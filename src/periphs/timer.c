@@ -1,0 +1,138 @@
+/*
+ * timer.c
+ *
+ * Created: 3/21/2025 2:19:31 AM
+ *  Author: brans
+ */ 
+
+#include "timer.h"
+#include "sam.h"
+#include "uart.h"
+#include <stddef.h>
+
+#define CLK_FREQ (120000000.0f)
+#define CLK_DIV  (256.0f)
+
+static const Tc* timers[6] = {TC0, TC1, TC2, TC3, TC4, TC5};
+static func_ptr_t callbacks[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+	
+static void process_interrupt(uint16_t timer_id);
+static uint16_t calculate_count(float sample_rate);
+
+void timer_schedule(uint16_t timer_id, float sample_rate, func_ptr_t callback) {
+	TcCount16* TIMER = &timers[timer_id]->COUNT16;
+	TIMER->CTRLA.bit.ENABLE = 0;
+	// Wait for synchronization
+	while (TIMER->SYNCBUSY.bit.ENABLE);
+	
+	// Add callback
+	callbacks[timer_id] = callback;
+	
+	// Initialize Timer
+	// Enable TCC bus clocks
+	MCLK->APBAMASK.reg |= (MCLK_APBAMASK_TC0 | MCLK_APBAMASK_TC1); 
+	MCLK->APBBMASK.reg |= (MCLK_APBBMASK_TC2 | MCLK_APBBMASK_TC3);
+	MCLK->APBCMASK.reg |= (MCLK_APBCMASK_TC4 | MCLK_APBCMASK_TC5); 
+	
+	// Enable gclocks
+	GCLK->PCHCTRL[TC0_GCLK_ID].reg = GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0;
+	while (!(GCLK->PCHCTRL[TC0_GCLK_ID].reg & GCLK_PCHCTRL_CHEN));  // Wait for clock enable
+	
+	GCLK->PCHCTRL[TC1_GCLK_ID].reg = GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0;
+	while (!(GCLK->PCHCTRL[TC1_GCLK_ID].reg & GCLK_PCHCTRL_CHEN));  // Wait for clock enable
+	
+	GCLK->PCHCTRL[TC2_GCLK_ID].reg = GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0;
+	while (!(GCLK->PCHCTRL[TC2_GCLK_ID].reg & GCLK_PCHCTRL_CHEN));  // Wait for clock enable
+	
+	GCLK->PCHCTRL[TC3_GCLK_ID].reg = GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0;
+	while (!(GCLK->PCHCTRL[TC3_GCLK_ID].reg & GCLK_PCHCTRL_CHEN));  // Wait for clock enable
+	
+	GCLK->PCHCTRL[TC4_GCLK_ID].reg = GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0;
+	while (!(GCLK->PCHCTRL[TC4_GCLK_ID].reg & GCLK_PCHCTRL_CHEN));  // Wait for clock enable
+	
+	GCLK->PCHCTRL[TC5_GCLK_ID].reg = GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0;
+	while (!(GCLK->PCHCTRL[TC5_GCLK_ID].reg & GCLK_PCHCTRL_CHEN));  // Wait for clock enable
+	
+	// Enable MC0 interrupt
+	TIMER->INTENSET.bit.MC0 = 1;
+	
+	// Enable NVIC interrupts
+	NVIC_EnableIRQ(TC0_IRQn);
+	NVIC_EnableIRQ(TC1_IRQn);
+	NVIC_EnableIRQ(TC2_IRQn);
+	NVIC_EnableIRQ(TC3_IRQn);
+	NVIC_EnableIRQ(TC4_IRQn);
+	NVIC_EnableIRQ(TC5_IRQn);
+	
+	// Set prescaler
+	TIMER->CTRLA.reg = TC_CTRLA_PRESCALER_DIV256;
+	
+	// Set MC0 value
+	uint16_t count_value = calculate_count(sample_rate);
+	TIMER->CC[0].reg = count_value;
+	
+	// Enable Match Frequency wavegen
+	TIMER->WAVE.bit.WAVEGEN = 0x1;
+	
+	// Enable timer
+	TIMER->CTRLA.bit.ENABLE = 1;
+	
+	// Wait for synchronization
+	while (TIMER->SYNCBUSY.bit.ENABLE);
+}
+
+static uint16_t calculate_count(float sample_rate) {
+	if (sample_rate < 1) sample_rate = 1;
+	float sample_period = 1.0f / sample_rate;
+	float clock_freq = CLK_FREQ / CLK_DIV;
+	float clock_period = 1.0f / clock_freq;
+	float k_samples = sample_period / clock_period;
+	uart_println_float(sample_rate);
+	uart_println_float(sample_period);
+	uart_println_float(clock_period);
+	uart_println_float(k_samples);
+	uint32_t k = (int) k_samples;
+	if (k > 0xFFFF) {
+		return 0xFFFF;
+	}
+	return (uint16_t) k;
+}
+
+static void process_interrupt(uint16_t timer_id) {
+	TcCount16* TIMER = &timers[timer_id]->COUNT16;
+	
+	// Clear interrupt
+	TIMER->INTFLAG.bit.MC0 = 1;
+
+	// Execute callback
+	func_ptr_t callback = callbacks[timer_id];	
+	if (callback != NULL) {
+		callback();
+	}
+}
+
+
+// Interrupt Handlers
+void TC0_Handler(void) {
+	process_interrupt(0);
+}
+
+void TC1_Handler(void) {
+	process_interrupt(1);
+}
+
+void TC2_Handler(void) {
+	process_interrupt(2);
+}
+
+void TC3_Handler(void) {
+	process_interrupt(3);
+}
+
+void TC4_Handler(void) {
+	process_interrupt(4);
+}
+
+void TC5_Handler(void) {
+	process_interrupt(5);
+}

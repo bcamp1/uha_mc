@@ -1,0 +1,8 @@
+build/
+CMSIS/
+*.o
+*.elf
+.DS_Store
+.DS_Store
+.vscode
+

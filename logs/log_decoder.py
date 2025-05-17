@@ -11,6 +11,7 @@ parser.add_argument('-o', type=str, default='out.csv', help='Output file name (C
 parser.add_argument('-f', type=str, help='Optional figure file to save the plot (e.g., figure.png)', default=None)
 parser.add_argument('-n', type=int, default=5)
 parser.add_argument('-l', type=str)
+parser.add_argument('-p', type=str)
 args = parser.parse_args()
 
 input_file = args.i
@@ -22,6 +23,12 @@ if args.l is not None:
     labels = str.split(args.l, ',')
 else:
     labels = ['Column ' + str(i+1) for i in range(n)]
+
+if args.p is not None:
+    plot_indices = str.split(args.p, ',')
+    plot_numbers = [int(ind) for ind in plot_indices]
+else:
+    plot_numbers = range(n)
 
 print('Reading ' + input_file + '...')
 with open(input_file, 'rb') as f:
@@ -64,10 +71,11 @@ np.savetxt(output_file, data, fmt='%.10e', delimiter=',')
 if output_image is not None:
     print('Saving figure to ' + output_image + '...')
     # Plot each column with a different color
-    for i in range(data.shape[1]):
+    for i in plot_numbers:
         plt.plot(data[:, i], label=labels[i])
 
     # Adding labels and title
+    # plt.ylim(-5, 5);
     plt.xlabel('Index')
     plt.ylabel('Value')
     plt.title('UHA Log Data')

@@ -43,23 +43,26 @@ State controller_get_state() {
 }
 
 void controller_send_state_uart() {
-   uart_send_float(x_k.theta1); 
-   uart_send_float(x_k.theta2); 
-   uart_send_float(x_k.tension1); 
-   uart_send_float(x_k.tension2); 
-   uart_send_float(x_k.tape_speed); 
-   uart_send_float(INFINITY);
+    uart_send_float(x_k.theta1); 
+    uart_send_float(x_k.theta2); 
+    uart_send_float(x_k.theta1_dot); 
+    uart_send_float(x_k.theta2_dot); 
+    uart_send_float(x_k.tension1); 
+    uart_send_float(x_k.tension2); 
+    uart_send_float(x_k.tension1_dot); 
+    uart_send_float(x_k.tension2_dot); 
+    uart_send_float(x_k.tape_speed); 
+    //uart_send_float(INFINITY);
+    //uart_println_float(x_k.tension1);
+    //uart_println_float(x_k.tension2);
 }
 
 void controller_init_all_hardware() {
 	// Init hardware
     motor_unit_init(&MOTOR_UNIT_A);
 	motor_unit_init(&MOTOR_UNIT_B);
-	//uha_motor_driver_disable(&UHA_MTR_DRVR_CONF_A);
-	//uha_motor_driver_disable(&UHA_MTR_DRVR_CONF_B);
     tension_arm_init(&TENSION_ARM_A);
     tension_arm_init(&TENSION_ARM_B);
-    //inc_encoder_init();
     
     // Init state
     x_k.theta1 = 0;
@@ -84,13 +87,16 @@ void controller_run_iteration() {
     tension2_prev = x_k.tension2;
 
     // Get new absolute positions
-    
     x_k.theta1 = motor_encoder_get_position(&MOTOR_ENCODER_A);
     x_k.theta2 = motor_encoder_get_position(&MOTOR_ENCODER_B);
-    x_k.tension1 = 0;
-    x_k.tension2 = 0;
-    //x_k.tension1 = tension_arm_get_position(&TENSION_ARM_A);
-    //x_k.tension2 = tension_arm_get_position(&TENSION_ARM_B);
+    x_k.tension1 = tension_arm_get_position(&TENSION_ARM_A);
+    x_k.tension2 = tension_arm_get_position(&TENSION_ARM_B);
+    uart_send_float(INFINITY);
+    //uart_println("");
+    //uart_print("Hi! ");
+    //uart_println_float(tension_arm_get_position(&TENSION_ARM_B));
+    //uart_println_float(tension_arm_get_position(&TENSION_ARM_B));
+    //uart_println_float(tension_arm_get_position(&TENSION_ARM_B));
     
     // Use backwards euler to get absolute velocities
     float T = config->sample_period;
@@ -103,8 +109,10 @@ void controller_run_iteration() {
     x_k.tape_speed = inc_encoder_get_vel();
 
     // Get torques
-    float torque1 = config->controller1(x_k);
-    float torque2 = config->controller2(x_k);
+    //float torque1 = config->controller1(x_k);
+    //float torque2 = config->controller2(x_k);
+    float torque1 = 0;
+    float torque2 = 0;
 
     // Send torques to motor
 	gpio_set_pin(DEBUG_PIN);

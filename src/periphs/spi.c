@@ -6,6 +6,7 @@
 
 #include "spi.h"
 #include "gpio.h"
+#include "uart.h"
 
 /* 12 MHz clock for SPI */
 #define SERCOM_SPI_GCLK GCLK_PCHCTRL_GEN_GCLK4;
@@ -195,6 +196,7 @@ uint16_t spi_write_read16(const SPIConfig* inst, uint16_t data) {
 	
 	// Bring nCS high
 	gpio_set_pin(inst->cs);
-	return (read1 << 8) | read0;
+	uint16_t result = (read1 << 8) | read0;
+	return result;
 }
 

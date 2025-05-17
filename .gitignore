@@ -5,4 +5,7 @@ CMSIS/
 .DS_Store
 .DS_Store
 .vscode
+*.csv
+*.bin
+*.png
 

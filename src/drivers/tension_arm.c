@@ -28,7 +28,7 @@ float tension_arm_get_position(const TensionArmConfig* config) {
 	uint16_t result = spi_write_read16(config->spi, 0);
 	uint16_t position = result >> 6;
 	
-	//return (float) position;
+	// return (float) position;
 	
 	// Interpolate between max and min
 	float interpolation = ((float) (config->bottom_position - position)) / ((float) (config->top_position - config->bottom_position));

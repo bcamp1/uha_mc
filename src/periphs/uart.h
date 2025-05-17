@@ -29,4 +29,7 @@ void uart_println_int(int num);
 void uart_print_float(float num);
 void uart_println_float(float num);
 
+// Send binary data
+void uart_send_float(float num);
+
 #endif /* UART_H_ */

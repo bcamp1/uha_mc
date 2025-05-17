@@ -7,6 +7,7 @@
 
 #include "timer.h"
 #include "sam.h"
+#include "samd51j20a.h"
 #include "uart.h"
 #include <stddef.h>
 

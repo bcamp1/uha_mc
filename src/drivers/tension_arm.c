@@ -9,14 +9,14 @@
 
 const TensionArmConfig TENSION_ARM_A = {
 	.spi = &SPI_CONF_TENSION_ARM_A,
-	.top_position = 946,
-	.bottom_position = 1008,
+	.top_position = 745,
+	.bottom_position = 806,
 };
 
 const TensionArmConfig TENSION_ARM_B = {
 	.spi = &SPI_CONF_TENSION_ARM_B,
-	.top_position = 634,
-	.bottom_position = 573,
+	.top_position = 874,
+	.bottom_position = 815,
 };
 
 void tension_arm_init(const TensionArmConfig* config) {

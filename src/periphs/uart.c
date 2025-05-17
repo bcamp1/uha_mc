@@ -11,6 +11,7 @@
 #include "sercom.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define UART_TX_PIN		PIN_PA04
 #define UART_RX_PIN		PIN_PA05
@@ -164,3 +165,15 @@ void SERCOM0_2_Handler(void) {
 	read_character = data;
 }
 
+void uart_send_float(float num) {
+	uint32_t raw = 0;
+	memcpy(&raw, &num, 4);
+	char byte0 = (raw >> 0)  & 0xFF;  // Least significant byte
+    char byte1 = (raw >> 8)  & 0xFF;
+    char byte2 = (raw >> 16) & 0xFF;
+    char byte3 = (raw >> 24) & 0xFF;  // Most significant byte
+	uart_put(byte3);
+	uart_put(byte2);
+	uart_put(byte1);
+	uart_put(byte0);
+}

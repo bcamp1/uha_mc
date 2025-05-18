@@ -9,31 +9,52 @@ static float controller_demo(State x, float* torque1, float* torque2) {
 	float theta1 = x.theta1;
 	float theta2 = x.theta2;
 	float k1 = 0.5f;
-	float k2 = -1.5f;
+	float k2 = -0.5f;
 	float delta1 = theta1 - PI;
 	float delta2 = theta2 - PI;
 	*torque1 = k1*delta2;
 	*torque2 = k2*delta2;
 }
 
+
+static float controller_constant_torques(State x, float* torque1, float* torque2) {
+	*torque1 = 1.0f;
+	*torque2 = 2.0f;
+}
+
 static float controller_tensions(State x, float* torque1, float* torque2) {
-	float k1 = 0.4f;
-	float k2 = -0.5f;
+	// References
 	float t_target = 0.5f;
+	float tape_speed_target = 3.0f;
 
-	float t1 = x.tension1;
-	float t2 = x.tension2;
-	float dt1 = t1 - t_target;
-	float dt2 = t2 - t_target;
+	// Controller Constants
+	float k_d = -0.8f;
+	float k2_t1 = 0.5f;
+	float k2_t2 = 0.8f;
 
-	float torque1_bias = -0.5f;
+	// Errors
+	float t1_error = t_target - x.tension1;
+	float t2_error = t_target - x.tension2;
+	float tape_speed = -x.theta1_dot;
+	float tape_speed_error = tape_speed_target - tape_speed;	
 
-	*torque1 = k1*dt1 + torque1_bias; 
-	*torque2 = k2*dt2; 
+	// Compute controller output
+	*torque1 = k_d*tape_speed_error; 
+	*torque2 = k2_t1*t1_error + k2_t2*t2_error; 
 }
 
 ControllerConfig controller_config_demo = {
+	.controller = controller_demo,
+	.sample_period = 0.01f,
+};
+
+ControllerConfig controller_config_tensions = {
 	.controller = controller_tensions,
+	.sample_period = 0.01f,
+};
+
+ControllerConfig controller_config_constant = {
+	.controller = controller_constant_torques,
 	.sample_period = 0.01f,
 };
 

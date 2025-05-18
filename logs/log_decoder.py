@@ -82,5 +82,5 @@ if output_image is not None:
     plt.legend()
 
     # Show the plot
-    plt.savefig(output_image)
+    plt.savefig(output_image, dpi=300)
 

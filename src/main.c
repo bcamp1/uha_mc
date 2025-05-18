@@ -10,6 +10,7 @@
 #include "periphs/clocks.h"
 #include "periphs/uart.h"
 #include "control/controller_tests.h"
+#include "drivers/inc_encoder.h"
 
 #include "foc/foc_math_fpu.h"
 #include "drivers/delay.h"
@@ -57,9 +58,18 @@ int main(void) {
 	init_peripherals();
 	print_welcome();
 
-	controller_tests_run(&controller_config_demo, false, true, false);
+	bool send_logs = true;
+	bool uart_toggle = true;
+	bool start_on = false;
 
+	controller_tests_run(&controller_config_tensions, send_logs, uart_toggle, start_on);
+	inc_encoder_init();
 	while (1) {
-		uart_print("MAINLOOP");
+		float pos = inc_encoder_get_pos();
+		float vel = inc_encoder_get_vel();
+		uart_print("Pos: ");
+		uart_print_float(pos);
+		uart_print(", Vel: ");
+		uart_println_float(vel);
 	}
 }

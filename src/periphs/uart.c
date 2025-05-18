@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../drivers/delay.h"
 
 #define UART_TX_PIN		PIN_PA04
 #define UART_RX_PIN		PIN_PA05
@@ -56,7 +57,8 @@ void uart_init(void) {
 }
 
 void uart_put(char ch) {
-	for (int i = 0; i < 0x8FF; i++);
+	delay(0x4F);
+	//for (int i = 0; i < 0x8FF; i++);
 	UART_SERCOM->USART.DATA.reg = ch; // Send data
 	while (!UART_SERCOM->USART.INTFLAG.bit.DRE) {} // Wait for empty
 	if (ch == '\n') {

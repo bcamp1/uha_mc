@@ -10,6 +10,7 @@
 #include "../periphs/uart.h"
 #include "../periphs/spi.h"
 #include "../foc/foc.h"
+#include "delay.h";
 #include <stdbool.h>
 
 const UHAMotorDriverConfig UHA_MTR_DRVR_CONF_A = {
@@ -85,7 +86,7 @@ uint16_t uha_motor_driver_read_reg(const UHAMotorDriverConfig* config, uint8_t a
 void uha_motor_driver_set_3x(const UHAMotorDriverConfig* config) {
 	uint16_t data = 0b100000;
 	// Delay to wait for enable signal to turn on chip
-	for (int i = 0; i < 0xFFFF; i++);
+	delay(0xFFFF);
 	uha_motor_driver_write_reg(config, DRV_REG_DRIVER_CONTROL, data);
 }
 

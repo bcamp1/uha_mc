@@ -20,6 +20,23 @@ static float theta2_prev;
 static float tension1_prev;
 static float tension2_prev;
 
+void controller_print_tension_info() {
+    uart_print("Tension Arm A: ");
+    uart_print_float(tension_arm_get_position(&TENSION_ARM_A));
+    uart_print(", Tension Arm B: ");
+    uart_println_float(tension_arm_get_position(&TENSION_ARM_B));
+}
+
+void controller_print_encoder_info() {
+	float encoder_pos_a = motor_encoder_get_pole_position(&MOTOR_ENCODER_A);
+	float encoder_pos_b = motor_encoder_get_pole_position(&MOTOR_ENCODER_B);
+	//float encoder_pos_b = motor_encoder_get_position(&MOTOR_ENCODER_B);
+	uart_print("ENC A: ");
+	uart_print_float(encoder_pos_a);
+	uart_print(", ENC B: ");
+	uart_println_float(encoder_pos_b);
+}
+
 static float get_delta_angle(float prev, float new) {
     static const float twopi = 2.0f * 3.14159f;
     float a = new - prev;
@@ -82,6 +99,7 @@ void controller_set_config(ControllerConfig* c) {
 }
 
 void controller_run_iteration() {
+    // Update previous values
     theta1_prev = x_k.theta1;
     theta2_prev = x_k.theta2;
     tension1_prev = x_k.tension1;
@@ -95,14 +113,6 @@ void controller_run_iteration() {
     spi_change_mode(&SPI_CONF_TENSION_ARM_A);
     x_k.tension1 = tension_arm_get_position(&TENSION_ARM_A);
     x_k.tension2 = tension_arm_get_position(&TENSION_ARM_B);
-    //uart_println("");
-    //uart_print("Hi! ");
-    //uart_print_float(x_k.tension1);
-    //uart_print(", ");
-    //uart_println_float(x_k.tension2);
-
-    //uart_println_float(tension_arm_get_position(&TENSION_ARM_B));
-    //uart_println_float(tension_arm_get_position(&TENSION_ARM_B));
     
     // Use backwards euler to get absolute velocities
     float T = config->sample_period;
@@ -115,10 +125,9 @@ void controller_run_iteration() {
     x_k.tape_speed = inc_encoder_get_vel();
 
     // Get torques
-    float torque1 = config->controller1(x_k);
-    float torque2 = config->controller2(x_k);
-    //float torque1 = 0;
-    //float torque2 = 0;
+    float torque1 = 0;
+    float torque2 = 0;
+    config->controller(x_k, &torque1, &torque2);
 
     // Send torques to motor
 	gpio_set_pin(DEBUG_PIN);
@@ -127,8 +136,12 @@ void controller_run_iteration() {
 	gpio_clear_pin(DEBUG_PIN);
 }
 
-void controller_run_loop() {
-    while (1) {
-        controller_run_iteration();
-    }
+void controller_disable_motors() {
+    uha_motor_driver_disable(&UHA_MTR_DRVR_CONF_A);
+    uha_motor_driver_disable(&UHA_MTR_DRVR_CONF_B);
+}
+
+void controller_enable_motors() {
+    uha_motor_driver_enable(&UHA_MTR_DRVR_CONF_A);
+    uha_motor_driver_enable(&UHA_MTR_DRVR_CONF_B);
 }

@@ -13,19 +13,21 @@ typedef struct {
     float tension2_dot;
 } State;
 
-typedef float (*ControllerFunc) (State);
+typedef float (*ControllerFunc) (State, float*, float*);
 
 typedef struct {
-    ControllerFunc controller1;
-    ControllerFunc controller2;
+    ControllerFunc controller;
     float sample_period;
 } ControllerConfig;
 
 void controller_init_all_hardware();
+void controller_disable_motors();
+void controller_enable_motors();
 void controller_set_config(ControllerConfig* c);
 void controller_run_iteration();
-void controller_run_loop();
 State controller_get_state();
 void controller_send_state_uart();
+void controller_print_tension_info();
+void controller_print_encoder_info();
 
 #endif

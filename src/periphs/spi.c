@@ -195,7 +195,7 @@ uint16_t spi_write_read16(const SPIConfig* inst, uint16_t data) {
 	
 	// Bring nCS low
 	gpio_clear_pin(inst->cs);
-    for (int i = 0; i < 0xFF; i++);
+    //for (int i = 0; i < 0xFF; i++);
 	
 	// Transmit first byte
 	while (!inst->sercom->INTFLAG.bit.DRE) {}
@@ -210,7 +210,7 @@ uint16_t spi_write_read16(const SPIConfig* inst, uint16_t data) {
 	read0 = inst->sercom->DATA.reg & 0xFF;
 	
 	// Bring nCS high
-    for (int i = 0; i < 0xFF; i++);
+    //for (int i = 0; i < 0xFF; i++);
 	gpio_set_pin(inst->cs);
 	uint16_t result = (read1 << 8) | read0;
 	return result;

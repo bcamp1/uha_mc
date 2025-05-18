@@ -57,11 +57,11 @@ const SPIConfig SPI_CONF_MTR_DRVR_B = {
 // Change on rising edge, sample on falling edge
 const SPIConfig SPI_CONF_TENSION_ARM_A = {
 	.sercom = (SercomSpi*) SERCOM4,
-	.dopo = 0,	// Pad 1 is SCK, pad 0 is MOSI
+	.dopo = 2,	// Pad 1 is SCK, pad 0 is MOSI
 	.dipo = 2, // Pad 2 is MISO
 
-	.polarity = 1,
-	.phase = 0,
+	.polarity = 0,
+	.phase = 1,
 
 	.mosi = PIN_PB15, // Dummy pin
 	.mosi_alt = GPIO_ALTERNATE_NONE,
@@ -77,11 +77,11 @@ const SPIConfig SPI_CONF_TENSION_ARM_A = {
 
 const SPIConfig SPI_CONF_TENSION_ARM_B = {
 	.sercom = (SercomSpi*) SERCOM4,
-	.dopo = 0,	// Pad 1 is SCK, pad 0 is MOSI
+	.dopo = 2,	// Pad 1 is SCK, pad 0 is MOSI
 	.dipo = 2, // Pad 2 is MISO
 
-	.polarity = 1,
-	.phase = 0,
+	.polarity = 0,
+	.phase = 1,
 
 	.mosi = PIN_PB15, // Dummy pin
 	.mosi_alt = GPIO_ALTERNATE_NONE,
@@ -100,7 +100,7 @@ const SPIConfig SPI_CONF_MTR_ENCODER_A = {
 	.dopo = 2,	// Pad 1 is SCK, pad 3 is MOSI
 	.dipo = 2, // Pad 2 is MISO
 
-	.polarity = 1,
+	.polarity = 0,
 	.phase = 0,
 
 	.mosi = PIN_PB15, // SERCOM4[3]
@@ -120,7 +120,7 @@ const SPIConfig SPI_CONF_MTR_ENCODER_B = {
 	.dopo = 2,	// Pad 1 is SCK, pad 3 is MOSI
 	.dipo = 2, // Pad 2 is MISO
 
-	.polarity = 1,
+	.polarity = 0,
 	.phase = 0,
 
 	.mosi = PIN_PB15, // SERCOM4[3]
@@ -173,6 +173,20 @@ void spi_init(const SPIConfig* inst) {
 	while (inst->sercom->SYNCBUSY.bit.ENABLE) {};
 }
 
+uint16_t spi_change_mode(const SPIConfig* inst) {
+    // Disable SPI
+    inst->sercom->CTRLA.bit.ENABLE = 0;
+    while (inst->sercom->SYNCBUSY.bit.ENABLE);
+
+    // Modify CPOL and CPHA
+    inst->sercom->CTRLA.bit.CPOL = inst->polarity; // or 0
+    inst->sercom->CTRLA.bit.CPHA = inst->phase; // or 0
+
+    // Enable SPI again
+    inst->sercom->CTRLA.bit.ENABLE = 1;
+    while (inst->sercom->SYNCBUSY.bit.ENABLE);
+}
+
 uint16_t spi_write_read16(const SPIConfig* inst, uint16_t data) {
 	uint8_t byte0 = data & 0xFF;
 	uint8_t byte1 = (data & 0xFF00) >> 8;
@@ -181,6 +195,7 @@ uint16_t spi_write_read16(const SPIConfig* inst, uint16_t data) {
 	
 	// Bring nCS low
 	gpio_clear_pin(inst->cs);
+    for (int i = 0; i < 0xFF; i++);
 	
 	// Transmit first byte
 	while (!inst->sercom->INTFLAG.bit.DRE) {}
@@ -195,6 +210,7 @@ uint16_t spi_write_read16(const SPIConfig* inst, uint16_t data) {
 	read0 = inst->sercom->DATA.reg & 0xFF;
 	
 	// Bring nCS high
+    for (int i = 0; i < 0xFF; i++);
 	gpio_set_pin(inst->cs);
 	uint16_t result = (read1 << 8) | read0;
 	return result;

@@ -142,8 +142,8 @@ void uart_println_float(float num) {
 #define MAX_INT_STR_LEN 50
 void uart_print_int_base(int num, int base) {
 	static char buffer[MAX_INT_STR_LEN];
-	buffer[0] = 0;
-	//itoa(num, buffer, base);
+	//buffer[0] = 0;
+	itoa(num, buffer, base);
 	uart_print(buffer);
 }
 

@@ -9,14 +9,14 @@
 
 const TensionArmConfig TENSION_ARM_A = {
 	.spi = &SPI_CONF_TENSION_ARM_A,
-	.top_position = 745,
-	.bottom_position = 806,
+	.top_position = 466,
+	.bottom_position = 588,
 };
 
 const TensionArmConfig TENSION_ARM_B = {
 	.spi = &SPI_CONF_TENSION_ARM_B,
-	.top_position = 874,
-	.bottom_position = 815,
+	.top_position = 725,
+	.bottom_position = 606,
 };
 
 void tension_arm_init(const TensionArmConfig* config) {
@@ -28,7 +28,7 @@ float tension_arm_get_position(const TensionArmConfig* config) {
 	uint16_t result = spi_write_read16(config->spi, 0);
 	uint16_t position = result >> 6;
 	
-	// return (float) position;
+	//return (float) position;
 	
 	// Interpolate between max and min
 	float interpolation = ((float) (config->bottom_position - position)) / ((float) (config->top_position - config->bottom_position));

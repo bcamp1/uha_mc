@@ -9,6 +9,7 @@
 #include "../drivers/inc_encoder.h"
 #include "../periphs/gpio.h"
 #include "../periphs/uart.h"
+#include "../periphs/spi.h"
 
 #define DEBUG_PIN PIN_PA14
 
@@ -52,7 +53,7 @@ void controller_send_state_uart() {
     uart_send_float(x_k.tension1_dot); 
     uart_send_float(x_k.tension2_dot); 
     uart_send_float(x_k.tape_speed); 
-    //uart_send_float(INFINITY);
+    uart_send_float(INFINITY);
     //uart_println_float(x_k.tension1);
     //uart_println_float(x_k.tension2);
 }
@@ -87,14 +88,19 @@ void controller_run_iteration() {
     tension2_prev = x_k.tension2;
 
     // Get new absolute positions
+    spi_change_mode(&SPI_CONF_MTR_ENCODER_A);
     x_k.theta1 = motor_encoder_get_position(&MOTOR_ENCODER_A);
     x_k.theta2 = motor_encoder_get_position(&MOTOR_ENCODER_B);
+    //for(int i = 0; i < 0xFF; i++);
+    spi_change_mode(&SPI_CONF_TENSION_ARM_A);
     x_k.tension1 = tension_arm_get_position(&TENSION_ARM_A);
     x_k.tension2 = tension_arm_get_position(&TENSION_ARM_B);
-    uart_send_float(INFINITY);
     //uart_println("");
     //uart_print("Hi! ");
-    //uart_println_float(tension_arm_get_position(&TENSION_ARM_B));
+    //uart_print_float(x_k.tension1);
+    //uart_print(", ");
+    //uart_println_float(x_k.tension2);
+
     //uart_println_float(tension_arm_get_position(&TENSION_ARM_B));
     //uart_println_float(tension_arm_get_position(&TENSION_ARM_B));
     
@@ -109,10 +115,10 @@ void controller_run_iteration() {
     x_k.tape_speed = inc_encoder_get_vel();
 
     // Get torques
-    //float torque1 = config->controller1(x_k);
-    //float torque2 = config->controller2(x_k);
-    float torque1 = 0;
-    float torque2 = 0;
+    float torque1 = config->controller1(x_k);
+    float torque2 = config->controller2(x_k);
+    //float torque1 = 0;
+    //float torque2 = 0;
 
     // Send torques to motor
 	gpio_set_pin(DEBUG_PIN);

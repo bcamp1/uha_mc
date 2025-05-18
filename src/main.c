@@ -226,8 +226,6 @@ static void motor_test3() {
 		//uart_put('\n');
 		//uart_put(0x02);
 		//uart_send_float(2.0213f);
-        //uart_print_float(tension_arm_get_position(&TENSION_ARM_B));
-        //uart_print(", ");
 		controller_run_iteration();
         //print_tension_info();
 		controller_send_state_uart();

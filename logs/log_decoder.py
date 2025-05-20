@@ -75,7 +75,7 @@ if output_image is not None:
         plt.plot(data[:, i], label=labels[i])
 
     # Adding labels and title
-    plt.ylim(-500, 800);
+    # plt.ylim(-500, 800);
     plt.xlabel('Index')
     plt.ylabel('Value')
     plt.title('UHA Log Data')

@@ -63,7 +63,7 @@ static void stopwatch_test(void) {
     uart_println("UART Stopwatch Test (press s)");
     
     while (1) {
-        uint32_t time = stopwatch_underlying_time();
+        //uint32_t time = stopwatch_underlying_time();
         //uart_println_int_base(time, 16);
         if (uart_get() == 's') {
             if (!running) {
@@ -71,7 +71,7 @@ static void stopwatch_test(void) {
                 running = true;
                 stopwatch_start(0);
             } else {
-                float dt = stopwatch_stop(0, false);
+                float dt = ticks_to_time(stopwatch_stop(0, false));
                 running = false;
                 uart_print("Stopped. Took ");
                 uart_print_float(dt);
@@ -94,23 +94,17 @@ int main(void) {
 	while (1) {
         //float pos = inc_encoder_get_pos();
         //float vel = inc_encoder_get_vel();
-        while(TCC2->SYNCBUSY.bit.CC0) {}
-        uint16_t T = TCC2->CC[0].reg;
-        float pos = 0.0;
-        float vel = (float) T;
-        float data[2] = {pos, vel};
-        uart_send_float_arr(data, 2);
-        //uart_println_int(inc_encoder_get_dt_ticks());
-        //uart_println_float(vel);
-        delay(0x4FFF);
+        ////uart_println_int(inc_encoder_get_dt_ticks());
+        ////uart_println_float(vel);
         //uart_print_float(pos);
         //uart_print(", ");
         //uart_println_float(vel);
+        delay(0x4FFF);
         //x = stopwatch_underlying_time();
         //uart_print(".");
-		//float pos = inc_encoder_get_pos();
-		//float vel = inc_encoder_get_vel();
-        //float data[2] = {pos, vel};
-        //uart_send_float_arr(data, 2);
+		float pos = inc_encoder_get_pos();
+		float vel = inc_encoder_get_vel();
+        float data[2] = {pos, vel};
+        uart_send_float_arr(data, 2);
 	}
 }

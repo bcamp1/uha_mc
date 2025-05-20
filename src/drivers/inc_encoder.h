@@ -17,6 +17,5 @@
 void inc_encoder_init();
 float inc_encoder_get_pos();
 float inc_encoder_get_vel();
-uint16_t inc_encoder_get_dt_ticks();
 
 #endif /* INC_ENCODER_H_ */

@@ -64,13 +64,13 @@ void eic_init_pin(uint16_t pin, uint16_t ext_num, uint16_t int_mode, func_ptr_t 
 	}
 
     // Enable events
-    EIC->EVCTRL.reg |= (0b1 << ext_num);
+    //EIC->EVCTRL.reg |= (0b1 << ext_num);
 	
 	uint32_t config_mask = int_mode << (4*block_num);
 	EIC->CONFIG[config_num].reg |= config_mask;
 	
 	// Enable external interrupt
-	//EIC->INTENSET.reg |= (0b1) << ext_num;
+	EIC->INTENSET.reg |= (0b1) << ext_num;
 	
 	// Register callback
 	callbacks[ext_num] = callback;

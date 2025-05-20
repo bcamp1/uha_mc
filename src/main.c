@@ -12,6 +12,7 @@
 #include "control/controller_tests.h"
 #include "drivers/inc_encoder.h"
 #include "drivers/stopwatch.h"
+#include "drivers/delay.h"
 
 #define LED PIN_PA15
 #define DEBUG_PIN PIN_PA14
@@ -86,22 +87,30 @@ int main(void) {
 	print_welcome();
     //stopwatch_test();
 
-	bool send_logs = true;
-	bool uart_toggle = true;
-	bool start_on = false;
+	//bool send_logs = true;
+	//bool uart_toggle = true;
+	//bool start_on = false;
 	//controller_tests_run(&controller_config_demo, send_logs, uart_toggle, start_on);
 	while (1) {
+        //float pos = inc_encoder_get_pos();
+        //float vel = inc_encoder_get_vel();
+        while(TCC2->SYNCBUSY.bit.CC0) {}
+        uint16_t T = TCC2->CC[0].reg;
+        float pos = 0.0;
+        float vel = (float) T;
+        float data[2] = {pos, vel};
+        uart_send_float_arr(data, 2);
+        //uart_println_int(inc_encoder_get_dt_ticks());
+        //uart_println_float(vel);
+        delay(0x4FFF);
+        //uart_print_float(pos);
+        //uart_print(", ");
+        //uart_println_float(vel);
         //x = stopwatch_underlying_time();
         //uart_print(".");
-		float pos = inc_encoder_get_pos();
-		float vel = inc_encoder_get_vel();
-        uint32_t ticks = inc_encoder_get_dt_ticks();
-        float data[3] = {pos, vel, (float) ticks};
-        uart_send_float_arr(data, 3);
-        //uart_print_float(pos);
-        //uart_print(" ");
-        //uart_print_float(vel);
-        //uart_print(" ");
-        //uart_println_float(ticks);
+		//float pos = inc_encoder_get_pos();
+		//float vel = inc_encoder_get_vel();
+        //float data[2] = {pos, vel};
+        //uart_send_float_arr(data, 2);
 	}
 }

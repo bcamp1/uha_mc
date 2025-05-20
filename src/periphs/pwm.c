@@ -26,6 +26,7 @@
 
 // Clock
 #define GCLK_TCC0_TCC1_INDEX (25)
+#define GCLK_TCC2_TCC3_INDEX (29)
 
 const PWMConfig PWM_A = {
 	.timer = TCC0,

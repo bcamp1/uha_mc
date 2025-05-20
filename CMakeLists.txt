@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.10)
 
 # Define project name and language (C in this case)
 project(MyProject C)
+# set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 
 # Set the path to arm-none-eabi-gcc and other tools
 set(CMAKE_C_COMPILER "arm-none-eabi-gcc")
@@ -19,7 +21,6 @@ set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 
 # Define the source files (all .c files in the src/ directory)
 file(GLOB SOURCES ${CMAKE_SOURCE_DIR}/src/*/*.c ${CMAKE_SOURCE_DIR}/src/*.c)
-
 # Define the object files output directory
 set(OBJECT_DIR ${CMAKE_BINARY_DIR}/obj)
 
@@ -54,4 +55,5 @@ add_custom_target(flash
     DEPENDS ${CMAKE_BINARY_DIR}/build.elf
     COMMENT "Flashing to the SAMD51 chip..." 
 )
+
 

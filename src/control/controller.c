@@ -61,18 +61,17 @@ State controller_get_state() {
 }
 
 void controller_send_state_uart() {
-    uart_send_float(x_k.theta1); 
-    uart_send_float(x_k.theta2); 
-    uart_send_float(x_k.theta1_dot); 
-    uart_send_float(x_k.theta2_dot); 
-    uart_send_float(x_k.tension1); 
-    uart_send_float(x_k.tension2); 
-    uart_send_float(x_k.tension1_dot); 
-    uart_send_float(x_k.tension2_dot); 
-    uart_send_float(x_k.tape_speed); 
-    uart_send_float(INFINITY);
-    //uart_println_float(x_k.tension1);
-    //uart_println_float(x_k.tension2);
+    float data[9] = {
+        x_k.theta1, 
+        x_k.theta2, 
+        x_k.theta1_dot, 
+        x_k.theta2_dot, 
+        x_k.tension1,
+        x_k.tension2,
+        x_k.tension1_dot,
+        x_k.tension2_dot,
+        x_k.tape_speed};
+    uart_send_float_arr(data, 9);
 }
 
 void controller_init_all_hardware() {

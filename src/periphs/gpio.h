@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "samd51j20a.h"
+#include <samd51j20a.h>
 
 #define GPIO_DIR_IN			(false)
 #define GPIO_DIR_OUT		(true)

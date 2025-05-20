@@ -8,6 +8,7 @@
 
 #ifndef INC_ENCODER_H_
 #define INC_ENCODER_H_
+#include <stdint.h>
 
 #define INC_ENCODER_PULSE_PIN PIN_PB10
 #define INC_ENCODER_EXT_NUM (10)
@@ -16,5 +17,6 @@
 void inc_encoder_init();
 float inc_encoder_get_pos();
 float inc_encoder_get_vel();
+uint32_t inc_encoder_get_dt_ticks();
 
 #endif /* INC_ENCODER_H_ */

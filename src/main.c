@@ -5,15 +5,13 @@
  * Author : brans
  */ 
 
-#include "sam.h"
+#include <sam.h>
 #include "periphs/gpio.h"
 #include "periphs/clocks.h"
 #include "periphs/uart.h"
 #include "control/controller_tests.h"
 #include "drivers/inc_encoder.h"
-
-#include "foc/foc_math_fpu.h"
-#include "drivers/delay.h"
+#include "drivers/stopwatch.h"
 
 #define LED PIN_PA15
 #define DEBUG_PIN PIN_PA14
@@ -35,12 +33,17 @@ static void init_peripherals(void) {
 	
 	// Init the UART
 	uart_init();
+    
+    // Stop Watch
+    stopwatch_init();
+
+    // Incremental Encoder
+	inc_encoder_init();
 }
 
 static void enable_fpu(void) {
 	// Enable CP10 and CP11 (FPU coprocessors)
 	SCB->CPACR |= (0xF << 20);
-
 	// Ensure all memory accesses complete before continuing
 	__DSB();  // Data Synchronization Barrier
 	__ISB();  // Instruction Synchronization Barrier
@@ -53,23 +56,52 @@ static void print_welcome(void) {
 	uart_println("----------------------");
 }
 
+static void stopwatch_test(void) {
+    stopwatch_init();
+    bool running = false;
+    uart_println("UART Stopwatch Test (press s)");
+    
+    while (1) {
+        uint32_t time = stopwatch_underlying_time();
+        //uart_println_int_base(time, 16);
+        if (uart_get() == 's') {
+            if (!running) {
+                uart_println("Starting stopwatch... s to stop");
+                running = true;
+                stopwatch_start(0);
+            } else {
+                float dt = stopwatch_stop(0, false);
+                running = false;
+                uart_print("Stopped. Took ");
+                uart_print_float(dt);
+                uart_println(" seconds.");
+            }
+        }
+    }
+}
+
 int main(void) {
 	// Print welcome message
 	init_peripherals();
 	print_welcome();
+    //stopwatch_test();
 
 	bool send_logs = true;
 	bool uart_toggle = true;
 	bool start_on = false;
-
-	controller_tests_run(&controller_config_tensions, send_logs, uart_toggle, start_on);
-	inc_encoder_init();
+	//controller_tests_run(&controller_config_demo, send_logs, uart_toggle, start_on);
 	while (1) {
+        //x = stopwatch_underlying_time();
+        //uart_print(".");
 		float pos = inc_encoder_get_pos();
 		float vel = inc_encoder_get_vel();
-		uart_print("Pos: ");
-		uart_print_float(pos);
-		uart_print(", Vel: ");
-		uart_println_float(vel);
+        uint32_t ticks = inc_encoder_get_dt_ticks();
+        float data[3] = {pos, vel, (float) ticks};
+        uart_send_float_arr(data, 3);
+        //uart_print_float(pos);
+        //uart_print(" ");
+        //uart_print_float(vel);
+        //uart_print(" ");
+        //uart_println_float(ticks);
 	}
 }

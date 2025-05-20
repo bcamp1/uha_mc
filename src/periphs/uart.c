@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "../drivers/delay.h"
 
 #define UART_TX_PIN		PIN_PA04
@@ -179,3 +180,11 @@ void uart_send_float(float num) {
 	uart_put(byte1);
 	uart_put(byte0);
 }
+
+void uart_send_float_arr(float* data, int len) {
+    for (int i = 0; i < len; i++) {
+        uart_send_float(data[i]);
+    }
+    uart_send_float(INFINITY);
+}
+

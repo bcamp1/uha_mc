@@ -14,22 +14,13 @@
 #define CLK_FREQ (120000000.0f)
 #define CLK_DIV  (256.0f)
 
-static const Tc* timers[6] = {TC0, TC1, TC2, TC3, TC4, TC5};
-static func_ptr_t callbacks[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+static const Tc* timers[5] = {TC0, TC1, TC2, TC3};
+static func_ptr_t callbacks[5] = {NULL, NULL, NULL, NULL};
 	
 static void process_interrupt(uint16_t timer_id);
 static uint16_t calculate_count(float sample_rate);
 
-void timer_schedule(uint16_t timer_id, float sample_rate, func_ptr_t callback) {
-	TcCount16* TIMER = &timers[timer_id]->COUNT16;
-	TIMER->CTRLA.bit.ENABLE = 0;
-	// Wait for synchronization
-	while (TIMER->SYNCBUSY.bit.ENABLE);
-	
-	// Add callback
-	callbacks[timer_id] = callback;
-	
-	// Initialize Timer
+void timer_init_all() {
 	// Enable TCC bus clocks
 	MCLK->APBAMASK.reg |= (MCLK_APBAMASK_TC0 | MCLK_APBAMASK_TC1); 
 	MCLK->APBBMASK.reg |= (MCLK_APBBMASK_TC2 | MCLK_APBBMASK_TC3);
@@ -48,25 +39,30 @@ void timer_schedule(uint16_t timer_id, float sample_rate, func_ptr_t callback) {
 	GCLK->PCHCTRL[TC3_GCLK_ID].reg = GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0;
 	while (!(GCLK->PCHCTRL[TC3_GCLK_ID].reg & GCLK_PCHCTRL_CHEN));  // Wait for clock enable
 	
-	GCLK->PCHCTRL[TC4_GCLK_ID].reg = GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0;
-	while (!(GCLK->PCHCTRL[TC4_GCLK_ID].reg & GCLK_PCHCTRL_CHEN));  // Wait for clock enable
-	
-	GCLK->PCHCTRL[TC5_GCLK_ID].reg = GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0;
-	while (!(GCLK->PCHCTRL[TC5_GCLK_ID].reg & GCLK_PCHCTRL_CHEN));  // Wait for clock enable
-	
-	// Enable MC0 interrupt
-	TIMER->INTENSET.bit.MC0 = 1;
-	
 	// Enable NVIC interrupts
 	NVIC_EnableIRQ(TC0_IRQn);
 	NVIC_EnableIRQ(TC1_IRQn);
 	NVIC_EnableIRQ(TC2_IRQn);
 	NVIC_EnableIRQ(TC3_IRQn);
-	NVIC_EnableIRQ(TC4_IRQn);
-	NVIC_EnableIRQ(TC5_IRQn);
+}
+
+void timer_schedule(uint16_t timer_id, float sample_rate, func_ptr_t callback) {
+	TcCount16* TIMER = &timers[timer_id]->COUNT16;
+	TIMER->CTRLA.bit.ENABLE = 0;
+	// Wait for synchronization
+	while (TIMER->SYNCBUSY.bit.ENABLE);
+	
+	// Add callback
+	callbacks[timer_id] = callback;
+	
+	// Initialize Timers 1-5
+	timer_init_all();
+
+	// Enable MC0 interrupt
+	TIMER->INTENSET.bit.MC0 = 1;
 	
 	// Set prescaler
-	TIMER->CTRLA.reg = TC_CTRLA_PRESCALER_DIV256;
+	TIMER->CTRLA.reg |= TC_CTRLA_PRESCALER_DIV256;
 	
 	// Set MC0 value
 	uint16_t count_value = calculate_count(sample_rate);
@@ -112,7 +108,6 @@ static void process_interrupt(uint16_t timer_id) {
 	}
 }
 
-
 // Interrupt Handlers
 void TC0_Handler(void) {
 	process_interrupt(0);
@@ -130,10 +125,3 @@ void TC3_Handler(void) {
 	process_interrupt(3);
 }
 
-void TC4_Handler(void) {
-	process_interrupt(4);
-}
-
-void TC5_Handler(void) {
-	process_interrupt(5);
-}

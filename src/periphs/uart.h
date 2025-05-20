@@ -28,6 +28,8 @@ void uart_println_int(int num);
 // Floats
 void uart_print_float(float num);
 void uart_println_float(float num);
+void uart_print_float_arr(float* data, int len);
+void uart_println_float_arr(float* data, int len);
 
 // Send binary data
 void uart_send_float(float num);

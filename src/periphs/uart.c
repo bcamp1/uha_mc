@@ -188,3 +188,19 @@ void uart_send_float_arr(float* data, int len) {
     uart_send_float(INFINITY);
 }
 
+void uart_print_float_arr(float* data, int len) {
+    uart_put('[');
+    for (int i = 0; i < len; i++) {
+        uart_print_float(data[i]);
+        if (i < len-1) {
+            uart_put(',');
+            uart_put(' ');
+        }
+    }
+    uart_put(']');
+}
+
+void uart_println_float_arr(float* data, int len) {
+    uart_print_float_arr(data, len);
+    uart_put('\n');
+}

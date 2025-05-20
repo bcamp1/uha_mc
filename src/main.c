@@ -10,7 +10,7 @@
 #include "periphs/clocks.h"
 #include "periphs/uart.h"
 #include "control/controller_tests.h"
-#include "drivers/inc_encoder.h"
+#include "drivers/roller.h"
 #include "drivers/stopwatch.h"
 #include "drivers/delay.h"
 
@@ -38,8 +38,8 @@ static void init_peripherals(void) {
     // Stop Watch
     stopwatch_init();
 
-    // Incremental Encoder
-	inc_encoder_init();
+    // Roller (Inc Encoder)
+	roller_init();
 }
 
 static void enable_fpu(void) {
@@ -57,7 +57,7 @@ static void print_welcome(void) {
 	uart_println("----------------------");
 }
 
-static void stopwatch_test(void) {
+static void stopwatch_test() {
     stopwatch_init();
     bool running = false;
     uart_println("UART Stopwatch Test (press s)");
@@ -81,30 +81,22 @@ static void stopwatch_test(void) {
     }
 }
 
+static void controller_test() {
+	bool send_logs = true;
+	bool uart_toggle = true;
+	bool start_on = false;
+	controller_tests_run(&controller_config_demo, send_logs, uart_toggle, start_on);
+}
+
 int main(void) {
-	// Print welcome message
 	init_peripherals();
 	print_welcome();
-    //stopwatch_test();
 
-	//bool send_logs = true;
-	//bool uart_toggle = true;
-	//bool start_on = false;
-	//controller_tests_run(&controller_config_demo, send_logs, uart_toggle, start_on);
 	while (1) {
-        //float pos = inc_encoder_get_pos();
-        //float vel = inc_encoder_get_vel();
-        ////uart_println_int(inc_encoder_get_dt_ticks());
-        ////uart_println_float(vel);
-        //uart_print_float(pos);
-        //uart_print(", ");
-        //uart_println_float(vel);
         delay(0x4FFF);
-        //x = stopwatch_underlying_time();
-        //uart_print(".");
-		float pos = inc_encoder_get_pos();
-		float vel = inc_encoder_get_vel();
-        float data[2] = {pos, vel};
-        uart_send_float_arr(data, 2);
+		float ips = roller_get_ips();
+		float tape_pos = roller_get_tape_position(15.0f);
+        float data[2] = {ips, tape_pos};
+        uart_println_float_arr(data, 2);
 	}
 }

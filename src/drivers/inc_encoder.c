@@ -25,7 +25,7 @@
 
 #define STOPWATCH_PRECISION (30)
 
-const float rad_tick_amount = 0.006135923151542565f;
+static const float rad_tick_amount = 0.006135923151542565f;
 
 static int32_t pulses = 0;
 static uint16_t stopwatch_ticks = 0;
@@ -41,7 +41,7 @@ float inc_encoder_get_vel() {
     return vel;
 }
 
-void inc_encoder_pulse() {
+static void inc_encoder_pulse() {
     // Get Encoder Pos
 	bool dir = gpio_get_pin(INC_ENCODER_DIR_PIN);
 	if (dir) {
@@ -84,6 +84,5 @@ void inc_encoder_init() {
     // Start the stopwatch
     stopwatch_start(0);
 }
-
 
 

@@ -13,7 +13,7 @@ typedef struct {
     float tension2_dot;
 } State;
 
-typedef float (*ControllerFunc) (State, float*, float*);
+typedef void (*ControllerFunc) (State, float*, float*);
 
 typedef struct {
     ControllerFunc controller;

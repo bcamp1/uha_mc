@@ -25,13 +25,12 @@
 
 #define STOPWATCH_PRECISION (30)
 
-static const float rad_tick_amount = 0.006135923151542565f;
+static volatile const float rad_tick_amount = 0.006135923151542565f;
 
-static int32_t pulses = 0;
-static uint16_t stopwatch_ticks = 0;
-static int32_t stopwatch_start_pos = 0;
-
-static float vel = 0.0f;
+static volatile int32_t pulses = 0;
+static volatile uint16_t stopwatch_ticks = 0;
+static volatile int32_t stopwatch_start_pos = 0;
+static volatile float vel = 0.0f;
 
 float inc_encoder_get_pos() {
 	return rad_tick_amount * (float) pulses;

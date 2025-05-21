@@ -11,7 +11,7 @@ set(CMAKE_C_COMPILER "arm-none-eabi-gcc")
 set(CMAKE_ASM_COMPILER "arm-none-eabi-gcc")  # Optional: if you're using assembly
 set(CMAKE_LINKER "arm-none-eabi-ld")         # Optional: if you need a specific linker
 # set(CMAKE_C_FLAGS -I${CMAKE_SOURCE_DIR}/lib/include -I${CMAKE_SOURCE_DIR}/CMSIS/CMSIS/Core/Include -g -Xassembler -Wa -mcpu=cortex-m4 -mthumb -Wall -lm -mfpu=fpv4-sp-d16 -mfloat-abi=hard -lc -std=c99 -ffreestanding -T ${CMAKE_SOURCE_DIR}/samd51j20a_flash.ld -D__SAMD51J20A__)
-set(CMAKE_C_FLAGS -x c -mthumb -D__SAMD51J20A__ -DDEBUG -I${CMAKE_SOURCE_DIR}/lib/include -I${CMAKE_SOURCE_DIR}/CMSIS/CMSIS/Core/Include  -O0 -ffunction-sections -mlong-calls -g3 -Wall -mcpu=cortex-m4 -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)")
+set(CMAKE_C_FLAGS -x c -mthumb -D__SAMD51J20A__ -DDEBUG -I${CMAKE_SOURCE_DIR}/lib/include -I${CMAKE_SOURCE_DIR}/CMSIS/CMSIS/Core/Include -O3 -fno-strict-aliasing -ffunction-sections -mlong-calls -g3 -Wall -mcpu=cortex-m4 -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)")
 set(CMAKE_L_FLAGS -mthumb -Wl,-Map="build.map" -Wl,--start-group -lm -lc -Wl,--end-group -Wl,--gc-sections -mcpu=cortex-m4 -T ${CMAKE_SOURCE_DIR}/samd51j20a_flash.ld) 
 
 # Set the output directory for the build

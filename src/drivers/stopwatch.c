@@ -8,7 +8,7 @@
 #define LED PIN_PA15
 #define DEBUG_PIN PIN_PA14
 
-static uint32_t start_timestamps[10];
+static volatile uint32_t start_timestamps[10];
 
 static void wait_resync() {
     TIMER.CTRLBSET.bit.CMD = 0x4; // READSYNC

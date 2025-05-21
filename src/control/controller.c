@@ -12,13 +12,15 @@
 #include "../periphs/spi.h"
 
 #define DEBUG_PIN PIN_PA14
+#define TWOPI (6.283185307179586f)
+#define PI (3.14159f)
 
-static ControllerConfig* config = NULL;
-static State x_k;
-static float theta1_prev;
-static float theta2_prev;
-static float tension1_prev;
-static float tension2_prev;
+static volatile ControllerConfig* config = NULL;
+static volatile State x_k;
+static volatile float theta1_prev;
+static volatile float theta2_prev;
+static volatile float tension1_prev;
+static volatile float tension2_prev;
 
 void controller_print_tension_info() {
     uart_print("Tension Arm A: ");
@@ -38,10 +40,9 @@ void controller_print_encoder_info() {
 }
 
 static float get_delta_angle(float prev, float new) {
-    static const float twopi = 2.0f * 3.14159f;
     float a = new - prev;
-    float b = (new + twopi) - prev;
-    float c = new - (prev + twopi);
+    float b = (new + TWOPI) - prev;
+    float c = new - (prev + TWOPI);
 
     float abs_a = fabs(a);
     float abs_b = fabs(b);

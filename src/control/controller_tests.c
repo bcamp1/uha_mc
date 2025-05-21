@@ -1,15 +1,16 @@
 
 #include "controller.h"
 #include "../drivers/uha_motor_driver.h"
+#include "../drivers/delay.h"
 #include "../periphs/uart.h"
 #include <stdbool.h>
 #define PI (3.14159f)
 
-static float controller_demo(State x, float* torque1, float* torque2) {
+static void controller_demo(State x, float* torque1, float* torque2) {
 	float theta1 = x.theta1;
 	float theta2 = x.theta2;
-	float k1 = 0.5f;
-	float k2 = -0.5f;
+	float k1 = 0.1f;
+	float k2 = -0.1f;
 	float delta1 = theta1 - PI;
 	float delta2 = theta2 - PI;
 	*torque1 = k1*delta2;
@@ -17,12 +18,12 @@ static float controller_demo(State x, float* torque1, float* torque2) {
 }
 
 
-static float controller_constant_torques(State x, float* torque1, float* torque2) {
-	*torque1 = 1.0f;
-	*torque2 = 2.0f;
+static void controller_constant_torques(State x, float* torque1, float* torque2) {
+	*torque1 = 0.4f;
+	*torque2 = -0.4f;
 }
 
-static float controller_tensions(State x, float* torque1, float* torque2) {
+static void controller_tensions(State x, float* torque1, float* torque2) {
 	// References
 	float t_target = 0.5f;
 	float tape_speed_target = 3.0f;
@@ -68,6 +69,7 @@ void controller_tests_run(ControllerConfig *config, bool send_logs, bool uart_to
 	}
 	controller_set_config(config); 
 	while (1) {
+        //delay(0xF);
 		controller_run_iteration();
         
 		if (send_logs) {

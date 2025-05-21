@@ -3,14 +3,15 @@
 #include "../drivers/uha_motor_driver.h"
 #include "../drivers/delay.h"
 #include "../periphs/uart.h"
+#include "../drivers/stopwatch.h"
 #include <stdbool.h>
 #define PI (3.14159f)
 
 static void controller_demo(State x, float* torque1, float* torque2) {
 	float theta1 = x.theta1;
 	float theta2 = x.theta2;
-	float k1 = 0.1f;
-	float k2 = -0.1f;
+	float k1 = 0.3f;
+	float k2 = -0.5f;
 	float delta1 = theta1 - PI;
 	float delta2 = theta2 - PI;
 	*torque1 = k1*delta2;
@@ -61,19 +62,20 @@ ControllerConfig controller_config_constant = {
 
 void controller_tests_run(ControllerConfig *config, bool send_logs, bool uart_toggle, bool start_on) { 
 	bool motors_enabled = true;
-
 	controller_init_all_hardware();
+
+    // Start timer controller process (iteration every 2ms)
+    controller_start_process();
+
 	if (!start_on) {
 		motors_enabled = false;
 		controller_disable_motors();
 	}
 	controller_set_config(config); 
 	while (1) {
-        //delay(0xF);
-		controller_run_iteration();
-        
+        uart_put('.');
 		if (send_logs) {
-		    controller_send_state_uart();
+	        // controller_send_state_uart();
         }
 		
 		if (uart_toggle) {

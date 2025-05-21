@@ -78,16 +78,23 @@ void timer_schedule(uint16_t timer_id, float sample_rate, func_ptr_t callback) {
 	while (TIMER->SYNCBUSY.bit.ENABLE);
 }
 
+void timer_deschedule(uint16_t timer_id) {
+	TcCount16* TIMER = &timers[timer_id]->COUNT16;
+
+    // Disable timer
+    TIMER->CTRLA.bit.ENABLE = 0;
+	while (TIMER->SYNCBUSY.bit.ENABLE) {}
+    
+    // Remove callback
+    callbacks[timer_id] = NULL;
+}
+
 static uint16_t calculate_count(float sample_rate) {
 	if (sample_rate < 1) sample_rate = 1;
 	float sample_period = 1.0f / sample_rate;
 	float clock_freq = CLK_FREQ / CLK_DIV;
 	float clock_period = 1.0f / clock_freq;
 	float k_samples = sample_period / clock_period;
-	uart_println_float(sample_rate);
-	uart_println_float(sample_period);
-	uart_println_float(clock_period);
-	uart_println_float(k_samples);
 	uint32_t k = (int) k_samples;
 	if (k > 0xFFFF) {
 		return 0xFFFF;

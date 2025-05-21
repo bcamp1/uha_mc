@@ -9,6 +9,7 @@
 #include "periphs/gpio.h"
 #include "periphs/clocks.h"
 #include "periphs/uart.h"
+#include "periphs/timer.h"
 #include "control/controller_tests.h"
 #include "drivers/roller.h"
 #include "drivers/stopwatch.h"
@@ -37,9 +38,6 @@ static void init_peripherals(void) {
     
     // Stop Watch
     stopwatch_init();
-
-    // Roller (Inc Encoder)
-	roller_init();
 }
 
 static void enable_fpu(void) {
@@ -88,9 +86,14 @@ static void controller_test() {
 	controller_tests_run(&controller_config_demo, send_logs, uart_toggle, start_on);
 }
 
+static void timer_test() {
+    gpio_toggle_pin(DEBUG_PIN);
+}
+
 int main(void) {
 	init_peripherals();
 	print_welcome();
+    timer_schedule(1, 500.0f, timer_test);
     controller_test();
 
 	while (1) {
@@ -101,3 +104,4 @@ int main(void) {
         uart_println_float_arr(data, 2);
 	}
 }
+

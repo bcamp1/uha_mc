@@ -14,6 +14,7 @@
 typedef void (*func_ptr_t)();
 
 void timer_schedule(uint16_t timer_id, float sample_rate, func_ptr_t callback);
+void timer_deschedule(uint16_t timer_id);
 void timer_init_all();
 
 #endif /* TIMER_H_ */

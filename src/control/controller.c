@@ -6,10 +6,12 @@
 #include "../drivers/uha_motor_driver.h"
 #include "../drivers/motor_encoder.h"
 #include "../drivers/tension_arm.h"
-#include "../drivers/inc_encoder.h"
+#include "../drivers/stopwatch.h"
+#include "../drivers/roller.h"
 #include "../periphs/gpio.h"
 #include "../periphs/uart.h"
 #include "../periphs/spi.h"
+#include "../periphs/timer.h"
 
 #define DEBUG_PIN PIN_PA14
 #define TWOPI (6.283185307179586f)
@@ -62,7 +64,7 @@ State controller_get_state() {
 }
 
 void controller_send_state_uart() {
-    float data[9] = {
+    float data[10] = {
         x_k.theta1, 
         x_k.theta2, 
         x_k.theta1_dot, 
@@ -71,6 +73,7 @@ void controller_send_state_uart() {
         x_k.tension2,
         x_k.tension1_dot,
         x_k.tension2_dot,
+        x_k.tape_position,
         x_k.tape_speed};
     uart_send_float_arr(data, 9);
 }
@@ -81,6 +84,7 @@ void controller_init_all_hardware() {
 	motor_unit_init(&MOTOR_UNIT_B);
     tension_arm_init(&TENSION_ARM_A);
     tension_arm_init(&TENSION_ARM_B);
+    roller_init(); 
     
     // Init state
     x_k.theta1 = 0;
@@ -88,6 +92,7 @@ void controller_init_all_hardware() {
     x_k.theta1_dot = 0;
     x_k.theta2_dot = 0;
     x_k.tape_speed = 0;
+    x_k.tape_position = 0;
     x_k.tension1 = 0;
     x_k.tension1_dot = 0;
     x_k.tension2 = 0;
@@ -99,6 +104,8 @@ void controller_set_config(ControllerConfig* c) {
 }
 
 void controller_run_iteration() {
+    gpio_set_pin(DEBUG_PIN);
+    //stopwatch_start(1);
     // Update previous values
     theta1_prev = x_k.theta1;
     theta2_prev = x_k.theta2;
@@ -122,7 +129,8 @@ void controller_run_iteration() {
     x_k.tension2_dot = (x_k.tension2 - tension2_prev) / T;
 
     // Get inc encoder values
-    x_k.tape_speed = inc_encoder_get_vel();
+    x_k.tape_position = roller_get_tape_position(CONTROLLER_IPS_TARGET);
+    x_k.tape_speed = roller_get_ips();
 
     // Get torques
     float torque1 = 0;
@@ -130,10 +138,11 @@ void controller_run_iteration() {
     config->controller(x_k, &torque1, &torque2);
 
     // Send torques to motor
-	gpio_set_pin(DEBUG_PIN);
     motor_unit_set_torque(&MOTOR_UNIT_A, torque1);
     motor_unit_set_torque(&MOTOR_UNIT_B, torque2);
-	gpio_clear_pin(DEBUG_PIN);
+
+    //stopwatch_print(1, false);
+    gpio_clear_pin(DEBUG_PIN);
 }
 
 void controller_disable_motors() {
@@ -145,3 +154,17 @@ void controller_enable_motors() {
     uha_motor_driver_enable(&UHA_MTR_DRVR_CONF_A);
     uha_motor_driver_enable(&UHA_MTR_DRVR_CONF_B);
 }
+
+void controller_start_process() {
+    timer_schedule(CONTROLLER_TIMER_ID, 500.0f, controller_run_iteration);
+}
+
+void controller_stop_process() {
+    timer_deschedule(CONTROLLER_TIMER_ID);
+    
+    // Stop motors
+    motor_unit_set_torque(&MOTOR_UNIT_A, 0.0f);
+    motor_unit_set_torque(&MOTOR_UNIT_B, 0.0f);
+}
+
+

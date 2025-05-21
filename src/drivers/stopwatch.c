@@ -1,6 +1,6 @@
 #include <sam.h>
 #include "stopwatch.h"
-//#include "../periphs/uart.h"
+#include "../periphs/uart.h"
 //#include "../periphs/gpio.h"
 
 #define TIMER TC4->COUNT32
@@ -87,6 +87,19 @@ uint32_t stopwatch_stop(int id, bool lap) {
 float ticks_to_time(uint32_t ticks) {
     const float time_per_count = 8.33e-9f;
     return time_per_count * (float) ticks;
+}
+
+void stopwatch_print(int id, bool lap) {
+    uint32_t ticks = stopwatch_stop(id, false);
+    float dt_ms = ticks_to_time(ticks) * 1000.0f;
+    uart_print("Stopwatch [");
+    uart_print_int(id);
+    uart_print("]: ");
+    uart_print_float(dt_ms);
+    uart_println(" ms");
+    if (lap) {
+        stopwatch_start(id);
+    }
 }
 
 void TC4_Handler(void) {

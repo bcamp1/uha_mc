@@ -137,7 +137,7 @@ const SPIConfig SPI_CONF_MTR_ENCODER_B = {
 
 void spi_init(const SPIConfig* inst) {
 	/* Enable clocks */
-	wntr_sercom_init_clock((Sercom*)inst->sercom, GCLK_PCHCTRL_GEN_GCLK4);
+	wntr_sercom_init_clock((Sercom*)inst->sercom, GCLK_PCHCTRL_GEN_GCLK1);
 
 	/* Reset and configure */
 	inst->sercom->CTRLA.bit.ENABLE = 0;

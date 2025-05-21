@@ -1,11 +1,15 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
+#define CONTROLLER_TIMER_ID (1)
+#define CONTROLLER_IPS_TARGET (15.0f)
+
 typedef struct {
     float theta1;
     float theta2;
     float theta1_dot;
     float theta2_dot;
+    float tape_position;
     float tape_speed;
     float tension1;
     float tension1_dot;
@@ -29,5 +33,8 @@ State controller_get_state();
 void controller_send_state_uart();
 void controller_print_tension_info();
 void controller_print_encoder_info();
+
+void controller_start_process();
+void controller_stop_process();
 
 #endif

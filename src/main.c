@@ -80,7 +80,7 @@ static void stopwatch_test() {
 }
 
 static void controller_test() {
-	bool send_logs = false;
+	bool send_logs = true;
 	bool uart_toggle = true;
 	bool start_on = false;
 	controller_tests_run(&controller_config_demo, send_logs, uart_toggle, start_on);

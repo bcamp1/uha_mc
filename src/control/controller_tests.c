@@ -64,18 +64,17 @@ void controller_tests_run(ControllerConfig *config, bool send_logs, bool uart_to
 	bool motors_enabled = true;
 	controller_init_all_hardware();
 
-    // Start timer controller process (iteration every 2ms)
-    controller_start_process();
 
 	if (!start_on) {
 		motors_enabled = false;
 		controller_disable_motors();
 	}
 	controller_set_config(config); 
+    // Start timer controller process (iteration every 2ms)
+    controller_start_process();
 	while (1) {
-        uart_put('.');
 		if (send_logs) {
-	        // controller_send_state_uart();
+	        controller_send_state_uart();
         }
 		
 		if (uart_toggle) {

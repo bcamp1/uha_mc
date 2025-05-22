@@ -4,6 +4,7 @@
 #include "../drivers/delay.h"
 #include "../periphs/uart.h"
 #include "../drivers/stopwatch.h"
+#include "state_recorder.h"
 #include <stdbool.h>
 #define PI (3.14159f)
 
@@ -61,20 +62,24 @@ ControllerConfig controller_config_constant = {
 };
 
 void controller_tests_run(ControllerConfig *config, bool send_logs, bool uart_toggle, bool start_on) { 
+    //uart_println("DEBUG");
 	bool motors_enabled = true;
 	controller_init_all_hardware();
-
 
 	if (!start_on) {
 		motors_enabled = false;
 		controller_disable_motors();
 	}
+
+    if (send_logs) {
+        state_recorder_schedule();
+    }
+
 	controller_set_config(config); 
-    // Start timer controller process (iteration every 2ms)
     controller_start_process();
 	while (1) {
-		if (send_logs) {
-	        controller_send_state_uart();
+        if (state_recorder_should_transmit()) {
+            state_recorder_transmit();
         }
 		
 		if (uart_toggle) {

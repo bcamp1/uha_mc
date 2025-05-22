@@ -63,6 +63,7 @@ for sublist in split_list:
     data.append(num_list)
 
 data = np.array(data)
+time = data[:, 0]
 
 # Save to csv
 print('Writing to ' + output_file + '...')
@@ -72,7 +73,7 @@ if output_image is not None:
     print('Saving figure to ' + output_image + '...')
     # Plot each column with a different color
     for i in plot_numbers:
-        plt.plot(data[:, i], label=labels[i])
+        plt.plot(time, data[:, i], label=labels[i])
 
     # Adding labels and title
     # plt.ylim(-500, 800);

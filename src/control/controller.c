@@ -14,8 +14,11 @@
 #include "../periphs/timer.h"
 
 #define DEBUG_PIN PIN_PA14
+#define LED PIN_PA15
 #define TWOPI (6.283185307179586f)
 #define PI (3.14159f)
+
+static const float sample_rate = 500.0f;
 
 static volatile ControllerConfig* config = NULL;
 static volatile State x_k;
@@ -23,6 +26,7 @@ static volatile float theta1_prev;
 static volatile float theta2_prev;
 static volatile float tension1_prev;
 static volatile float tension2_prev;
+static volatile uint32_t timesteps = 0;
 
 void controller_print_tension_info() {
     uart_print("Tension Arm A: ");
@@ -64,7 +68,8 @@ State controller_get_state() {
 }
 
 void controller_send_state_uart() {
-    float data[10] = {
+    float data[11] = {
+        x_k.time,
         x_k.theta1, 
         x_k.theta2, 
         x_k.theta1_dot, 
@@ -75,7 +80,7 @@ void controller_send_state_uart() {
         x_k.tension2_dot,
         x_k.tape_position,
         x_k.tape_speed};
-    uart_send_float_arr(data, 10);
+    uart_send_float_arr(data, 11);
 }
 
 void controller_init_all_hardware() {
@@ -87,6 +92,7 @@ void controller_init_all_hardware() {
     roller_init(); 
     
     // Init state
+    x_k.time = 0;
     x_k.theta1 = 0;
     x_k.theta2 = 0;
     x_k.theta1_dot = 0;
@@ -104,7 +110,7 @@ void controller_set_config(ControllerConfig* c) {
 }
 
 void controller_run_iteration() {
-    gpio_set_pin(DEBUG_PIN);
+    gpio_set_pin(LED);
     //stopwatch_start(1);
     // Update previous values
     theta1_prev = x_k.theta1;
@@ -142,7 +148,15 @@ void controller_run_iteration() {
     motor_unit_set_torque(&MOTOR_UNIT_B, torque2);
 
     //stopwatch_print(1, false);
-    gpio_clear_pin(DEBUG_PIN);
+    gpio_clear_pin(LED);
+
+    // Update time
+    x_k.time = controller_get_time();
+    timesteps++;
+}
+
+float controller_get_time() {
+    return (1.0f / sample_rate) * (float) timesteps;
 }
 
 void controller_disable_motors() {
@@ -156,7 +170,8 @@ void controller_enable_motors() {
 }
 
 void controller_start_process() {
-    timer_schedule(CONTROLLER_TIMER_ID, 500.0f, controller_run_iteration);
+    timesteps = 0;
+    timer_schedule(CONTROLLER_TIMER_ID, sample_rate, controller_run_iteration);
 }
 
 void controller_stop_process() {

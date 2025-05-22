@@ -75,7 +75,7 @@ void controller_send_state_uart() {
         x_k.tension2_dot,
         x_k.tape_position,
         x_k.tape_speed};
-    uart_send_float_arr(data, 9);
+    uart_send_float_arr(data, 10);
 }
 
 void controller_init_all_hardware() {

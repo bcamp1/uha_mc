@@ -2,33 +2,32 @@ import struct
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
+import yaml
+import os
 
 # Process arguments
 # Set up the argument parser
 parser = argparse.ArgumentParser(description="Process serial binary data and save it as a CSV file/figure")
-parser.add_argument('-i', type=str, default='log.bin', help='Input file name (binary)')
-parser.add_argument('-o', type=str, default='out.csv', help='Output file name (CSV)')
-parser.add_argument('-f', type=str, help='Optional figure file to save the plot (e.g., figure.png)', default=None)
-parser.add_argument('-n', type=int, default=5)
-parser.add_argument('-l', type=str)
-parser.add_argument('-p', type=str)
+parser.add_argument('-c', type=str, help='Path to config YAML file', default='$UHA/logs/decoder_config.yaml')
+parser.add_argument('-i', type=str, help='Path to binary input file')
 args = parser.parse_args()
+config_file = os.path.expandvars(args.c)
+config_stream = open(config_file, 'r');
+config = yaml.safe_load(config_stream)
 
 input_file = args.i
-output_file = args.o
-output_image = args.f
-n = args.n
+file_prefix = str.split(str.split(input_file, '/')[-1], '.')[0]
+output_file = config['output_dir'] + file_prefix + '.csv'
+plot_file = config['plots_dir'] + file_prefix + '.png'
+plot_numbers = config['plot_indices']
+plot_labels = config['labels']
 
-if args.l is not None:
-    labels = str.split(args.l, ',')
-else:
-    labels = ['Column ' + str(i+1) for i in range(n)]
+# Expand bash variables
+input_file = os.path.expandvars(input_file)
+output_file = os.path.expandvars(output_file)
+plot_file = os.path.expandvars(plot_file)
 
-if args.p is not None:
-    plot_indices = str.split(args.p, ',')
-    plot_numbers = [int(ind) for ind in plot_indices]
-else:
-    plot_numbers = range(n)
+n = len(plot_labels)
 
 print('Reading ' + input_file + '...')
 with open(input_file, 'rb') as f:
@@ -69,11 +68,11 @@ time = data[:, 0]
 print('Writing to ' + output_file + '...')
 np.savetxt(output_file, data, fmt='%.10e', delimiter=',')
 
-if output_image is not None:
-    print('Saving figure to ' + output_image + '...')
+if config['generate_plot']:
+    print('Saving figure to ' + plot_file + '...')
     # Plot each column with a different color
     for i in plot_numbers:
-        plt.plot(time, data[:, i], label=labels[i])
+        plt.plot(time, data[:, i], label=plot_labels[i])
 
     # Adding labels and title
     # plt.ylim(-500, 800);
@@ -83,5 +82,5 @@ if output_image is not None:
     plt.legend()
 
     # Show the plot
-    plt.savefig(output_image, dpi=300)
+    plt.savefig(plot_file, dpi=300)
 

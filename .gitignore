@@ -7,6 +7,5 @@ CMSIS/
 .vscode
 *.csv
 *.bin
-*.png
 .cache
 

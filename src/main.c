@@ -93,7 +93,7 @@ static void timer_test() {
 int main(void) {
 	init_peripherals();
 	print_welcome();
-    timer_schedule(1, 500.0f, timer_test);
+    //timer_schedule(1, 500.0f, timer_test);
     controller_test();
 
 	while (1) {

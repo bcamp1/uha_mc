@@ -1,7 +1,7 @@
 output_dir: $UHA/logs/csv/
 plots_dir: $UHA/logs/plots/
 generate_plot: true
-plot_indices: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+plot_indices: [5, 6, 10]
 labels:
   - Time
   - Theta 1

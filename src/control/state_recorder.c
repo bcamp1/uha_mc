@@ -4,7 +4,7 @@
 //#include "../periphs/uart.h"
 #include "controller.h"
 
-#define STATE_RECORDER_SAMPLE_RATE  (20.0f)
+#define STATE_RECORDER_SAMPLE_RATE  (50.0f)
 #define STATE_RECORDER_TIMER_ID     (2)
 
 #define DEBUG_PIN PIN_PA14

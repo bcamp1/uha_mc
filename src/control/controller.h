@@ -13,8 +13,8 @@ typedef struct {
     float tape_position;
     float tape_speed;
     float tension1;
-    float tension1_dot;
     float tension2;
+    float tension1_dot;
     float tension2_dot;
 } State;
 
@@ -22,8 +22,15 @@ typedef void (*ControllerFunc) (State, float*, float*);
 
 typedef struct {
     ControllerFunc controller;
-    float sample_period;
 } ControllerConfig;
+
+typedef struct {
+    float motor1_k[11];
+    float motor2_k[11];
+} LinearControlLaw;
+
+void controller_linear_control_law(LinearControlLaw* K, State* s, float* torque1, float* torque2);
+State controller_get_error(State* r, State* x);
 
 void controller_init_all_hardware();
 void controller_disable_motors();

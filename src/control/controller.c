@@ -128,11 +128,10 @@ void controller_run_iteration() {
     x_k.tension2 = tension_arm_get_position(&TENSION_ARM_B);
     
     // Use backwards euler to get absolute velocities
-    float T = config->sample_period;
-    x_k.theta1_dot = get_delta_angle(theta1_prev, x_k.theta1) / T;
-    x_k.theta2_dot = get_delta_angle(theta2_prev, x_k.theta2) / T;
-    x_k.tension1_dot = (x_k.tension1 - tension1_prev) / T;
-    x_k.tension2_dot = (x_k.tension2 - tension2_prev) / T;
+    x_k.theta1_dot = get_delta_angle(theta1_prev, x_k.theta1) * sample_rate;
+    x_k.theta2_dot = get_delta_angle(theta2_prev, x_k.theta2) * sample_rate;
+    x_k.tension1_dot = (x_k.tension1 - tension1_prev) * sample_rate;
+    x_k.tension2_dot = (x_k.tension2 - tension2_prev) * sample_rate;
 
     // Get inc encoder values
     x_k.tape_position = roller_get_tape_position(CONTROLLER_IPS_TARGET);
@@ -182,4 +181,32 @@ void controller_stop_process() {
     motor_unit_set_torque(&MOTOR_UNIT_B, 0.0f);
 }
 
+State controller_get_error(State* r, State* x) {
+    State s; // This is our error state: e = r - x
+    s.time = r->time - x->time;
+    s.theta1 = r->theta1 - x->theta1;
+    s.theta2 = r->theta2 - x->theta2;
+    s.theta1_dot = r->theta1_dot - x->theta1_dot;
+    s.theta2_dot = r->theta2_dot - x->theta2_dot;
+    s.tape_position = r->tape_position - x->tape_position;
+    s.tape_speed = r->tape_speed - x->tape_speed;
+    s.tension1 = r->tension1 - x->tension1;
+    s.tension2 = r->tension2 - x->tension2;
+    s.tension1_dot = r->tension1_dot - x->tension1_dot;
+    s.tension2_dot = r->tension2_dot - x->tension2_dot;
+    return s;
+}
+
+void controller_linear_control_law(LinearControlLaw* K, State* s, float* torque1, float* torque2) {
+    float* k1 = K->motor1_k; 
+    float* k2 = K->motor2_k; 
+
+    *torque1 = k1[0]*s->time + k1[1]*s->theta1 + k1[2]*s->theta2 + k1[3]*s->theta1_dot 
+    + k1[4]*s->theta2_dot + k1[5]*s->tape_position + k1[6]*s->tape_speed + k1[7]*s->tension1 
+    + k1[8]*s->tension2 + k1[9]*s->tension1_dot + k1[10]*s->tension2_dot; 
+
+    *torque2 = k2[0]*s->time + k2[1]*s->theta1 + k2[2]*s->theta2 + k2[3]*s->theta1_dot 
+    + k2[4]*s->theta2_dot + k2[5]*s->tape_position + k2[6]*s->tape_speed + k2[7]*s->tension1 
+    + k2[8]*s->tension2 + k2[9]*s->tension1_dot + k2[10]*s->tension2_dot; 
+}
 

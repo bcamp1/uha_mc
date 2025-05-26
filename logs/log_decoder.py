@@ -74,6 +74,7 @@ if config['generate_plot']:
     for i in plot_numbers:
         plt.plot(time, data[:, i], label=plot_labels[i])
 
+    plt.axhline(y=15, color='black', linewidth=0.5)
     # Adding labels and title
     # plt.ylim(-500, 800);
     plt.xlabel('Index')

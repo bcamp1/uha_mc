@@ -46,19 +46,71 @@ static void controller_tensions(State x, float* torque1, float* torque2) {
 	*torque2 = k2_t1*t1_error + k2_t2*t2_error; 
 }
 
-ControllerConfig controller_config_demo = {
-	.controller = controller_demo,
-	.sample_period = 0.01f,
+static LinearControlLaw K = {
+    .motor1_k = {
+        0.0f, // Time
+        0.0f, // Theta 1 
+        0.0f, // Theta 2 
+        0.0f, // Theta 1 dot 
+        0.0f, // Theta 2 dot 
+        0.0f, // Tape position 
+        -0.05f, // Tape speed 
+        -0.9f, // Tension 1 
+        0.0f, // Tension 2 
+        -0.4f, // Tension 1 dot 
+        0.0f, // Tension 2 dot 
+    },
+    .motor2_k = {
+        0.0f, // Time
+        0.0f, // Theta 1 
+        0.0f, // Theta 2 
+        0.0f, // Theta 1 dot 
+        0.0f, // Theta 2 dot 
+        0.0f, // Tape position 
+        0.0f, // Tape speed 
+        0.0f, // Tension 1 
+        0.9f, // Tension 2 
+        0.0f, // Tension 1 dot 
+        0.4f, // Tension 2 dot 
+    },
 };
 
-ControllerConfig controller_config_tensions = {
-	.controller = controller_tensions,
-	.sample_period = 0.01f,
+static State r = {
+    .time = 0.0f,
+    .theta1 = 0.0f,
+    .theta2 = 0.0f,
+    .theta1_dot = 0.0f,
+    .theta2_dot = 0.0f,
+    .tape_position = 0.0f,
+    .tape_speed = 15.0f,
+    .tension1 = 0.5f,
+    .tension2 = 0.5f,
+    .tension1_dot = 0.0f,
+    .tension2_dot = 0.0f,
+};
+
+static void controller_linear(State x, float* torque1, float* torque2) {
+    State e = controller_get_error(&r, &x);
+
+    if (e.tension1_dot < 5.0f && e.tension1_dot > -5.0f) {
+        e.tension1_dot = 0.0f;
+    }
+    if (e.tension2_dot < 5.0f && e.tension2_dot > -5.0f) {
+        e.tension2_dot = 0.0f;
+    }
+    controller_linear_control_law(&K, &e, torque1, torque2);   
+}
+
+ControllerConfig controller_config_demo = {
+	.controller = controller_demo,
+};
+
+ControllerConfig controller_config_linear = {
+	.controller = controller_linear,
 };
 
 ControllerConfig controller_config_constant = {
 	.controller = controller_constant_torques,
-	.sample_period = 0.01f,
 };
 
 void controller_tests_run(ControllerConfig *config, bool send_logs, bool uart_toggle, bool start_on) { 

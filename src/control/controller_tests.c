@@ -88,7 +88,7 @@ static State r = {
     .theta2_dot = 0.0f,
     .tape_position = 0.0f,
     .tape_speed = 15.0f,
-    .tension1 = 0.5f,
+    .tension1 = 0.7f,
     .tension2 = 0.5f,
     .tension1_dot = 0.0f,
     .tension2_dot = 0.0f,
@@ -164,27 +164,19 @@ void controller_tests_run(ControllerConfig *config, bool send_logs, bool uart_to
             state_recorder_transmit();
             if (uart_toggle) {
                 if (got == 'e') {
-                    if (motors_enabled) {
-                        motors_enabled = false;
-                        controller_disable_motors();
-                        gpio_clear_pin(LED);
-                        if (!send_logs) {
-                            uart_println("Disabling Motors. Type 'e' to enable.");
-                        }
-                    } else {
-                        motors_enabled = true;
-                        controller_enable_motors();
-                        gpio_set_pin(LED);
-                        if (!send_logs) {
-                            uart_println("Enabling Motors. Type 'e' to disable.");
-                        }
+                    motors_enabled = true;
+                    controller_enable_motors();
+                    gpio_set_pin(LED);
+                    if (!send_logs) {
+                        uart_println("Enabling Motors. Type 'e' to disable.");
                     }
-                // For emergencies
-                } else if (got == 'd') {
+                } else if (got == 'p') {
                     motors_enabled = false;
                     controller_disable_motors();
                     gpio_clear_pin(LED);
-                    while (1) {}
+                    if (!send_logs) {
+                        uart_println("Disabling Motors. Type 'e' to enable.");
+                    }
                 }
             }
         }

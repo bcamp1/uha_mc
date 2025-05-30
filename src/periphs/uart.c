@@ -72,9 +72,6 @@ char uart_get() {
 		return (UART_SERCOM->USART.DATA.reg & 0xff);
 	}
 	return 0;
-	//char temp = read_character;
-	//read_character = 0;
-	//return temp;
 }
 
 void uart_print(char* str) {

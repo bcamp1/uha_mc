@@ -4,6 +4,7 @@ bin_file="$UHA/logs/bin/$date_str.bin"
 plot_file="$UHA/logs/plots/$date_str.png"
 python_file="$UHA/logs/log_decoder.py"
 echo "Recording to $bin_file... (Ctrl-C to stop)"
+stty -F /dev/ttyUSB0 -echo
 socat -u FILE:/dev/ttyUSB0,b115200,raw STDOUT > "$bin_file"
 echo "Parsing binary to CSV..."
 python "$python_file" -i "$bin_file"

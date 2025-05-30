@@ -1,0 +1,29 @@
+----------------DECENT--------------
+static LinearControlLaw K = {
+    .motor1_k = {
+        0.0f, // Time
+        0.0f, // Theta 1 
+        0.0f, // Theta 2 
+        0.0f, // Theta 1 dot 
+        0.0f, // Theta 2 dot 
+        0.0f, // Tape position 
+        -0.05f, // Tape speed 
+        -0.9f, // Tension 1 
+        0.0f, // Tension 2 
+        -0.4f, // Tension 1 dot 
+        0.0f, // Tension 2 dot 
+    },
+    .motor2_k = {
+        0.0f, // Time
+        0.0f, // Theta 1 
+        0.0f, // Theta 2 
+        0.0f, // Theta 1 dot 
+        0.0f, // Theta 2 dot 
+        0.0f, // Tape position 
+        -0.05f, // Tape speed 
+        0.0f, // Tension 1 
+        0.9f, // Tension 2 
+        0.0f, // Tension 1 dot 
+        0.4f, // Tension 2 dot 
+    },
+};

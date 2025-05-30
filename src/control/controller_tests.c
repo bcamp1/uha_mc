@@ -5,8 +5,13 @@
 #include "../periphs/uart.h"
 #include "../drivers/stopwatch.h"
 #include "state_recorder.h"
+#include "../periphs/gpio.h"
 #include <stdbool.h>
 #define PI (3.14159f)
+#define DEBUG_PIN PIN_PA14
+#define LED PIN_PA15
+
+static float tape_speed_integrator = 0.0f;
 
 static void controller_demo(State x, float* torque1, float* torque2) {
 	float theta1 = x.theta1;
@@ -54,10 +59,10 @@ static LinearControlLaw K = {
         0.0f, // Theta 1 dot 
         0.0f, // Theta 2 dot 
         0.0f, // Tape position 
-        -0.05f, // Tape speed 
-        -0.9f, // Tension 1 
+        -0.03f, // Tape speed 
+        -0.7f, // Tension 1 
         0.0f, // Tension 2 
-        -0.4f, // Tension 1 dot 
+        -0.0f, // Tension 1 dot 
         0.0f, // Tension 2 dot 
     },
     .motor2_k = {
@@ -67,11 +72,11 @@ static LinearControlLaw K = {
         0.0f, // Theta 1 dot 
         0.0f, // Theta 2 dot 
         0.0f, // Tape position 
-        0.0f, // Tape speed 
+        -0.03f, // Tape speed 
         0.0f, // Tension 1 
-        0.9f, // Tension 2 
+        0.7f, // Tension 2 
         0.0f, // Tension 1 dot 
-        0.4f, // Tension 2 dot 
+        0.0f, // Tension 2 dot 
     },
 };
 
@@ -101,12 +106,33 @@ static void controller_linear(State x, float* torque1, float* torque2) {
     controller_linear_control_law(&K, &e, torque1, torque2);   
 }
 
+static void controller_pid(State x, float* torque1, float* torque2) {
+    State e = controller_get_error(&r, &x);
+    tape_speed_integrator += e.tape_speed;
+
+    const float k_i = -0.0001f;
+
+    if (e.tension1_dot < 5.0f && e.tension1_dot > -5.0f) {
+        e.tension1_dot = 0.0f;
+    }
+    if (e.tension2_dot < 5.0f && e.tension2_dot > -5.0f) {
+        e.tension2_dot = 0.0f;
+    }
+    controller_linear_control_law(&K, &e, torque1, torque2);   
+    *torque1 += k_i*tape_speed_integrator;
+    *torque2 += k_i*tape_speed_integrator;
+}
+
 ControllerConfig controller_config_demo = {
 	.controller = controller_demo,
 };
 
 ControllerConfig controller_config_linear = {
 	.controller = controller_linear,
+};
+
+ControllerConfig controller_config_pid = {
+	.controller = controller_pid,
 };
 
 ControllerConfig controller_config_constant = {
@@ -130,26 +156,37 @@ void controller_tests_run(ControllerConfig *config, bool send_logs, bool uart_to
 	controller_set_config(config); 
     controller_start_process();
 	while (1) {
-        if (state_recorder_should_transmit()) {
-            state_recorder_transmit();
+        if (!motors_enabled) {
+            tape_speed_integrator = 0.0f;
         }
-		
-		if (uart_toggle) {
-			if (uart_get() == 'e') {
-				if (motors_enabled) {
-					motors_enabled = false;
-					controller_disable_motors();
-					if (!send_logs) {
-						uart_println("Disabling Motors. Type 'e' to enable.");
-					}
-				} else {
-					motors_enabled = true;
-					controller_enable_motors();
-					if (!send_logs) {
-						uart_println("Enabling Motors. Type 'e' to disable.");
-					}
-				}
-			}
-		}
+        if (state_recorder_should_transmit()) {
+            char got = uart_get();
+            state_recorder_transmit();
+            if (uart_toggle) {
+                if (got == 'e') {
+                    if (motors_enabled) {
+                        motors_enabled = false;
+                        controller_disable_motors();
+                        gpio_clear_pin(LED);
+                        if (!send_logs) {
+                            uart_println("Disabling Motors. Type 'e' to enable.");
+                        }
+                    } else {
+                        motors_enabled = true;
+                        controller_enable_motors();
+                        gpio_set_pin(LED);
+                        if (!send_logs) {
+                            uart_println("Enabling Motors. Type 'e' to disable.");
+                        }
+                    }
+                // For emergencies
+                } else if (got == 'd') {
+                    motors_enabled = false;
+                    controller_disable_motors();
+                    gpio_clear_pin(LED);
+                    while (1) {}
+                }
+            }
+        }
     }
 }

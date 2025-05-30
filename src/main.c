@@ -83,7 +83,7 @@ static void controller_test() {
 	bool send_logs = true;
 	bool uart_toggle = true;
 	bool start_on = false;
-	controller_tests_run(&controller_config_linear, send_logs, uart_toggle, start_on);
+	controller_tests_run(&controller_config_pid, send_logs, uart_toggle, start_on);
 }
 
 static void timer_test() {

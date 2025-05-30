@@ -110,7 +110,7 @@ void controller_set_config(ControllerConfig* c) {
 }
 
 void controller_run_iteration() {
-    gpio_set_pin(LED);
+    //gpio_set_pin(LED);
     //stopwatch_start(1);
     // Update previous values
     theta1_prev = x_k.theta1;
@@ -147,7 +147,7 @@ void controller_run_iteration() {
     motor_unit_set_torque(&MOTOR_UNIT_B, torque2);
 
     //stopwatch_print(1, false);
-    gpio_clear_pin(LED);
+    //gpio_clear_pin(LED);
 
     // Update time
     x_k.time = controller_get_time();

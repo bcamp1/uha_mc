@@ -80,10 +80,10 @@ static void stopwatch_test() {
 }
 
 static void controller_test() {
-	bool send_logs = true;
+	bool send_logs = false;
 	bool uart_toggle = true;
 	bool start_on = false;
-	controller_tests_run(&controller_config_pid, send_logs, uart_toggle, start_on);
+	controller_tests_run(&controller_tests_config, send_logs, uart_toggle, start_on);
 }
 
 static void timer_test() {
@@ -101,7 +101,7 @@ int main(void) {
 		float ips = roller_get_ips();
 		float tape_pos = roller_get_tape_position(15.0f);
         float data[2] = {ips, tape_pos};
-        uart_println_float_arr(data, 2);
+        //uart_println_float_arr(data, 2);
 	}
 }
 

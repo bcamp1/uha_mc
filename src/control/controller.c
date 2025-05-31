@@ -1,5 +1,6 @@
 #include "controller.h"
 #include <stdlib.h>
+#include <stdbool.h>
 #include <math.h>
 
 #include "../drivers/motor_unit.h"
@@ -12,6 +13,7 @@
 #include "../periphs/uart.h"
 #include "../periphs/spi.h"
 #include "../periphs/timer.h"
+#include "sensor_state.h"
 
 #define DEBUG_PIN PIN_PA14
 #define LED PIN_PA15
@@ -21,66 +23,64 @@
 static const float sample_rate = 500.0f;
 
 static volatile ControllerConfig* config = NULL;
-static volatile State x_k;
-static volatile float theta1_prev;
-static volatile float theta2_prev;
-static volatile float tension1_prev;
-static volatile float tension2_prev;
+
 static volatile uint32_t timesteps = 0;
+static volatile float time;
 
-void controller_print_tension_info() {
-    uart_print("Tension Arm A: ");
-    uart_print_float(tension_arm_get_position(&TENSION_ARM_A));
-    uart_print(", Tension Arm B: ");
-    uart_println_float(tension_arm_get_position(&TENSION_ARM_B));
-}
+static volatile SensorState x_k = {0.0f};
+static volatile SensorState x_kminus1 = {0.0f};
+static volatile SensorState x_kminus2 = {0.0f};
+static volatile SensorState integrator = {0.0f};
+static volatile SensorState e_x = {0.0f};
+static volatile SensorState e_v = {0.0f};
+static volatile SensorState e_a = {0.0f};
+static const SensorState zeros = {0,0,0,0,0,0};
 
-void controller_print_encoder_info() {
-	float encoder_pos_a = motor_encoder_get_pole_position(&MOTOR_ENCODER_A);
-	float encoder_pos_b = motor_encoder_get_pole_position(&MOTOR_ENCODER_B);
-	//float encoder_pos_b = motor_encoder_get_position(&MOTOR_ENCODER_B);
-	uart_print("ENC A: ");
-	uart_print_float(encoder_pos_a);
-	uart_print(", ENC B: ");
-	uart_println_float(encoder_pos_b);
-}
+static volatile bool motors_enabled = true;
 
-static float get_delta_angle(float prev, float new) {
-    float a = new - prev;
-    float b = (new + TWOPI) - prev;
-    float c = new - (prev + TWOPI);
+static SensorState measure_sensor_state() {
 
-    float abs_a = fabs(a);
-    float abs_b = fabs(b);
-    float abs_c = fabs(c);
+    // Get new absolute positions
+    spi_change_mode(&SPI_CONF_MTR_ENCODER_A);
+    float theta1 = motor_encoder_get_position(&MOTOR_ENCODER_A);
+    float theta2 = motor_encoder_get_position(&MOTOR_ENCODER_B);
+                                    
+    spi_change_mode(&SPI_CONF_TENSION_ARM_A);
+    float tension1 = tension_arm_get_position(&TENSION_ARM_A);
+    float tension2 = tension_arm_get_position(&TENSION_ARM_B);
 
-    if (abs_a <= abs_b && abs_a <= abs_c) {
-        return a;
-    } else if (abs_b <= abs_a && abs_b <= abs_c) {
-        return b;
-    } else {
-        return c;
-    }
-}
+    float tape_position = roller_get_tape_position(15.0f);
+    float tape_speed = roller_get_ips();
 
-State controller_get_state() {
-    return x_k;
+    return (SensorState) {
+       .state = {theta1, theta2, tape_position, tape_speed, tension1, tension2}, 
+    };
 }
 
 void controller_send_state_uart() {
-    float data[11] = {
-        x_k.time,
-        x_k.theta1, 
-        x_k.theta2, 
-        x_k.theta1_dot, 
-        x_k.theta2_dot, 
-        x_k.tension1,
-        x_k.tension2,
-        x_k.tension1_dot,
-        x_k.tension2_dot,
-        x_k.tape_position,
-        x_k.tape_speed};
-    uart_send_float_arr(data, 11);
+    float data[7] = {
+        time,
+        x_k.state[0],
+        x_k.state[1],
+        x_k.state[2],
+        x_k.state[3],
+        x_k.state[4],
+        x_k.state[5],
+    };
+    uart_send_float_arr(data, 7);
+}
+
+void controller_print_state() {
+    float data[7] = {
+        time,
+        x_k.state[0],
+        x_k.state[1],
+        x_k.state[2],
+        x_k.state[3],
+        x_k.state[4],
+        x_k.state[5],
+    };
+    uart_println_float_arr(x_k.state, 6);
 }
 
 void controller_init_all_hardware() {
@@ -90,19 +90,6 @@ void controller_init_all_hardware() {
     tension_arm_init(&TENSION_ARM_A);
     tension_arm_init(&TENSION_ARM_B);
     roller_init(); 
-    
-    // Init state
-    x_k.time = 0;
-    x_k.theta1 = 0;
-    x_k.theta2 = 0;
-    x_k.theta1_dot = 0;
-    x_k.theta2_dot = 0;
-    x_k.tape_speed = 0;
-    x_k.tape_position = 0;
-    x_k.tension1 = 0;
-    x_k.tension1_dot = 0;
-    x_k.tension2 = 0;
-    x_k.tension2_dot = 0;
 }
 
 void controller_set_config(ControllerConfig* c) {
@@ -110,48 +97,66 @@ void controller_set_config(ControllerConfig* c) {
 }
 
 void controller_run_iteration() {
-    //gpio_set_pin(LED);
-    //stopwatch_start(1);
-    // Update previous values
-    theta1_prev = x_k.theta1;
-    theta2_prev = x_k.theta2;
-    tension1_prev = x_k.tension1;
-    tension2_prev = x_k.tension2;
+    gpio_set_pin(DEBUG_PIN);
+    // Get sensor states
+    x_kminus2 = x_kminus1;
+    x_kminus1 = x_k;
+    x_k = measure_sensor_state(); 
 
-    // Get new absolute positions
-    spi_change_mode(&SPI_CONF_MTR_ENCODER_A);
-    x_k.theta1 = motor_encoder_get_position(&MOTOR_ENCODER_A);
-    x_k.theta2 = motor_encoder_get_position(&MOTOR_ENCODER_B);
-    //for(int i = 0; i < 0xFF; i++);
-    spi_change_mode(&SPI_CONF_TENSION_ARM_A);
-    x_k.tension1 = tension_arm_get_position(&TENSION_ARM_A);
-    x_k.tension2 = tension_arm_get_position(&TENSION_ARM_B);
+    // Calculate v_k and a_k using backwards approx
+    SensorState v_k = sensor_state_scale(sensor_state_sub(x_k, x_kminus1), sample_rate);
     
-    // Use backwards euler to get absolute velocities
-    x_k.theta1_dot = get_delta_angle(theta1_prev, x_k.theta1) * sample_rate;
-    x_k.theta2_dot = get_delta_angle(theta2_prev, x_k.theta2) * sample_rate;
-    x_k.tension1_dot = (x_k.tension1 - tension1_prev) * sample_rate;
-    x_k.tension2_dot = (x_k.tension2 - tension2_prev) * sample_rate;
+    // Acceleration
+    SensorState twox_kminus1 = sensor_state_scale(x_kminus1, 2);
+    SensorState a_k = sensor_state_scale(sensor_state_add(sensor_state_sub(x_k, twox_kminus1), x_kminus2), sample_rate*sample_rate);
+    
+    // Calculate errors
+    SensorState r = (SensorState) {
+       .state = {
+           0.0f, 
+           0.0f, 
+           0.0f, 
+           config->reference->tape_speed,
+           config->reference->tension1,
+           config->reference->tension2,
+       } 
+    };
 
-    // Get inc encoder values
-    x_k.tape_position = roller_get_tape_position(CONTROLLER_IPS_TARGET);
-    x_k.tape_speed = roller_get_ips();
+    SensorState r_dot = (SensorState) {
+       .state = {
+           config->reference->theta1_dot,
+           config->reference->theta2_dot,
+           0.0f,
+           0.0f,
+           0.0f,
+           0.0f,
+       } 
+    };
+
+    e_x = sensor_state_sub(r, x_k);
+    e_v = sensor_state_sub(r_dot, v_k);
+    e_a = sensor_state_scale(a_k, -1.0f);
+
+    // Update integrator
+    if (motors_enabled) {
+        integrator = sensor_state_add(integrator, sensor_state_scale(e_x, (1.0f/sample_rate)));
+    } else {
+        integrator = zeros; 
+    }
 
     // Get torques
     float torque1 = 0;
     float torque2 = 0;
-    config->controller(x_k, &torque1, &torque2);
+    config->controller(e_x, e_v, e_a, integrator, &torque1, &torque2);
 
     // Send torques to motor
     motor_unit_set_torque(&MOTOR_UNIT_A, torque1);
     motor_unit_set_torque(&MOTOR_UNIT_B, torque2);
 
-    //stopwatch_print(1, false);
-    //gpio_clear_pin(LED);
-
     // Update time
-    x_k.time = controller_get_time();
+    time = controller_get_time();
     timesteps++;
+    gpio_clear_pin(DEBUG_PIN);
 }
 
 float controller_get_time() {
@@ -161,11 +166,13 @@ float controller_get_time() {
 void controller_disable_motors() {
     uha_motor_driver_disable(&UHA_MTR_DRVR_CONF_A);
     uha_motor_driver_disable(&UHA_MTR_DRVR_CONF_B);
+    motors_enabled = false;
 }
 
 void controller_enable_motors() {
     uha_motor_driver_enable(&UHA_MTR_DRVR_CONF_A);
     uha_motor_driver_enable(&UHA_MTR_DRVR_CONF_B);
+    motors_enabled = true;
 }
 
 void controller_start_process() {
@@ -179,34 +186,5 @@ void controller_stop_process() {
     // Stop motors
     motor_unit_set_torque(&MOTOR_UNIT_A, 0.0f);
     motor_unit_set_torque(&MOTOR_UNIT_B, 0.0f);
-}
-
-State controller_get_error(State* r, State* x) {
-    State s; // This is our error state: e = r - x
-    s.time = r->time - x->time;
-    s.theta1 = r->theta1 - x->theta1;
-    s.theta2 = r->theta2 - x->theta2;
-    s.theta1_dot = r->theta1_dot - x->theta1_dot;
-    s.theta2_dot = r->theta2_dot - x->theta2_dot;
-    s.tape_position = r->tape_position - x->tape_position;
-    s.tape_speed = r->tape_speed - x->tape_speed;
-    s.tension1 = r->tension1 - x->tension1;
-    s.tension2 = r->tension2 - x->tension2;
-    s.tension1_dot = r->tension1_dot - x->tension1_dot;
-    s.tension2_dot = r->tension2_dot - x->tension2_dot;
-    return s;
-}
-
-void controller_linear_control_law(LinearControlLaw* K, State* s, float* torque1, float* torque2) {
-    float* k1 = K->motor1_k; 
-    float* k2 = K->motor2_k; 
-
-    *torque1 = k1[0]*s->time + k1[1]*s->theta1 + k1[2]*s->theta2 + k1[3]*s->theta1_dot 
-    + k1[4]*s->theta2_dot + k1[5]*s->tape_position + k1[6]*s->tape_speed + k1[7]*s->tension1 
-    + k1[8]*s->tension2 + k1[9]*s->tension1_dot + k1[10]*s->tension2_dot; 
-
-    *torque2 = k2[0]*s->time + k2[1]*s->theta1 + k2[2]*s->theta2 + k2[3]*s->theta1_dot 
-    + k2[4]*s->theta2_dot + k2[5]*s->tape_position + k2[6]*s->tape_speed + k2[7]*s->tension1 
-    + k2[8]*s->tension2 + k2[9]*s->tension1_dot + k2[10]*s->tension2_dot; 
 }
 

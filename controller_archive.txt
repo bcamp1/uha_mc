@@ -27,3 +27,5 @@ static LinearControlLaw K = {
         0.4f, // Tension 2 dot 
     },
 };
+
+const float k_i = -0.0001f;

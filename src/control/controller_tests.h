@@ -3,10 +3,7 @@
 #include "controller.h"
 #include <stdbool.h>
 
-extern ControllerConfig controller_config_demo;
-extern ControllerConfig controller_config_linear;
-extern ControllerConfig controller_config_pid;
-extern ControllerConfig controller_config_constant;
+extern ControllerConfig controller_tests_config;
 
 void controller_tests_run(ControllerConfig *config, bool send_logs, bool uart_toggle, bool start_on);
 

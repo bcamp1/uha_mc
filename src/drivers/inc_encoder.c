@@ -23,7 +23,7 @@
 #define INC_ENCODER_TIMER_RATE (5.0f)
 #define INC_ENCODER_PPR (1024)
 
-#define STOPWATCH_PRECISION (50)
+#define STOPWATCH_PRECISION (500)
 
 static volatile const float rad_tick_amount = 0.006135923151542565f;
 

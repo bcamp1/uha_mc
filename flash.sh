@@ -4,7 +4,7 @@ if [ "$1" = "-b" ]; then
 fi
 
 cd $UHA/build
-make flash
+make flash || exit $?
 cd $UHA
 
 if [ "$1" = "-u" ]; then

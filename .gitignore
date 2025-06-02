@@ -8,4 +8,5 @@ CMSIS/
 *.bin
 *.png
 .cache
+flash.log
 

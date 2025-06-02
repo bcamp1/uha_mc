@@ -20,10 +20,10 @@
 #define GCLK_TCC2_TCC3_INDEX (29)
 
 #define INC_ENCODER_TIMER_ID (0)
-#define INC_ENCODER_TIMER_RATE (10.0f)
+#define INC_ENCODER_TIMER_RATE (5.0f)
 #define INC_ENCODER_PPR (1024)
 
-#define STOPWATCH_PRECISION (200)
+#define STOPWATCH_PRECISION (50)
 
 static volatile const float rad_tick_amount = 0.006135923151542565f;
 
@@ -78,7 +78,7 @@ void inc_encoder_init() {
 	gpio_init_pin(INC_ENCODER_DIR_PIN, GPIO_DIR_IN, GPIO_ALTERNATE_NONE);
 	
 	// Init velocity timer
-	timer_schedule(INC_ENCODER_TIMER_ID, INC_ENCODER_TIMER_RATE, vel_timer_callback);
+	//timer_schedule(INC_ENCODER_TIMER_ID, INC_ENCODER_TIMER_RATE, vel_timer_callback);
 
     // Start the stopwatch
     stopwatch_start(0);

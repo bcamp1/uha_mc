@@ -34,7 +34,7 @@ static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, S
         0.0f, // Theta 1
         0.0f, // Theta 2
         0.0f, // Tape Position
-        -0.0f, // Tape Speed
+        -0.01f, // Tape Speed
         0.0f, // Tension Arm 1
         0.0f, // Tension Arm 2
     };
@@ -43,7 +43,7 @@ static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, S
         0.0f, // Theta 1
         0.0f, // Theta 2
         0.0f, // Tape Position
-        -0.0f, // Tape Speed
+        -0.00f, // Tape Speed
         0.0f, // Tension Arm 1
         0.0f, // Tension Arm 2
     };
@@ -57,8 +57,8 @@ static ControllerReference r = {
     .theta1_dot = 0.0f,
     .theta2_dot = 0.0f,
     .tape_speed = 15.0f,
-    .tension1 = 0.7f,
-    .tension2 = 0.7f,
+    .tension1 = 0.9f,
+    .tension2 = 0.3f,
 };
 
 ControllerConfig controller_tests_config = {

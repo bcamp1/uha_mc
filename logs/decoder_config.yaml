@@ -1,13 +1,16 @@
 output_dir: $UHA/logs/csv/
 plots_dir: $UHA/logs/plots/
-generate_plot: true
-plot_indices: [4, 5]
-labels:
-  - Time
-  - Theta 1
-  - Theta 2
-  - Tape Position
-  - Tape Speed
-  - Tension 1
-  - Tension 2
+auto_generate_plot: true
+data_info:
+  - {name: Time, ylabel: Seconds (s), plot: false}
+  - {name: Theta 1, ylabel: rads, plot: false}
+  - {name: Theta 2, ylabel: rads, plot: false}
+  - {name: Tape Position, ylabel: Seconds (s), plot: false}
+  - {name: Tape Speed, ylabel: Tape Speed (ips), plot: true}
+  - {name: Tension Arm 1 Height, ylabel: Arm Height (%), plot: true, scale: 100.0}
+  - {name: Tension Arm 2 Height, ylabel: Arm Height (%), plot: true, scale: 100.0}
+plot_settings:
+  show_xlims: false
+  x_min: 2.0
+  x_max: 3.0
 

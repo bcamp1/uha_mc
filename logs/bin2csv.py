@@ -1,13 +1,12 @@
 import struct
 import numpy as np
-import matplotlib.pyplot as plt
 import argparse
 import yaml
 import os
 
 # Process arguments
 # Set up the argument parser
-parser = argparse.ArgumentParser(description="Process serial binary data and save it as a CSV file/figure")
+parser = argparse.ArgumentParser(description="Process serial binary data and save it as a CSV file.")
 parser.add_argument('-c', type=str, help='Path to config YAML file', default='$UHA/logs/decoder_config.yaml')
 parser.add_argument('-i', type=str, help='Path to binary input file')
 args = parser.parse_args()
@@ -19,15 +18,18 @@ input_file = args.i
 file_prefix = str.split(str.split(input_file, '/')[-1], '.')[0]
 output_file = config['output_dir'] + file_prefix + '.csv'
 plot_file = config['plots_dir'] + file_prefix + '.png'
-plot_numbers = config['plot_indices']
-plot_labels = config['labels']
+data_info = config['data_info']
+
+labels = []
+for info in data_info:
+    labels.append(info['name'])
 
 # Expand bash variables
 input_file = os.path.expandvars(input_file)
 output_file = os.path.expandvars(output_file)
 plot_file = os.path.expandvars(plot_file)
 
-n = len(plot_labels)
+n = len(data_info)
 
 print('Reading ' + input_file + '...')
 with open(input_file, 'rb') as f:
@@ -66,22 +68,6 @@ time = data[:, 0]
 
 # Save to csv
 print('Writing to ' + output_file + '...')
-np.savetxt(output_file, data, fmt='%.10e', delimiter=',')
+np.savetxt(output_file, data, fmt='%.10e', delimiter=',', header=','.join(labels))
 
-if config['generate_plot']:
-    print('Saving figure to ' + plot_file + '...')
-    # Plot each column with a different color
-    for i in plot_numbers:
-        plt.plot(time, data[:, i], label=plot_labels[i])
-
-    plt.axhline(y=15, color='black', linewidth=0.5)
-    # Adding labels and title
-    # plt.ylim(-500, 800);
-    plt.xlabel('Index')
-    plt.ylabel('Value')
-    plt.title('UHA Log Data')
-    plt.legend()
-
-    # Show the plot
-    plt.savefig(plot_file, dpi=300)
 

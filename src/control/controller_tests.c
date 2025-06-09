@@ -16,8 +16,8 @@ static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, S
         0.0f, // Theta 1
         0.0f, // Theta 2
         0.0f, // Tape Position
-        -0.03f, // Tape Speed
-        -0.0f, // Tension Arm 1
+        -0.00f, // Tape Speed
+        -0.00f, // Tension Arm 1
         0.0f, // Tension Arm 2
     };
 
@@ -25,8 +25,8 @@ static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, S
         0.0f, // Theta 1
         0.0f, // Theta 2
         0.0f, // Tape Position
-        -0.01f, // Tape Speed
-        0.3f, // Tension Arm 1
+        -0.00f, // Tape Speed
+        0.0f, // Tension Arm 1
         0.0f, // Tension Arm 2
     };
 
@@ -34,7 +34,7 @@ static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, S
         0.0f, // Theta 1
         0.0f, // Theta 2
         0.0f, // Tape Position
-        -0.01f, // Tape Speed
+        -0.02f, // Tape Speed
         0.0f, // Tension Arm 1
         0.0f, // Tension Arm 2
     };
@@ -44,7 +44,7 @@ static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, S
         0.0f, // Theta 2
         0.0f, // Tape Position
         -0.00f, // Tape Speed
-        0.0f, // Tension Arm 1
+        0.01f, // Tension Arm 1
         0.0f, // Tension Arm 2
     };
 
@@ -52,7 +52,7 @@ static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, S
         0.0f, // Theta 1
         0.0f, // Theta 2
         0.0f, // Tape Position
-        -0.03f, // Tape Speed
+        -0.00f, // Tape Speed
         0.0f, // Tension Arm 1
         0.0f, // Tension Arm 2
     };
@@ -61,8 +61,80 @@ static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, S
         0.0f, // Theta 1
         0.0f, // Theta 2
         0.0f, // Tape Position
-        -0.03f, // Tape Speed
-        0.05f, // Tension Arm 1
+        -0.00f, // Tape Speed
+        0.00f, // Tension Arm 1
+        0.0f, // Tension Arm 2
+    };
+
+    *torque1 = sensor_state_dot(e_x, k1) 
+        + sensor_state_dot(e_i, k1_i)
+        + sensor_state_dot(e_v, k1_d);
+
+    *torque2 = sensor_state_dot(e_x, k2)
+        + sensor_state_dot(e_i, k2_i)
+        + sensor_state_dot(e_v, k2_d);
+}
+
+static ControllerReference r = {
+    .theta1_dot = 0.0f,
+    .theta2_dot = 0.0f,
+    .tape_speed = 7.6f,
+    .tension1 = 0.8f,
+    .tension2 = 0.0f,
+};
+
+static void rewind_controller_func(SensorState e_x, SensorState e_v, SensorState e_a, SensorState e_i, float* torque1, float* torque2) {
+    float k1[6] = {
+        0.0f, // Theta 1
+        0.0f, // Theta 2
+        0.0f, // Tape Position
+        -0.00f, // Tape Speed
+        -0.00f, // Tension Arm 1
+        0.0f, // Tension Arm 2
+    };
+
+    float k2[6] = {
+        0.0f, // Theta 1
+        0.0f, // Theta 2
+        0.0f, // Tape Position
+        -0.00f, // Tape Speed
+        0.0f, // Tension Arm 1
+        0.0f, // Tension Arm 2
+    };
+
+    float k1_i[6] = {
+        0.0f, // Theta 1
+        0.0f, // Theta 2
+        0.0f, // Tape Position
+        0.00f, // Tape Speed
+        -0.01f, // Tension Arm 1
+        0.0f, // Tension Arm 2
+    };
+
+    float k2_i[6] = {
+        0.0f, // Theta 1
+        0.0f, // Theta 2
+        0.0f, // Tape Position
+        -0.015f, // Tape Speed
+        0.00f, // Tension Arm 1
+        0.0f, // Tension Arm 2
+    };
+
+    float k1_d[6] = {
+        0.0f, // Theta 1
+        0.0f, // Theta 2
+        0.0f, // Tape Position
+        -0.00f, // Tape Speed
+        0.0f, // Tension Arm 1
+        0.0f, // Tension Arm 2
+    };
+
+    float k2_d[6] = {
+        0.0f, // Theta 1
+        0.0f, // Theta 2
+        0.0f, // Tape Position
+        -0.00f, // Tape Speed
+        0.00f, // Tension Arm 1
         0.0f, // Tension Arm 2
     };
 
@@ -76,10 +148,10 @@ static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, S
 }
 
 
-static ControllerReference r = {
+static ControllerReference r_rewind = {
     .theta1_dot = 0.0f,
     .theta2_dot = 0.0f,
-    .tape_speed = 15.0f,
+    .tape_speed = -30.0f,
     .tension1 = 0.8f,
     .tension2 = 0.0f,
 };
@@ -87,6 +159,11 @@ static ControllerReference r = {
 ControllerConfig controller_tests_config = {
 	.controller = controller_func,
     .reference = &r,
+};
+
+ControllerConfig controller_tests_config_rewind = {
+	.controller = rewind_controller_func,
+    .reference = &r_rewind,
 };
 
 void controller_tests_run(ControllerConfig *config, bool send_logs, bool uart_toggle, bool start_on) { 

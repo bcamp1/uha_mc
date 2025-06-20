@@ -50,10 +50,12 @@ def split_by_sublist(data, delimiter):
     return result
 
 split_list = split_by_sublist(binary_data, [127, 128, 0, 0])
+print(len(split_list))
 
 data = []
 for sublist in split_list:
-    if len(sublist) != 4*n:
+    if len(sublist) < 4*n:
+        print("Invalid length: " + str(len(sublist)) + " need " + str(4*n))
         continue
     num_list = []
     for i in range(0, 4*n, 4):

@@ -16,8 +16,8 @@ static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, S
         0.0f, // Theta 1
         0.0f, // Theta 2
         0.0f, // Tape Position
-        -0.00f, // Tape Speed
-        -0.00f, // Tension Arm 1
+        -0.0f, // Tape Speed
+        -0.0f, // Tension Arm 1
         0.0f, // Tension Arm 2
     };
 
@@ -25,7 +25,7 @@ static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, S
         0.0f, // Theta 1
         0.0f, // Theta 2
         0.0f, // Tape Position
-        -0.00f, // Tape Speed
+        -0.0f, // Tape Speed
         0.0f, // Tension Arm 1
         0.0f, // Tension Arm 2
     };
@@ -34,7 +34,7 @@ static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, S
         0.0f, // Theta 1
         0.0f, // Theta 2
         0.0f, // Tape Position
-        -0.02f, // Tape Speed
+        -0.00f, // Tape Speed
         0.0f, // Tension Arm 1
         0.0f, // Tension Arm 2
     };
@@ -43,17 +43,17 @@ static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, S
         0.0f, // Theta 1
         0.0f, // Theta 2
         0.0f, // Tape Position
-        -0.00f, // Tape Speed
-        0.01f, // Tension Arm 1
+        -0.0f, // Tape Speed
+        0.00f, // Tension Arm 1
         0.0f, // Tension Arm 2
     };
 
     float k1_d[6] = {
-        0.0f, // Theta 1
+        0.05f, // Theta 1
         0.0f, // Theta 2
         0.0f, // Tape Position
-        -0.00f, // Tape Speed
-        0.0f, // Tension Arm 1
+        0.0f, // Tape Speed
+        -0.00f, // Tension Arm 1
         0.0f, // Tension Arm 2
     };
 
@@ -63,24 +63,45 @@ static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, S
         0.0f, // Tape Position
         -0.00f, // Tape Speed
         0.00f, // Tension Arm 1
-        0.0f, // Tension Arm 2
+        0.00f, // Tension Arm 2
     };
 
-    *torque1 = sensor_state_dot(e_x, k1) 
-        + sensor_state_dot(e_i, k1_i)
-        + sensor_state_dot(e_v, k1_d);
+    float p_max = 40.0f;
 
-    *torque2 = sensor_state_dot(e_x, k2)
-        + sensor_state_dot(e_i, k2_i)
+    float bias1 = -0.0f;
+    float bias2 = 0.0f;
+
+    float torque1_p = sensor_state_dot(e_x, k1) 
+        + sensor_state_dot(e_v, k1_d);
+    if (torque1_p > p_max) {
+        torque1_p = p_max;
+    }
+    if (torque1_p < -p_max) {
+        torque1_p = -p_max;
+    }
+
+    float torque2_p = sensor_state_dot(e_x, k2) 
         + sensor_state_dot(e_v, k2_d);
+    if (torque2_p > p_max) {
+        torque2_p = p_max;
+    }
+    if (torque2_p < -p_max) {
+        torque2_p = -p_max;
+    }
+
+    *torque1 = bias1 + torque1_p
+        + sensor_state_dot(e_i, k1_i);
+
+    *torque2 = bias2 + torque2_p
+        + sensor_state_dot(e_i, k2_i);
 }
 
 static ControllerReference r = {
-    .theta1_dot = 0.0f,
+    .theta1_dot = -50.0f,
     .theta2_dot = 0.0f,
-    .tape_speed = 7.6f,
-    .tension1 = 0.8f,
-    .tension2 = 0.0f,
+    .tape_speed = 0.0f,
+    .tension1 = 0.5f,
+    .tension2 = 0.5f,
 };
 
 static void rewind_controller_func(SensorState e_x, SensorState e_v, SensorState e_a, SensorState e_i, float* torque1, float* torque2) {

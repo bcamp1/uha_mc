@@ -16,7 +16,7 @@
 #include "sensor_state.h"
 
 #define DEBUG_PIN PIN_PA14
-#define LED PIN_PA15
+#define LED_PIN PIN_PA15
 #define TWOPI (6.283185307179586f)
 #define PI (3.14159f)
 
@@ -64,10 +64,13 @@ void controller_send_state_uart() {
         x_k.state[1],
         x_k.state[2],
         x_k.state[3],
-        x_k.state[4],
-        x_k.state[5],
+        //x_k.state[4],
+        //x_k.state[5],
+        e_v.state[0],
+        e_v.state[1],
     };
-    uart_send_float_arr(data, 7);
+    //uart_send_float_arr(data, 7);
+    uart_println_float_arr(data, 7);
 }
 
 void controller_print_state() {
@@ -97,7 +100,7 @@ void controller_set_config(ControllerConfig* c) {
 }
 
 void controller_run_iteration() {
-    gpio_set_pin(DEBUG_PIN);
+    gpio_set_pin(LED_PIN);
     // Get sensor states
     x_kminus2 = x_kminus1;
     x_kminus1 = x_k;
@@ -156,7 +159,7 @@ void controller_run_iteration() {
     // Update time
     time = controller_get_time();
     timesteps++;
-    gpio_clear_pin(DEBUG_PIN);
+    gpio_clear_pin(LED_PIN);
 }
 
 float controller_get_time() {

@@ -48,6 +48,10 @@ show_xlims = plot_settings.get('show_xlims', False)
 x_min = plot_settings.get('x_min', 0)
 x_max = plot_settings.get('x_max', 0)
 
+show_ylims = plot_settings.get('show_ylims', False)
+y_min = plot_settings.get('y_min', 0)
+y_max = plot_settings.get('y_max', 0)
+
 # Load data
 data = np.loadtxt(input_file, delimiter=',')
 time = data[:, 0]
@@ -71,7 +75,7 @@ print('Saving figure to ' + plot_file + '...')
 # Plot each column with a different color
 for i in plot_numbers:
     info = data_info[i]
-    plt.plot(time, data[:, i], label=info['name'])
+    plt.plot(time, data[:, i], label=info['name'], linestyle='-', marker='o', linewidth=1, markersize=1.5)
 
 if 'Tape Speed' in plot_names:
     plt.axhline(y=15, color='black', linewidth=0.5)
@@ -79,10 +83,14 @@ if 'Tape Speed' in plot_names:
 if show_xlims:
     plt.xlim(x_min, x_max)
 
+if show_ylims:
+    plt.ylim(y_min, y_max)
+
 plt.xlabel('Time (s)')
 plt.ylabel(plot_ylabel)
 plt.title(plot_title)
 plt.legend()
+plt.grid(True)
 
 # Show the plot
 plt.savefig(plot_file, dpi=300)

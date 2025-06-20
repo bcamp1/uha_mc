@@ -58,7 +58,7 @@ void uart_init(void) {
 }
 
 void uart_put(char ch) {
-	delay(0x4F);
+	delay(0x1F);
 	//for (int i = 0; i < 0x8FF; i++);
 	UART_SERCOM->USART.DATA.reg = ch; // Send data
 	while (!UART_SERCOM->USART.INTFLAG.bit.DRE) {} // Wait for empty
@@ -89,7 +89,7 @@ void uart_println(char* str) {
 
 
 #define MAX_FLOAT_STR_LEN 32  // Define max length for the float string (e.g., 32 chars)
-#define FLOAT_PRECISION (5)
+#define FLOAT_PRECISION (4)
 
 void uart_print_float(float num) {
 	if (num < 0) {
@@ -181,20 +181,22 @@ void uart_send_float(float num) {
 void uart_send_float_arr(float* data, int len) {
     for (int i = 0; i < len; i++) {
         uart_send_float(data[i]);
+        delay(0x3FF); 
     }
     uart_send_float(INFINITY);
+    delay(0x3FF); 
 }
 
 void uart_print_float_arr(float* data, int len) {
-    uart_put('[');
+   // uart_put('[');
     for (int i = 0; i < len; i++) {
         uart_print_float(data[i]);
         if (i < len-1) {
             uart_put(',');
-            uart_put(' ');
+            //uart_put(' ');
         }
     }
-    uart_put(']');
+   // uart_put(']');
 }
 
 void uart_println_float_arr(float* data, int len) {

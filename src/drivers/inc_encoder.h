@@ -15,6 +15,7 @@
 #define INC_ENCODER_DIR_PIN PIN_PB11
 
 void inc_encoder_init();
+void inc_encoder_update();
 float inc_encoder_get_pos();
 float inc_encoder_get_vel();
 

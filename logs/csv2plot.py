@@ -75,7 +75,8 @@ print('Saving figure to ' + plot_file + '...')
 # Plot each column with a different color
 for i in plot_numbers:
     info = data_info[i]
-    plt.plot(time, data[:, i], label=info['name'], linestyle='-', marker='o', linewidth=1, markersize=1.5)
+    # plt.plot(time, data[:, i], label=info['name'], linestyle='-', marker='o', linewidth=1, markersize=1.5)
+    plt.plot(time, data[:, i], label=info['name'], linestyle='-', linewidth=1)
 
 if 'Tape Speed' in plot_names:
     plt.axhline(y=15, color='black', linewidth=0.5)

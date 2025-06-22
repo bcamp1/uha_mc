@@ -14,8 +14,26 @@ static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, S
         0.0f, // Theta 1
         0.0f, // Theta 2
         0.0f, // Tape Position
-        -0.00f, // Tape Speed
+        -0.05f, // Tape Speed
         -0.00f, // Tension Arm 1
+        0.0f, // Tension Arm 2
+    };
+
+    float k1_i[6] = {
+        0.0f, // Theta 1
+        0.0f, // Theta 2
+        0.0f, // Tape Position
+        -0.01f, // Tape Speed
+        0.0f, // Tension Arm 1
+        0.0f, // Tension Arm 2
+    };
+
+    float k1_d[6] = {
+        0.0f, // Theta 1
+        0.0f, // Theta 2
+        0.0f, // Tape Position
+        -0.003f, // Tape Speed
+        0.0f, // Tension Arm 1
         0.0f, // Tension Arm 2
     };
 
@@ -28,31 +46,13 @@ static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, S
         0.0f, // Tension Arm 2
     };
 
-    float k1_i[6] = {
-        0.0f, // Theta 1
-        0.0f, // Theta 2
-        0.0f, // Tape Position
-        -0.02f, // Tape Speed
-        0.0f, // Tension Arm 1
-        0.0f, // Tension Arm 2
-    };
-
     float k2_i[6] = {
         0.0f, // Theta 1
         0.0f, // Theta 2
         0.0f, // Tape Position
         -0.00f, // Tape Speed
         0.0f, // Tension Arm 1
-        0.01f, // Tension Arm 2
-    };
-
-    float k1_d[6] = {
-        0.0f, // Theta 1
-        0.0f, // Theta 2
-        0.0f, // Tape Position
-        -0.00f, // Tape Speed
-        0.0f, // Tension Arm 1
-        0.0f, // Tension Arm 2
+        0.00f, // Tension Arm 2
     };
 
     float k2_d[6] = {
@@ -74,10 +74,10 @@ static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, S
 }
 
 static ControllerReference r = {
-    .theta1_dot = 0.0f,
+    .theta1_dot = -4.0f,
     .theta2_dot = 0.0f,
-    .tape_speed = 15.0f,
-    .tension1 = 0.6f,
+    .tape_speed = 10.0f,
+    .tension1 = 0.5f,
     .tension2 = 0.5f,
 };
 
@@ -91,15 +91,6 @@ static void rewind_controller_func(SensorState e_x, SensorState e_v, SensorState
         0.0f, // Tension Arm 2
     };
 
-    float k2[6] = {
-        0.0f, // Theta 1
-        0.0f, // Theta 2
-        0.0f, // Tape Position
-        -0.00f, // Tape Speed
-        0.0f, // Tension Arm 1
-        0.0f, // Tension Arm 2
-    };
-
     float k1_i[6] = {
         0.0f, // Theta 1
         0.0f, // Theta 2
@@ -109,21 +100,30 @@ static void rewind_controller_func(SensorState e_x, SensorState e_v, SensorState
         0.0f, // Tension Arm 2
     };
 
-    float k2_i[6] = {
-        0.0f, // Theta 1
-        0.0f, // Theta 2
-        0.0f, // Tape Position
-        -0.015f, // Tape Speed
-        0.00f, // Tension Arm 1
-        0.0f, // Tension Arm 2
-    };
-
     float k1_d[6] = {
         0.0f, // Theta 1
         0.0f, // Theta 2
         0.0f, // Tape Position
         -0.00f, // Tape Speed
         0.0f, // Tension Arm 1
+        0.0f, // Tension Arm 2
+    };
+
+    float k2[6] = {
+        0.0f, // Theta 1
+        0.0f, // Theta 2
+        0.0f, // Tape Position
+        -0.00f, // Tape Speed
+        0.0f, // Tension Arm 1
+        0.0f, // Tension Arm 2
+    };
+
+    float k2_i[6] = {
+        0.0f, // Theta 1
+        0.0f, // Theta 2
+        0.0f, // Tape Position
+        -0.0f, // Tape Speed
+        0.00f, // Tension Arm 1
         0.0f, // Tension Arm 2
     };
 

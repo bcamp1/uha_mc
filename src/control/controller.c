@@ -6,6 +6,7 @@
 #include "../drivers/motor_unit.h"
 #include "../drivers/uha_motor_driver.h"
 #include "../drivers/motor_encoder.h"
+#include "../drivers/inc_encoder.h"
 #include "../drivers/tension_arm.h"
 #include "../drivers/stopwatch.h"
 #include "../drivers/roller.h"
@@ -14,6 +15,7 @@
 #include "../periphs/uart.h"
 #include "../periphs/spi.h"
 #include "../periphs/timer.h"
+#include "simple_filter.h"
 #include "sensor_state.h"
 
 static const float sample_rate = 500.0f;
@@ -34,6 +36,9 @@ static const SensorState zeros = {0,0,0,0,0,0};
 
 static volatile bool motors_enabled = true;
 
+static SimpleFilter tape_speed_filter = {0.96f, 0.0f};
+static SimpleFilter tape_acc_filter = {0.95f, 0.0f};
+
 static SensorState measure_sensor_state() {
 
     // Get new absolute positions
@@ -45,8 +50,10 @@ static SensorState measure_sensor_state() {
     float tension1 = tension_arm_get_position(&TENSION_ARM_A);
     float tension2 = tension_arm_get_position(&TENSION_ARM_B);
 
+    inc_encoder_update();
     float tape_position = roller_get_tape_position(15.0f);
-    float tape_speed = roller_get_ips();
+    float tape_speed_raw = roller_get_ips();
+    float tape_speed = simple_filter_next(tape_speed_raw, &tape_speed_filter);
 
     return (SensorState) {
        .state = {theta1, theta2, tape_position, tape_speed, tension1, tension2}, 
@@ -58,7 +65,8 @@ void controller_send_state_uart() {
         time,
         x_k.state[0],
         x_k.state[1],
-        x_k.state[2],
+        //x_k.state[2],
+        e_v.state[3],
         x_k.state[3],
         //x_k.state[4],
         //x_k.state[5],
@@ -104,7 +112,12 @@ void controller_run_iteration() {
 
     // Calculate v_k and a_k using backwards approx
     SensorState v_k = sensor_state_scale(sensor_state_sub(x_k, x_kminus1), sample_rate);
-    
+
+    // Apply filter to tape acc
+    float tape_acc_raw = v_k.state[SENSOR_STATE_IND_TAPE_SPEED];
+    float tape_acc_smooth = simple_filter_next(tape_acc_raw, &tape_acc_filter);
+    v_k.state[SENSOR_STATE_IND_TAPE_SPEED] = tape_acc_smooth;
+
     // Acceleration
     SensorState twox_kminus1 = sensor_state_scale(x_kminus1, 2);
     SensorState a_k = sensor_state_scale(sensor_state_add(sensor_state_sub(x_k, twox_kminus1), x_kminus2), sample_rate*sample_rate);

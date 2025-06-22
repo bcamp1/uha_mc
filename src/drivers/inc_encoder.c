@@ -28,16 +28,25 @@
 static volatile const float rad_tick_amount = 0.006135923151542565f;
 
 static volatile int32_t pulses = 0;
+static volatile int32_t pulses_k = 0;
+static volatile int32_t pulses_kminus1 = 0;
+
 static volatile uint16_t stopwatch_ticks = 0;
 static volatile int32_t stopwatch_start_pos = 0;
 static volatile float vel = 0.0f;
+
+void inc_encoder_update() {
+    pulses_kminus1 = pulses_k;
+    pulses_k = pulses;
+}
 
 float inc_encoder_get_pos() {
 	return rad_tick_amount * (float) pulses;
 }
 
 float inc_encoder_get_vel() {
-    return vel;
+    float sample_rate = 500.0f;
+    return (float)(pulses_k - pulses_kminus1) * rad_tick_amount * sample_rate;
 }
 
 static void inc_encoder_pulse() {

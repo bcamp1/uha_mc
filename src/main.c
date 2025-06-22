@@ -14,9 +14,7 @@
 #include "drivers/roller.h"
 #include "drivers/stopwatch.h"
 #include "drivers/delay.h"
-
-#define LED PIN_PA15
-#define DEBUG_PIN PIN_PA14
+#include "drivers/board.h"
 
 static void enable_fpu(void);
 static void init_peripherals(void);
@@ -30,7 +28,7 @@ static void init_peripherals(void) {
 	enable_fpu();
 
 	// Init useful debugging GPIO pins
-	gpio_init_pin(LED, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
+	gpio_init_pin(LED_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
 	gpio_init_pin(DEBUG_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
 	
 	// Init the UART
@@ -84,10 +82,6 @@ static void controller_test() {
 	bool uart_toggle = true;
 	bool start_on = false;
 	controller_tests_run(&controller_tests_config, send_logs, uart_toggle, start_on);
-}
-
-static void timer_test() {
-    gpio_toggle_pin(DEBUG_PIN);
 }
 
 int main(void) {

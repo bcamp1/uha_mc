@@ -2,13 +2,11 @@
 #include "../periphs/timer.h"
 #include "../periphs/gpio.h"
 //#include "../periphs/uart.h"
+#include "../drivers/board.h"
 #include "controller.h"
 
 #define STATE_RECORDER_SAMPLE_RATE  (50.0f)
 #define STATE_RECORDER_TIMER_ID     (2)
-
-#define DEBUG_PIN PIN_PA14
-#define LED PIN_PA15
 
 static volatile bool flag = false;
 

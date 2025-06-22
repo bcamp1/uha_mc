@@ -1,12 +1,10 @@
 #include <sam.h>
 #include "stopwatch.h"
+#include "board.h"
 #include "../periphs/uart.h"
 //#include "../periphs/gpio.h"
 
 #define TIMER TC4->COUNT32
-
-#define LED PIN_PA15
-#define DEBUG_PIN PIN_PA14
 
 static volatile uint32_t start_timestamps[10];
 
@@ -106,8 +104,8 @@ void TC4_Handler(void) {
 	// Clear interrupt
 	//TIMER.INTFLAG.bit.MC0 = 1;
     
-    //gpio_toggle_pin(LED);
-    //gpio_toggle_pin(LED);
+    //gpio_toggle_pin(LED_PIN);
+    //gpio_toggle_pin(LED_PIN);
 }
 
 void TC5_Handler(void) {

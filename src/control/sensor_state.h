@@ -26,6 +26,7 @@ typedef struct {
 
 SensorState sensor_state_add(SensorState a, SensorState b);
 SensorState sensor_state_sub(SensorState a, SensorState b);
+SensorState sensor_state_sub_raw(SensorState a, SensorState b);
 SensorState sensor_state_scale(SensorState a, float c);
 float sensor_state_dot(SensorState a, float* k);
 

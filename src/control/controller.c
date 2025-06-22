@@ -9,16 +9,12 @@
 #include "../drivers/tension_arm.h"
 #include "../drivers/stopwatch.h"
 #include "../drivers/roller.h"
+#include "../drivers/board.h"
 #include "../periphs/gpio.h"
 #include "../periphs/uart.h"
 #include "../periphs/spi.h"
 #include "../periphs/timer.h"
 #include "sensor_state.h"
-
-#define DEBUG_PIN PIN_PA14
-#define LED_PIN PIN_PA15
-#define TWOPI (6.283185307179586f)
-#define PI (3.14159f)
 
 static const float sample_rate = 500.0f;
 
@@ -137,7 +133,7 @@ void controller_run_iteration() {
     };
 
     e_x = sensor_state_sub(r, x_k);
-    e_v = sensor_state_sub(r_dot, v_k);
+    e_v = sensor_state_sub_raw(r_dot, v_k);
     e_a = sensor_state_scale(a_k, -1.0f);
 
     // Update integrator

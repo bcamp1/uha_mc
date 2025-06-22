@@ -2,14 +2,12 @@
 #include "controller.h"
 #include "../drivers/uha_motor_driver.h"
 #include "../drivers/delay.h"
+#include "../drivers/board.h"
 #include "../periphs/uart.h"
 #include "../drivers/stopwatch.h"
 #include "state_recorder.h"
 #include "../periphs/gpio.h"
 #include <stdbool.h>
-#define PI (3.14159f)
-#define DEBUG_PIN PIN_PA14
-#define LED PIN_PA15
 
 static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, SensorState e_i, float* torque1, float* torque2) {
     float k1[6] = {
@@ -197,14 +195,14 @@ void controller_tests_run(ControllerConfig *config, bool send_logs, bool uart_to
             if (input_command == 'e') {
                 motors_enabled = true;
                 controller_enable_motors();
-                gpio_set_pin(LED);
+                gpio_set_pin(LED_PIN);
                 if (!send_logs) {
                     uart_println("Enabling Motors. Type 'e' to disable.");
                 }
             } else if (input_command == 'p') {
                 motors_enabled = false;
                 controller_disable_motors();
-                gpio_clear_pin(LED);
+                gpio_clear_pin(LED_PIN);
                 if (!send_logs) {
                     uart_println("Disabling Motors. Type 'e' to enable.");
                 }

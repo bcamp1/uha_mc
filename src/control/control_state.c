@@ -42,7 +42,7 @@ static volatile float prev_supply_tension = 0.0f;
 
 static volatile float prev_tape_speed = 0.0f;
 
-ControlState control_state_get_filtered_state(ControlStateFilter* filter, float sample_rate) {
+ControlState control_state_get_filtered_state(const ControlStateFilter* filter, float sample_rate) {
     // Get new reel positions via SPI
     spi_change_mode(&SPI_CONF_MTR_ENCODER_A);
     float takeup_reel_theta = motor_encoder_get_position(&MOTOR_ENCODER_A);
@@ -115,20 +115,22 @@ ControlState control_state_get_filtered_state(ControlStateFilter* filter, float 
     return state;
 }
 
-void control_state_transmit_uart(ControlState state) {
-    bool send_takeup_reel_speed         = false;
+void control_state_transmit_uart(float time, ControlState state) {
+    bool send_takeup_reel_speed         = true;
     bool send_takeup_reel_acceleration  = false;
-    bool send_takeup_tension            = false;
+    bool send_takeup_tension            = true;
     bool send_takeup_tension_speed      = false;
-    bool send_supply_reel_speed         = false;
+    bool send_supply_reel_speed         = true;
     bool send_supply_reel_acceleration  = false;
-    bool send_supply_tension            = false;
+    bool send_supply_tension            = true;
     bool send_supply_tension_speed      = false;
     bool send_tape_position             = false;
-    bool send_tape_speed                = false;
+    bool send_tape_speed                = true;
     bool send_tape_acceleration         = false;
     int data_count = 0;
     float data[20] = {0};
+    data[data_count] = time;
+    data_count++;
     if (send_takeup_reel_speed) {data[data_count] = state.takeup_reel_speed; data_count++;}
     if (send_takeup_reel_acceleration) {data[data_count] = state.takeup_reel_speed; data_count++;}
     if (send_takeup_tension) {data[data_count] = state.takeup_reel_speed; data_count++;}
@@ -140,6 +142,40 @@ void control_state_transmit_uart(ControlState state) {
     if (send_tape_position) {data[data_count] = state.tape_position; data_count++;}
     if (send_tape_speed) {data[data_count] = state.tape_speed; data_count++;}
     if (send_tape_acceleration) {data[data_count] = state.tape_acceleration; data_count++;}
-    uart_println_float_arr(data, 7);
+    uart_println_float_arr(data, data_count);
+}
+
+ControlState control_state_sub(ControlState* a, ControlState* b) {
+    return (ControlState) {
+        .takeup_reel_speed = a->takeup_reel_speed - b->takeup_reel_speed,
+        .takeup_reel_acceleration = a->takeup_reel_acceleration - b->takeup_reel_acceleration,
+
+        .takeup_tension = a->takeup_tension - b->takeup_tension,
+        .takeup_tension_speed = a->takeup_tension_speed - b->takeup_tension_speed,
+
+        .supply_reel_speed = a->supply_reel_speed - b->supply_reel_speed,
+        .supply_reel_acceleration = a->supply_reel_acceleration - b->supply_reel_acceleration,
+
+        .supply_tension = a->supply_tension - b->supply_tension,
+        .supply_tension_speed = a->supply_tension_speed - b->supply_tension_speed,
+
+        .tape_position = a->tape_position - b->tape_position,
+        .tape_speed = a->tape_speed - b->tape_speed,
+        .tape_acceleration = a->tape_acceleration - b->tape_acceleration,
+    };
+}
+
+float control_state_dot(ControlState* a, ControlState* b) {
+    return (a->takeup_reel_speed * b->takeup_reel_speed)
+        + (a->takeup_reel_acceleration * b->takeup_reel_acceleration)
+        + (a->takeup_tension * b->takeup_tension)
+        + (a->takeup_tension_speed * b->takeup_tension_speed)
+        + (a->supply_reel_speed * b->supply_reel_speed)
+        + (a->supply_reel_acceleration * b->supply_reel_acceleration)
+        + (a->supply_tension * b->supply_tension)
+        + (a->supply_tension_speed * b->supply_tension_speed)
+        + (a->tape_position * b->tape_position)
+        + (a->tape_speed * b->tape_speed)
+        + (a->tape_acceleration * b->tape_acceleration);
 }
 

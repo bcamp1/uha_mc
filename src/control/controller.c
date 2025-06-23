@@ -17,6 +17,7 @@
 #include "../periphs/timer.h"
 #include "simple_filter.h"
 #include "sensor_state.h"
+#include "control_state.h"
 
 static const float sample_rate = 500.0f;
 
@@ -25,70 +26,39 @@ static volatile ControllerConfig* config = NULL;
 static volatile uint32_t timesteps = 0;
 static volatile float time;
 
-static volatile SensorState x_k = {0.0f};
-static volatile SensorState x_kminus1 = {0.0f};
-static volatile SensorState x_kminus2 = {0.0f};
-static volatile SensorState integrator = {0.0f};
-static volatile SensorState e_x = {0.0f};
-static volatile SensorState e_v = {0.0f};
-static volatile SensorState e_a = {0.0f};
-static const SensorState zeros = {0,0,0,0,0,0};
-
 static volatile bool motors_enabled = true;
 
-static SimpleFilter tape_speed_filter = {0.96f, 0.0f};
-static SimpleFilter tape_acc_filter = {0.95f, 0.0f};
+static ControlState control_state;
 
-static SensorState measure_sensor_state() {
+// Filters
+static SimpleFilter takeup_reel_speed_filter        = {0.0f, 0.0f};
+static SimpleFilter takeup_reel_acceleration_filter = {0.0f, 0.0f};
+static SimpleFilter takeup_tension_speed_filter     = {0.0f, 0.0f};
+static SimpleFilter supply_tension_speed_filter     = {0.0f, 0.0f};
+static SimpleFilter supply_reel_speed_filter        = {0.0f, 0.0f};
+static SimpleFilter supply_reel_acceleration_filter = {0.0f, 0.0f};
+static SimpleFilter tape_speed_filter               = {0.999f, 0.0f};
+static SimpleFilter tape_acceleration_filter        = {0.9999f, 0.0f};
 
-    // Get new absolute positions
-    spi_change_mode(&SPI_CONF_MTR_ENCODER_A);
-    float theta1 = motor_encoder_get_position(&MOTOR_ENCODER_A);
-    float theta2 = motor_encoder_get_position(&MOTOR_ENCODER_B);
-                                    
-    spi_change_mode(&SPI_CONF_TENSION_ARM_A);
-    float tension1 = tension_arm_get_position(&TENSION_ARM_A);
-    float tension2 = tension_arm_get_position(&TENSION_ARM_B);
 
-    inc_encoder_update();
-    float tape_position = roller_get_tape_position(15.0f);
-    float tape_speed_raw = roller_get_ips();
-    float tape_speed = simple_filter_next(tape_speed_raw, &tape_speed_filter);
+static const ControlStateFilter control_state_filter = {
+    .takeup_reel_speed = &takeup_reel_speed_filter,
+    .takeup_reel_acceleration = &takeup_reel_acceleration_filter,
+    .takeup_tension_speed = &takeup_tension_speed_filter,
 
-    return (SensorState) {
-       .state = {theta1, theta2, tape_position, tape_speed, tension1, tension2}, 
-    };
-}
+    .supply_reel_speed = &supply_reel_speed_filter,
+    .supply_reel_acceleration = &supply_reel_acceleration_filter,
+    .supply_tension_speed = &supply_tension_speed_filter,
+
+    .tape_speed = &tape_speed_filter,
+    .tape_acceleration = &tape_acceleration_filter,
+};
+
 
 void controller_send_state_uart() {
-    float data[7] = {
-        time,
-        x_k.state[0],
-        x_k.state[1],
-        //x_k.state[2],
-        e_v.state[3],
-        x_k.state[3],
-        //x_k.state[4],
-        //x_k.state[5],
-        e_v.state[0],
-        e_v.state[1],
-    };
-    //uart_send_float_arr(data, 7);
-    uart_println_float_arr(data, 7);
+    control_state_transmit_uart(controller_get_time(), control_state);
 }
 
-void controller_print_state() {
-    float data[7] = {
-        time,
-        x_k.state[0],
-        x_k.state[1],
-        x_k.state[2],
-        x_k.state[3],
-        x_k.state[4],
-        x_k.state[5],
-    };
-    uart_println_float_arr(x_k.state, 6);
-}
 
 void controller_init_all_hardware() {
 	// Init hardware
@@ -105,61 +75,17 @@ void controller_set_config(ControllerConfig* c) {
 
 void controller_run_iteration() {
     gpio_set_pin(LED_PIN);
-    // Get sensor states
-    x_kminus2 = x_kminus1;
-    x_kminus1 = x_k;
-    x_k = measure_sensor_state(); 
 
-    // Calculate v_k and a_k using backwards approx
-    SensorState v_k = sensor_state_scale(sensor_state_sub(x_k, x_kminus1), sample_rate);
+    // Get new control state
+    control_state = control_state_get_filtered_state(&control_state_filter, sample_rate);
 
-    // Apply filter to tape acc
-    float tape_acc_raw = v_k.state[SENSOR_STATE_IND_TAPE_SPEED];
-    float tape_acc_smooth = simple_filter_next(tape_acc_raw, &tape_acc_filter);
-    v_k.state[SENSOR_STATE_IND_TAPE_SPEED] = tape_acc_smooth;
-
-    // Acceleration
-    SensorState twox_kminus1 = sensor_state_scale(x_kminus1, 2);
-    SensorState a_k = sensor_state_scale(sensor_state_add(sensor_state_sub(x_k, twox_kminus1), x_kminus2), sample_rate*sample_rate);
-    
-    // Calculate errors
-    SensorState r = (SensorState) {
-       .state = {
-           0.0f, 
-           0.0f, 
-           0.0f, 
-           config->reference->tape_speed,
-           config->reference->tension1,
-           config->reference->tension2,
-       } 
-    };
-
-    SensorState r_dot = (SensorState) {
-       .state = {
-           config->reference->theta1_dot,
-           config->reference->theta2_dot,
-           0.0f,
-           0.0f,
-           0.0f,
-           0.0f,
-       } 
-    };
-
-    e_x = sensor_state_sub(r, x_k);
-    e_v = sensor_state_sub_raw(r_dot, v_k);
-    e_a = sensor_state_scale(a_k, -1.0f);
-
-    // Update integrator
-    if (motors_enabled) {
-        integrator = sensor_state_add(integrator, sensor_state_scale(e_x, (1.0f/sample_rate)));
-    } else {
-        integrator = zeros; 
-    }
+    // Get error
+    ControlState error_state = control_state_sub(config->reference, &control_state);
 
     // Get torques
     float torque1 = 0;
     float torque2 = 0;
-    config->controller(e_x, e_v, e_a, integrator, &torque1, &torque2);
+    config->controller(error_state, &torque1, &torque2);
 
     // Send torques to motor
     motor_unit_set_torque(&MOTOR_UNIT_A, torque1);

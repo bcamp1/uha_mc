@@ -3,15 +3,11 @@ plots_dir: $UHA/logs/plots/
 auto_generate_plot: true
 data_info:
   - {name: Time, ylabel: Seconds (s), plot: false}
-  - {name: Theta 1, ylabel: rads, plot: false}
-  - {name: Theta 2, ylabel: rads, plot: false}
-  # - {name: Tape Position, ylabel: Seconds (s), plot: false}
-  - {name: Tape Speed Dot Error, ylabel: Tape Speed (ips), plot: true}
+  - {name: Takeup Reel Speed, ylabel: rads/s, plot: true}
+  - {name: Takeup Tension Arm, ylabel: Arm Height (%), plot: true, scale: 100.0}
+  - {name: Supply Reel Speed, ylabel: rads/s, plot: true}
+  - {name: Supply Tension Arm, ylabel: Arm Height (%), plot: true, scale: 100.0}
   - {name: Tape Speed, ylabel: Tape Speed (ips), plot: true}
-  - {name: Theta 1 Dot, ylabel: rads/s, plot: false}
-  - {name: Theta 2 Dot, ylabel: rads/s, plot: false}
-#  - {name: Tension Arm 1 Height, ylabel: Arm Height (%), plot: false, scale: 100.0}
-#  - {name: Tension Arm 2 Height, ylabel: Arm Height (%), plot: false, scale: 100.0}
 plot_settings:
   show_xlims: false
   x_min: 2.0

@@ -7,161 +7,61 @@
 #include "../drivers/stopwatch.h"
 #include "state_recorder.h"
 #include "../periphs/gpio.h"
+#include "control_state.h"
 #include <stdbool.h>
 
-static void controller_func(SensorState e_x, SensorState e_v, SensorState e_a, SensorState e_i, float* torque1, float* torque2) {
-    float k1[6] = {
-        0.0f, // Theta 1
-        0.0f, // Theta 2
-        0.0f, // Tape Position
-        -0.05f, // Tape Speed
-        -0.00f, // Tension Arm 1
-        0.0f, // Tension Arm 2
+static void controller_func(ControlState error, float* torque1, float* torque2) {
+    ControlState K1 = {
+        .takeup_reel_speed = 0.0f,
+        .takeup_reel_acceleration = 0.0f,
+        .takeup_tension = 0.0f,
+        .takeup_tension_speed = 0.0f,
+        .supply_reel_speed = 0.0f,
+        .supply_reel_acceleration = 0.0f,
+        .supply_tension = 0.0f,
+        .supply_tension_speed = 0.0f,
+        .tape_position = 0.0f,
+        .tape_speed = -0.00f,
+        .tape_acceleration = -0.10f,
     };
 
-    float k1_i[6] = {
-        0.0f, // Theta 1
-        0.0f, // Theta 2
-        0.0f, // Tape Position
-        -0.01f, // Tape Speed
-        0.0f, // Tension Arm 1
-        0.0f, // Tension Arm 2
+    ControlState K2 = {
+        .takeup_reel_speed = 0.0f,
+        .takeup_reel_acceleration = 0.0f,
+        .takeup_tension = 0.0f,
+        .takeup_tension_speed = 0.0f,
+        .supply_reel_speed = 0.0f,
+        .supply_reel_acceleration = 0.0f,
+        .supply_tension = 0.0f,
+        .supply_tension_speed = 0.0f,
+        .tape_position = 0.0f,
+        .tape_speed = 0.0f,
+        .tape_acceleration = 0.0f,
     };
-
-    float k1_d[6] = {
-        0.0f, // Theta 1
-        0.0f, // Theta 2
-        0.0f, // Tape Position
-        -0.003f, // Tape Speed
-        0.0f, // Tension Arm 1
-        0.0f, // Tension Arm 2
-    };
-
-    float k2[6] = {
-        0.0f, // Theta 1
-        0.0f, // Theta 2
-        0.0f, // Tape Position
-        -0.00f, // Tape Speed
-        0.0f, // Tension Arm 1
-        0.0f, // Tension Arm 2
-    };
-
-    float k2_i[6] = {
-        0.0f, // Theta 1
-        0.0f, // Theta 2
-        0.0f, // Tape Position
-        -0.00f, // Tape Speed
-        0.0f, // Tension Arm 1
-        0.00f, // Tension Arm 2
-    };
-
-    float k2_d[6] = {
-        0.0f, // Theta 1
-        0.0f, // Theta 2
-        0.0f, // Tape Position
-        -0.00f, // Tape Speed
-        0.00f, // Tension Arm 1
-        0.0f, // Tension Arm 2
-    };
-
-    *torque1 = sensor_state_dot(e_x, k1) 
-        + sensor_state_dot(e_i, k1_i)
-        + sensor_state_dot(e_v, k1_d);
-
-    *torque2 = sensor_state_dot(e_x, k2)
-        + sensor_state_dot(e_i, k2_i)
-        + sensor_state_dot(e_v, k2_d);
+    
+    *torque1 = control_state_dot(&K1, &error);
+    *torque2 = control_state_dot(&K2, &error);
 }
 
-static ControllerReference r = {
-    .theta1_dot = -4.0f,
-    .theta2_dot = 0.0f,
-    .tape_speed = 10.0f,
-    .tension1 = 0.5f,
-    .tension2 = 0.5f,
-};
+static ControlState r = {
+    .takeup_reel_speed = 0.0f,
+    .takeup_reel_acceleration = 0.0f,
+    .takeup_tension = 0.0f,
+    .takeup_tension_speed = 0.0f,
 
-static void rewind_controller_func(SensorState e_x, SensorState e_v, SensorState e_a, SensorState e_i, float* torque1, float* torque2) {
-    float k1[6] = {
-        0.0f, // Theta 1
-        0.0f, // Theta 2
-        0.0f, // Tape Position
-        -0.00f, // Tape Speed
-        -0.00f, // Tension Arm 1
-        0.0f, // Tension Arm 2
-    };
+    .supply_reel_speed = 0.0f,
+    .supply_reel_acceleration = 0.0f,
+    .supply_tension = 0.0f,
+    .supply_tension_speed = 0.0f,
 
-    float k1_i[6] = {
-        0.0f, // Theta 1
-        0.0f, // Theta 2
-        0.0f, // Tape Position
-        0.00f, // Tape Speed
-        -0.01f, // Tension Arm 1
-        0.0f, // Tension Arm 2
-    };
-
-    float k1_d[6] = {
-        0.0f, // Theta 1
-        0.0f, // Theta 2
-        0.0f, // Tape Position
-        -0.00f, // Tape Speed
-        0.0f, // Tension Arm 1
-        0.0f, // Tension Arm 2
-    };
-
-    float k2[6] = {
-        0.0f, // Theta 1
-        0.0f, // Theta 2
-        0.0f, // Tape Position
-        -0.00f, // Tape Speed
-        0.0f, // Tension Arm 1
-        0.0f, // Tension Arm 2
-    };
-
-    float k2_i[6] = {
-        0.0f, // Theta 1
-        0.0f, // Theta 2
-        0.0f, // Tape Position
-        -0.0f, // Tape Speed
-        0.00f, // Tension Arm 1
-        0.0f, // Tension Arm 2
-    };
-
-    float k2_d[6] = {
-        0.0f, // Theta 1
-        0.0f, // Theta 2
-        0.0f, // Tape Position
-        -0.00f, // Tape Speed
-        0.00f, // Tension Arm 1
-        0.0f, // Tension Arm 2
-    };
-
-    *torque1 = sensor_state_dot(e_x, k1) 
-        + sensor_state_dot(e_i, k1_i)
-        + sensor_state_dot(e_v, k1_d);
-
-    *torque2 = sensor_state_dot(e_x, k2)
-        + sensor_state_dot(e_i, k2_i)
-        + sensor_state_dot(e_v, k2_d);
-}
-
-
-static ControllerReference r_rewind = {
-    .theta1_dot = 0.0f,
-    .theta2_dot = 0.0f,
-    .tape_speed = -15.0f,
-    .tension1 = 0.8f,
-    .tension2 = 0.0f,
+    .tape_position = 0.0f,
+    .tape_speed = 0.0f,
+    .tape_acceleration = 0.0f,
 };
 
 ControllerConfig controller_tests_config = {
 	.controller = controller_func,
     .reference = &r,
-};
-
-ControllerConfig controller_tests_config_rewind = {
-	.controller = rewind_controller_func,
-    .reference = &r_rewind,
 };
 
 void controller_tests_run(ControllerConfig *config, bool send_logs, bool uart_toggle, bool start_on) { 

@@ -80,7 +80,8 @@ ControlState control_state_get_filtered_state(const ControlStateFilter* filter, 
 
     // Filter accelerations
     takeup_reel_acceleration = simple_filter_next(takeup_reel_acceleration, filter->takeup_reel_acceleration);
-    takeup_reel_acceleration = simple_filter_next(takeup_reel_acceleration, filter->takeup_reel_acceleration);
+    supply_reel_acceleration = simple_filter_next(supply_reel_acceleration, filter->supply_reel_acceleration);
+    tape_acceleration = simple_filter_next(tape_acceleration, filter->tape_acceleration);
 
     // Set previous variables
     prev_takeup_reel_theta = takeup_reel_theta;
@@ -126,18 +127,18 @@ void control_state_transmit_uart(float time, ControlState state) {
     bool send_supply_tension_speed      = false;
     bool send_tape_position             = false;
     bool send_tape_speed                = true;
-    bool send_tape_acceleration         = false;
+    bool send_tape_acceleration         = true;
     int data_count = 0;
     float data[20] = {0};
     data[data_count] = time;
     data_count++;
     if (send_takeup_reel_speed) {data[data_count] = state.takeup_reel_speed; data_count++;}
-    if (send_takeup_reel_acceleration) {data[data_count] = state.takeup_reel_speed; data_count++;}
-    if (send_takeup_tension) {data[data_count] = state.takeup_reel_speed; data_count++;}
-    if (send_takeup_tension_speed) {data[data_count] = state.takeup_reel_speed; data_count++;}
-    if (send_supply_reel_speed) {data[data_count] = state.takeup_reel_speed; data_count++;}
-    if (send_supply_reel_acceleration) {data[data_count] = state.takeup_reel_speed; data_count++;}
-    if (send_supply_tension) {data[data_count] = state.takeup_reel_speed; data_count++;}
+    if (send_takeup_reel_acceleration) {data[data_count] = state.takeup_reel_acceleration; data_count++;}
+    if (send_takeup_tension) {data[data_count] = state.takeup_tension; data_count++;}
+    if (send_takeup_tension_speed) {data[data_count] = state.takeup_tension_speed; data_count++;}
+    if (send_supply_reel_speed) {data[data_count] = state.supply_reel_speed; data_count++;}
+    if (send_supply_reel_acceleration) {data[data_count] = state.supply_reel_acceleration; data_count++;}
+    if (send_supply_tension) {data[data_count] = state.supply_tension; data_count++;}
     if (send_supply_tension_speed) {data[data_count] = state.supply_tension_speed; data_count++;}
     if (send_tape_position) {data[data_count] = state.tape_position; data_count++;}
     if (send_tape_speed) {data[data_count] = state.tape_speed; data_count++;}

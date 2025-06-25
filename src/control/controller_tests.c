@@ -11,9 +11,9 @@
 #include <stdbool.h>
 
 static void controller_func(ControlState error, float* torque1, float* torque2) {
-    ControlState K1 = {
-        .takeup_reel_speed = 0.0f,
-        .takeup_reel_acceleration = 0.0f,
+    ControlState K_takeup = {
+        .takeup_reel_speed = 0.6f, // 0.5
+        .takeup_reel_acceleration = 0.5f, // 0.1
         .takeup_tension = 0.0f,
         .takeup_tension_speed = 0.0f,
         .supply_reel_speed = 0.0f,
@@ -22,14 +22,14 @@ static void controller_func(ControlState error, float* torque1, float* torque2) 
         .supply_tension_speed = 0.0f,
         .tape_position = 0.0f,
         .tape_speed = -0.00f,
-        .tape_acceleration = -0.10f,
+        .tape_acceleration = -0.0f,
     };
 
-    ControlState K2 = {
+    ControlState K_supply = {
         .takeup_reel_speed = 0.0f,
         .takeup_reel_acceleration = 0.0f,
-        .takeup_tension = 0.0f,
-        .takeup_tension_speed = 0.0f,
+        .takeup_tension = 1.0f,
+        .takeup_tension_speed = 1.0f,
         .supply_reel_speed = 0.0f,
         .supply_reel_acceleration = 0.0f,
         .supply_tension = 0.0f,
@@ -39,23 +39,23 @@ static void controller_func(ControlState error, float* torque1, float* torque2) 
         .tape_acceleration = 0.0f,
     };
     
-    *torque1 = control_state_dot(&K1, &error);
-    *torque2 = control_state_dot(&K2, &error);
+    *torque1 = control_state_dot(&K_takeup, &error);
+    *torque2 = control_state_dot(&K_supply, &error);
 }
 
 static ControlState r = {
-    .takeup_reel_speed = 0.0f,
+    .takeup_reel_speed = -5.5f,
     .takeup_reel_acceleration = 0.0f,
-    .takeup_tension = 0.0f,
+    .takeup_tension = 0.5f,
     .takeup_tension_speed = 0.0f,
 
     .supply_reel_speed = 0.0f,
     .supply_reel_acceleration = 0.0f,
-    .supply_tension = 0.0f,
+    .supply_tension = 0.5f,
     .supply_tension_speed = 0.0f,
 
     .tape_position = 0.0f,
-    .tape_speed = 0.0f,
+    .tape_speed = 15.0f,
     .tape_acceleration = 0.0f,
 };
 
@@ -111,3 +111,57 @@ void controller_tests_run(ControllerConfig *config, bool send_logs, bool uart_to
         
     }
 }
+
+static void controller_func_rewind(ControlState error, float* torque1, float* torque2) {
+    ControlState K_takeup = {
+        .takeup_reel_speed = 0.0f, // 0.5
+        .takeup_reel_acceleration = 0.0f, // 0.1
+        .takeup_tension = -0.5f,
+        .takeup_tension_speed = -0.5f,
+        .supply_reel_speed = 0.0f,
+        .supply_reel_acceleration = 0.0f,
+        .supply_tension = 0.0f,
+        .supply_tension_speed = 0.0f,
+        .tape_position = 0.0f,
+        .tape_speed = -0.00f,
+        .tape_acceleration = -0.0f,
+    };
+
+    ControlState K_supply = {
+        .takeup_reel_speed = 0.0f,
+        .takeup_reel_acceleration = 0.0f,
+        .takeup_tension = 0.0f,
+        .takeup_tension_speed = 0.0f,
+        .supply_reel_speed = 0.1f,
+        .supply_reel_acceleration = 0.00f,
+        .supply_tension = 0.0f,
+        .supply_tension_speed = 0.0f,
+        .tape_position = 0.0f,
+        .tape_speed = 0.0f,
+        .tape_acceleration = 0.0f,
+    };
+    
+    *torque1 = control_state_dot(&K_takeup, &error);
+    *torque2 = control_state_dot(&K_supply, &error);
+}
+
+static ControlState r_rewind = {
+    .takeup_reel_speed = 0.0f,
+    .takeup_reel_acceleration = 0.0f,
+    .takeup_tension = 0.5f,
+    .takeup_tension_speed = 0.0f,
+
+    .supply_reel_speed = 20.0f,
+    .supply_reel_acceleration = 0.0f,
+    .supply_tension = 0.5f,
+    .supply_tension_speed = 0.0f,
+
+    .tape_position = 0.0f,
+    .tape_speed = -15.0f,
+    .tape_acceleration = 0.0f,
+};
+
+ControllerConfig controller_tests_config_rewind = {
+	.controller = controller_func_rewind,
+    .reference = &r_rewind,
+};

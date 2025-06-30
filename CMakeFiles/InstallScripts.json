@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/brans/dev/embed/uha_mc/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

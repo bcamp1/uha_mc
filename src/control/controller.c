@@ -19,7 +19,7 @@
 #include "sensor_state.h"
 #include "control_state.h"
 
-static const float sample_rate = 500.0f;
+static const float sample_rate = 1000.0f;
 
 static volatile ControllerConfig* config = NULL;
 

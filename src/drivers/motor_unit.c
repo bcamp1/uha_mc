@@ -33,38 +33,38 @@ void motor_unit_init(const MotorUnitConfig* config) {
 #define TORQUE_LIMIT (0.4f)
 
 void motor_unit_set_torque(const MotorUnitConfig* config, float torque) {
-	// Get encoder position and target position (90 degree lead)
-	
-	//float target_pos = encoder_pos + (0.5f * PI);
-	//if (torque < 0) {
-		//target_pos = encoder_pos - (0.5f * PI);
-	//}
-    
-	float encoder_pos = motor_encoder_get_pole_position(config->encoder);
+    // Get encoder position and target position (90 degree lead)
 
-    gpio_set_pin(DEBUG_PIN);
-	 // Scale down torque + saturate
-	 if (torque > 1.0f) torque = 1.0f;
-	 if (torque < -1.0f) torque = -1.0f;
-	 torque *= TORQUE_LIMIT;
-	 
-	 // Get PWM values
-	 float a = 0;
-	 float b = 0;
-	 float c = 0;
-	 float d = 0;
-	 float q = torque;
+    //float target_pos = encoder_pos + (0.5f * PI);
+    //if (torque < 0) {
+    //target_pos = encoder_pos - (0.5f * PI);
+    //}
 
-	 foc_get_duties(encoder_pos, d, q, &a, &b, &c);
-	 
-	 // Convert to integers
-	 uint8_t a_int = (int) (255.0f * a);
-	 uint8_t b_int = (int) (255.0f * b);
-	 uint8_t c_int = (int) (255.0f * c);
-	 
-	 // Write them to motor driver
-	 uha_motor_driver_set_pwm(config->driver, a_int, b_int, c_int);
-     gpio_clear_pin(DEBUG_PIN);
+    float encoder_pos = motor_encoder_get_pole_position(config->encoder);
+
+    // Scale down torque + saturate
+    if (torque > 1.0f) torque = 1.0f;
+    if (torque < -1.0f) torque = -1.0f;
+    torque *= TORQUE_LIMIT;
+
+    // Get PWM values
+    float a = 0;
+    float b = 0;
+    float c = 0;
+    float d = 0;
+    float q = torque;
+
+    //gpio_set_pin(DEBUG_PIN);
+    foc_get_duties(encoder_pos, d, q, &a, &b, &c);
+    //gpio_clear_pin(DEBUG_PIN);
+
+    // Convert to integers
+    uint8_t a_int = (int) (255.0f * a);
+    uint8_t b_int = (int) (255.0f * b);
+    uint8_t c_int = (int) (255.0f * c);
+
+    // Write them to motor driver
+    uha_motor_driver_set_pwm(config->driver, a_int, b_int, c_int);
 }
 
 void motor_unit_energize_coils(const MotorUnitConfig* config, float a, float b, float c) {

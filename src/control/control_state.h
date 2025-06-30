@@ -34,7 +34,7 @@ typedef struct {
     SimpleFilter* tape_acceleration;
 } ControlStateFilter;
 
-ControlState control_state_get_filtered_state(const ControlStateFilter* filter, float sample_rate);
+ControlState control_state_get_filtered_state(const ControlStateFilter* filter, float sample_rate, float takeup_reel_theta, float supply_reel_theta);
 void control_state_transmit_uart(float time, ControlState state);
 ControlState control_state_sub(ControlState* a, ControlState* b);
 float control_state_dot(ControlState* a, ControlState* b);

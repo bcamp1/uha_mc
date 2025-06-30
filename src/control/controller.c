@@ -75,9 +75,13 @@ void controller_set_config(ControllerConfig* c) {
 
 void controller_run_iteration() {
     gpio_set_pin(LED_PIN);
-
+    
+    // Get reel positions
+    float takeup_reel_theta = motor_encoder_get_position(&MOTOR_ENCODER_A);
+    float supply_reel_theta = motor_encoder_get_position(&MOTOR_ENCODER_B);
+    
     // Get new control state
-    control_state = control_state_get_filtered_state(&control_state_filter, sample_rate);
+    control_state = control_state_get_filtered_state(&control_state_filter, sample_rate, takeup_reel_theta, supply_reel_theta);
 
     // Get error
     ControlState error_state = control_state_sub(config->reference, &control_state);
@@ -88,8 +92,8 @@ void controller_run_iteration() {
     config->controller(error_state, &torque1, &torque2);
 
     // Send torques to motor
-    motor_unit_set_torque(&MOTOR_UNIT_A, torque1);
-    motor_unit_set_torque(&MOTOR_UNIT_B, torque2);
+    motor_unit_set_torque(&MOTOR_UNIT_A, torque1, takeup_reel_theta);
+    motor_unit_set_torque(&MOTOR_UNIT_B, torque2, supply_reel_theta);
 
     // Update time
     time = controller_get_time();
@@ -122,7 +126,7 @@ void controller_stop_process() {
     timer_deschedule(CONTROLLER_TIMER_ID);
     
     // Stop motors
-    motor_unit_set_torque(&MOTOR_UNIT_A, 0.0f);
-    motor_unit_set_torque(&MOTOR_UNIT_B, 0.0f);
+    //motor_unit_set_torque(&MOTOR_UNIT_A, 0.0f);
+    //motor_unit_set_torque(&MOTOR_UNIT_B, 0.0f);
 }
 

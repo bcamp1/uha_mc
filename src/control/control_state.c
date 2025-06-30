@@ -42,11 +42,11 @@ static volatile float prev_supply_tension = 0.0f;
 
 static volatile float prev_tape_speed = 0.0f;
 
-ControlState control_state_get_filtered_state(const ControlStateFilter* filter, float sample_rate) {
+ControlState control_state_get_filtered_state(const ControlStateFilter* filter, float sample_rate, float takeup_reel_theta, float supply_reel_theta) {
     // Get new reel positions via SPI
     spi_change_mode(&SPI_CONF_MTR_ENCODER_A);
-    float takeup_reel_theta = motor_encoder_get_position(&MOTOR_ENCODER_A);
-    float supply_reel_theta = motor_encoder_get_position(&MOTOR_ENCODER_B);
+    //float takeup_reel_theta = motor_encoder_get_position(&MOTOR_ENCODER_A);
+    //float supply_reel_theta = motor_encoder_get_position(&MOTOR_ENCODER_B);
 
     // Calculate reel speeds
     float takeup_reel_speed = sample_rate * sub_angles(takeup_reel_theta, prev_takeup_reel_theta); 

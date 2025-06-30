@@ -21,5 +21,6 @@ extern const MotorEncoderConfig MOTOR_ENCODER_B;
 float motor_encoder_get_position(const MotorEncoderConfig* config);
 float motor_encoder_get_pole_position(const MotorEncoderConfig* config);
 void motor_encoder_init(const MotorEncoderConfig* config);
+float motor_encoder_get_pole_pos_from_theta(const MotorEncoderConfig* config, float theta);
 
 #endif

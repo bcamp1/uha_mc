@@ -32,15 +32,16 @@ void motor_unit_init(const MotorUnitConfig* config) {
 
 #define TORQUE_LIMIT (0.4f)
 
-void motor_unit_set_torque(const MotorUnitConfig* config, float torque) {
+void motor_unit_set_torque(const MotorUnitConfig* config, float torque, float encoder_theta) {
     // Get encoder position and target position (90 degree lead)
+    float encoder_pos = motor_encoder_get_pole_pos_from_theta(config->encoder, encoder_theta);
 
     //float target_pos = encoder_pos + (0.5f * PI);
     //if (torque < 0) {
     //target_pos = encoder_pos - (0.5f * PI);
     //}
 
-    float encoder_pos = motor_encoder_get_pole_position(config->encoder);
+    //float encoder_pos = motor_encoder_get_pole_position(config->encoder);
 
     // Scale down torque + saturate
     if (torque > 1.0f) torque = 1.0f;

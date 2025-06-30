@@ -40,3 +40,12 @@ float motor_encoder_get_pole_position(const MotorEncoderConfig* config) {
 	while (theta > 2*PI) theta -= 2*PI;
 	return theta;
 }
+
+float motor_encoder_get_pole_pos_from_theta(const MotorEncoderConfig* config, float theta) {
+	theta -= config->offset;
+	theta *= (float) MOTOR_POLES;
+	while (theta < 0) theta += 2*PI;
+	while (theta > 2*PI) theta -= 2*PI;
+	return theta;
+}
+

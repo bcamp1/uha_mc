@@ -9,4 +9,5 @@ CMSIS/
 *.png
 .cache
 flash.log
+logs/csv/recent.csv
 

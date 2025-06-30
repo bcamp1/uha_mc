@@ -11,9 +11,10 @@
 #include "../periphs/gpio.h"
 #include "../periphs/timer.h"
 #include "component/tcc.h"
- #include "delay.h"
+#include "delay.h"
 #include "instance/evsys.h"
 #include "stopwatch.h"
+#include "../drivers/board.h"
 #include <sam.h>
 
 #define GCLK_TCC0_TCC1_INDEX (25)
@@ -50,6 +51,7 @@ float inc_encoder_get_vel() {
 }
 
 static void inc_encoder_pulse() {
+    gpio_set_pin(DEBUG_PIN);
     // Get Encoder Pos
 	bool dir = gpio_get_pin(INC_ENCODER_DIR_PIN);
 	if (dir) {
@@ -59,6 +61,7 @@ static void inc_encoder_pulse() {
 	}
 
     // Stopwatch stuff
+    /*
     stopwatch_ticks++;
     if (stopwatch_ticks >= STOPWATCH_PRECISION) {
         stopwatch_ticks = 0;
@@ -67,8 +70,8 @@ static void inc_encoder_pulse() {
         vel = ((float) delta * rad_tick_amount) / dt;
         stopwatch_start_pos = pulses;
     }
-
-
+    */
+    gpio_clear_pin(DEBUG_PIN);
 }
 
 static void vel_timer_callback() {

@@ -21,6 +21,9 @@ void eic_init() {
 
 	// Enable the peripheral channel
 	GCLK->PCHCTRL[EIC_GCLK_ID].bit.CHEN = 1;
+
+    // Set NVIC priorities (roller encoder)
+    NVIC_SetPriority(EIC_10_IRQn, 0);
 	
 	// Enable EIC interrupts
 	NVIC_EnableIRQ(EIC_0_IRQn);

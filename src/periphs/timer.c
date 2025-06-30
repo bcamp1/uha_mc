@@ -38,6 +38,12 @@ void timer_init_all() {
 	
 	GCLK->PCHCTRL[TC3_GCLK_ID].reg = GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0;
 	while (!(GCLK->PCHCTRL[TC3_GCLK_ID].reg & GCLK_PCHCTRL_CHEN));  // Wait for clock enable
+                                                                    
+    // Set NVIC Priorities                                                            
+    NVIC_SetPriority(TC0_IRQn, 1);
+    NVIC_SetPriority(TC1_IRQn, 1);
+    NVIC_SetPriority(TC2_IRQn, 1);
+    NVIC_SetPriority(TC3_IRQn, 1);
 	
 	// Enable NVIC interrupts
 	NVIC_EnableIRQ(TC0_IRQn);

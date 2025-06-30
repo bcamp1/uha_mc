@@ -9,6 +9,8 @@
 #include "../foc/foc_math_fpu.h"
 #include "../foc/foc.h"
 #include "../periphs/uart.h"
+#include "../periphs/gpio.h"
+#include "board.h"
 
 const MotorUnitConfig MOTOR_UNIT_A = {
 	.driver = &UHA_MTR_DRVR_CONF_A,
@@ -37,9 +39,10 @@ void motor_unit_set_torque(const MotorUnitConfig* config, float torque) {
 	//if (torque < 0) {
 		//target_pos = encoder_pos - (0.5f * PI);
 	//}
-	
+    
 	float encoder_pos = motor_encoder_get_pole_position(config->encoder);
-	
+
+    gpio_set_pin(DEBUG_PIN);
 	 // Scale down torque + saturate
 	 if (torque > 1.0f) torque = 1.0f;
 	 if (torque < -1.0f) torque = -1.0f;
@@ -61,6 +64,7 @@ void motor_unit_set_torque(const MotorUnitConfig* config, float torque) {
 	 
 	 // Write them to motor driver
 	 uha_motor_driver_set_pwm(config->driver, a_int, b_int, c_int);
+     gpio_clear_pin(DEBUG_PIN);
 }
 
 void motor_unit_energize_coils(const MotorUnitConfig* config, float a, float b, float c) {

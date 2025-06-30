@@ -1,7 +1,8 @@
 #include "roller.h"
 #include "inc_encoder.h"
 
-#define ROLLER_RADIUS_INCHES (0.79f)
+//#define ROLLER_RADIUS_INCHES (0.79f)
+#define ROLLER_RADIUS_INCHES (1.0f)
 #define PI (3.14159f)
 
 void roller_init() {

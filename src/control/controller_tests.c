@@ -1,4 +1,3 @@
-
 #include "controller.h"
 #include "../drivers/uha_motor_driver.h"
 #include "../drivers/delay.h"
@@ -12,8 +11,8 @@
 
 static void controller_func(ControlState error, float* torque1, float* torque2) {
     ControlState K_takeup = {
-        .takeup_reel_speed = 0.6f, // 0.5
-        .takeup_reel_acceleration = 0.5f, // 0.1
+        .takeup_reel_speed = 0.0f, // 0.5
+        .takeup_reel_acceleration = 0.0f, // 0.1
         .takeup_tension = 0.0f,
         .takeup_tension_speed = 0.0f,
         .supply_reel_speed = 0.0f,
@@ -21,19 +20,20 @@ static void controller_func(ControlState error, float* torque1, float* torque2) 
         .supply_tension = 0.0f,
         .supply_tension_speed = 0.0f,
         .tape_position = 0.0f,
-        .tape_speed = -0.00f,
-        .tape_acceleration = -0.0f,
+        .tape_speed = -0.05f,
+        .tape_acceleration = -0.01f,
     };
+
 
     ControlState K_supply = {
         .takeup_reel_speed = 0.0f,
         .takeup_reel_acceleration = 0.0f,
-        .takeup_tension = 1.0f,
-        .takeup_tension_speed = 1.0f,
+        .takeup_tension = 0.0f,
+        .takeup_tension_speed = 0.0f,
         .supply_reel_speed = 0.0f,
         .supply_reel_acceleration = 0.0f,
-        .supply_tension = 0.0f,
-        .supply_tension_speed = 0.0f,
+        .supply_tension = -0.0f,
+        .supply_tension_speed = -0.0f,
         .tape_position = 0.0f,
         .tape_speed = 0.0f,
         .tape_acceleration = 0.0f,
@@ -44,14 +44,14 @@ static void controller_func(ControlState error, float* torque1, float* torque2) 
 }
 
 static ControlState r = {
-    .takeup_reel_speed = -5.5f,
+    .takeup_reel_speed = -4.3f,
     .takeup_reel_acceleration = 0.0f,
     .takeup_tension = 0.5f,
     .takeup_tension_speed = 0.0f,
 
     .supply_reel_speed = 0.0f,
     .supply_reel_acceleration = 0.0f,
-    .supply_tension = 0.5f,
+    .supply_tension = 0.7f,
     .supply_tension_speed = 0.0f,
 
     .tape_position = 0.0f,

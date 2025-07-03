@@ -46,7 +46,7 @@ float inc_encoder_get_pos() {
 }
 
 float inc_encoder_get_vel() {
-    float sample_rate = 500.0f;
+    float sample_rate = 1000.0f;
     return (float)(pulses_k - pulses_kminus1) * rad_tick_amount * sample_rate;
 }
 

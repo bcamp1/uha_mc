@@ -60,7 +60,7 @@ void spi_collector_callback() {
     //uart_println_int_base(full & 0x3FFF, 16);
 
     // Done processing all 4? Post to clean
-    if (current_index == 0) {
+    if (current_index == 1) {
         __disable_irq();
         clean_bits[0] = dirty_bits[0];
         clean_bits[1] = dirty_bits[1];
@@ -84,7 +84,7 @@ void spi_collector_callback() {
         //uart_println("Queuing another callback");
         spi_async_start_transfer(configs[current_index], tx_data, rx_data, 2, spi_collector_callback);
     }
-    delay(0xF);
+    delay(0x1);
 }
 
 void spi_collector_start_service() {

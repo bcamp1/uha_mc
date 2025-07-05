@@ -40,7 +40,7 @@ void spi_async_init(const SPIConfig* inst) {
 
 	/* Set baud to max (GCLK / 2) 6 MHz */
 	//inst->sercom->BAUD.reg = SERCOM_SPI_BAUD_BAUD(2000);
-	inst->sercom->BAUD.reg = (uint8_t) 20; //SERCOM_SPI_BAUD_BAUD(1000);
+	inst->sercom->BAUD.reg = (uint8_t) 10; //SERCOM_SPI_BAUD_BAUD(1000);
 
     // Enable interrupt(s)
     //inst->sercom->INTENSET.bit.DRE = 1;
@@ -83,7 +83,7 @@ void spi_async_start_transfer(const SPIConfig* inst, const uint8_t *tx_buf, uint
     spi_busy = true;
 
     SERCOM4->SPI.INTENSET.bit.DRE = 1;
-    SERCOM4->SPI.INTENSET.bit.RXC = 1;
+    //SERCOM4->SPI.INTENSET.bit.RXC = 1;
 }
     
 void spi_async_change_mode(const SPIConfig* inst) {
@@ -126,11 +126,11 @@ static void spi_async_isr() {
         if (!spi_busy) return;
 
         // Send next byte
-        delay(0xF);
+        delay(0x8);
         if (tx_index < transfer_len) {
             SERCOM4->SPI.DATA.reg = tx_buf_ptr ? tx_buf_ptr[tx_index] : 0xFF;
+            tx_index++;
         }
-        tx_index++;
         SERCOM4->SPI.INTENSET.bit.RXC = 1;
         SERCOM4->SPI.INTENCLR.bit.DRE = 1;
     }

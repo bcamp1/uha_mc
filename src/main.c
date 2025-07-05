@@ -108,7 +108,7 @@ static void encoder_test() {
     while (1) {
         //while (spi_async_is_busy());    
         spi_collector_start_service();
-        delay(0xFFFF);
+        delay(0xFFF);
         //uart_print(".");
         //spi_async_start_transfer(&SPI_CONF_MTR_ENCODER_A, spi_write_bytes, spi_read_bytes, 2, spi_callback);
     }

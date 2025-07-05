@@ -41,7 +41,7 @@ void gpio_init_pin(uint8_t pin, bool direction, uint8_t alternate_function) {
 	}
 	
 	// Set drivestrength
-	//PORT->Group[port].PINCFG[pin].bit.DRVSTR = 0;
+	PORT->Group[port].PINCFG[pin].bit.DRVSTR = 1;
 	//PORT->Group[port].PINCFG[pin].bit.PULLEN = 1;
 	
 	// Set alternate function

@@ -7,14 +7,19 @@
 
 #include <sam.h>
 #include "periphs/gpio.h"
+#include "periphs/spi.h"
+#include "periphs/spi_async.h"
 #include "periphs/clocks.h"
 #include "periphs/uart.h"
 #include "periphs/timer.h"
 #include "control/controller_tests.h"
+#include "control/controller.h"
 #include "drivers/roller.h"
+#include "drivers/motor_encoder.h"
 #include "drivers/stopwatch.h"
 #include "drivers/delay.h"
 #include "drivers/board.h"
+#include "drivers/spi_collector.h"
 
 static void enable_fpu(void);
 static void init_peripherals(void);
@@ -84,17 +89,54 @@ static void controller_test() {
 	controller_tests_run(&controller_tests_config, send_logs, uart_toggle, start_on);
 }
 
+static uint8_t spi_read_bytes[2] = {0, 0};
+static uint8_t spi_write_bytes[2] = {0, 0};
+
+void spi_callback() {
+    uint16_t msb = spi_read_bytes[0];
+    uint16_t lsb = spi_read_bytes[1];
+    uint16_t together = ((msb << 8) | lsb) & 0x3FFF;
+    uart_println_int_base(together, 16); 
+}
+
+static void encoder_test() {
+    //controller_init_all_hardware();
+    //spi_async_init(&SPI_CONF_MTR_ENCODER_A);
+    spi_collector_init();
+    uart_println("Initialized SPI Collector");
+    //uart_println("Starting SPI collector service");
+    while (1) {
+        //while (spi_async_is_busy());    
+        spi_collector_start_service();
+        delay(0xFFFF);
+        //uart_print(".");
+        //spi_async_start_transfer(&SPI_CONF_MTR_ENCODER_A, spi_write_bytes, spi_read_bytes, 2, spi_callback);
+    }
+    /*
+       while (1) {
+       float a = motor_encoder_get_pole_position(&MOTOR_ENCODER_A); 
+       float b = motor_encoder_get_pole_position(&MOTOR_ENCODER_B); 
+       uart_print_float(a);
+       uart_put(' ');
+       uart_println_float(b);
+       }
+       */
+}
+
 int main(void) {
 	init_peripherals();
 	print_welcome();
     //timer_schedule(1, 500.0f, timer_test);
-    controller_test();
+    //controller_test();
+    delay(0x4FFF);
+    uart_println("\nStarting Encoder Test");
+    encoder_test();
 
 	while (1) {
         delay(0x4FFF);
-		float ips = roller_get_ips();
-		float tape_pos = roller_get_tape_position(15.0f);
-        float data[2] = {ips, tape_pos};
+		//float ips = roller_get_ips();
+		//float tape_pos = roller_get_tape_position(15.0f);
+        //float data[2] = {ips, tape_pos};
         //uart_println_float_arr(data, 2);
 	}
 }

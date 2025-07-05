@@ -82,8 +82,8 @@ void spi_async_start_transfer(const SPIConfig* inst, const uint8_t *tx_buf, uint
     user_callback = callback;
     spi_busy = true;
 
+    SERCOM4->SPI.INTENCLR.bit.RXC = 1;
     SERCOM4->SPI.INTENSET.bit.DRE = 1;
-    //SERCOM4->SPI.INTENSET.bit.RXC = 1;
 }
     
 void spi_async_change_mode(const SPIConfig* inst) {
@@ -112,11 +112,12 @@ static void spi_async_isr() {
 
         rx_index++;
         if (rx_index < transfer_len) {
-            SERCOM4->SPI.INTENSET.bit.DRE = 1;
             SERCOM4->SPI.INTENCLR.bit.RXC = 1;
+            SERCOM4->SPI.INTENSET.bit.DRE = 1;
         } else {
             // Full transfer complete
 	        gpio_set_pin(current_spi_conf->cs);
+            //delay(0xFF);
             SERCOM4->SPI.INTENCLR.bit.DRE = 1;
             SERCOM4->SPI.INTENCLR.bit.RXC = 1;
             spi_busy = false;
@@ -126,25 +127,23 @@ static void spi_async_isr() {
         if (!spi_busy) return;
 
         // Send next byte
-        delay(0x8);
+        delay(0x3);
         if (tx_index < transfer_len) {
             SERCOM4->SPI.DATA.reg = tx_buf_ptr ? tx_buf_ptr[tx_index] : 0xFF;
             tx_index++;
         }
-        SERCOM4->SPI.INTENSET.bit.RXC = 1;
         SERCOM4->SPI.INTENCLR.bit.DRE = 1;
+        SERCOM4->SPI.INTENSET.bit.RXC = 1;
     }
 }
 
 void SERCOM4_0_Handler(void) {
     //uart_println("(0) Handler");  
     spi_async_isr();
-    //delay(0x8FFFF);
 }
 
 void SERCOM4_2_Handler(void) {
     //uart_println("(2) Handler");  
     spi_async_isr();
-    //delay(0x8FFFF);
 }
 

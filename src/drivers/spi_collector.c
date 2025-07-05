@@ -84,7 +84,7 @@ void spi_collector_callback() {
         //uart_println("Queuing another callback");
         spi_async_start_transfer(configs[current_index], tx_data, rx_data, 2, spi_collector_callback);
     }
-    delay(0x1);
+    //delay(0x1);
 }
 
 void spi_collector_start_service() {

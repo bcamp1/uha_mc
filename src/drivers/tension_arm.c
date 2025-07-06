@@ -6,6 +6,7 @@
  */ 
 
 #include "tension_arm.h"
+#include "spi_collector.h"
 
 const TensionArmConfig TENSION_ARM_A = {
 	.spi = &SPI_CONF_TENSION_ARM_A,
@@ -25,10 +26,13 @@ void tension_arm_init(const TensionArmConfig* config) {
 }
 
 float tension_arm_get_position(const TensionArmConfig* config) {
-	uint16_t result = spi_write_read16(config->spi, 0);
+	uint16_t result;
+    if (config->spi == &SPI_CONF_TENSION_ARM_A) {
+        result = spi_collector_get_tension_a();
+    } else {
+        result = spi_collector_get_tension_b();
+    }
 	uint16_t position = result >> 6;
-	
-	//return (float) position;
 	
 	// Interpolate between max and min
 	float interpolation = ((float) (config->bottom_position - position)) / ((float) (config->top_position - config->bottom_position));

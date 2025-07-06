@@ -10,6 +10,7 @@
 #define FOC_MATH_FPU_H_
 
 #define PI (3.14159265f)
+#define TWOPI (6.283185307179586f)
 
 void park_transform(float theta, float alpha, float beta, float* d, float* q);
 void inv_park_transform(float theta, float d, float q, float* alpha, float* beta);

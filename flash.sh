@@ -3,6 +3,9 @@
 
 if [ "$1" = "-b" ]; then
     cmake -S $UHA -B $UHA/build
+    cd $UHA/build
+    make flash || exit $?
+    cd $UHA
 fi
 
 cd $UHA/build

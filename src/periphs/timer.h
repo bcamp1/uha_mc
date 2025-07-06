@@ -18,7 +18,7 @@
 
 // Timer Sample Rates
 #define TIMER_SAMPLE_RATE_STATE_RECORDER    (50.0f)
-#define TIMER_SAMPLE_RATE_SPI_COLLECTOR     (5000.0f)
+#define TIMER_SAMPLE_RATE_SPI_COLLECTOR     (2500.0f)
 
 // Timer Priorities
 #define TIMER_PRIORITY_CONTROLLER     (2)

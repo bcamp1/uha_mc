@@ -16,6 +16,7 @@
 #include "control/controller.h"
 #include "drivers/roller.h"
 #include "drivers/motor_encoder.h"
+#include "drivers/tension_arm.h"
 #include "drivers/stopwatch.h"
 #include "drivers/delay.h"
 #include "drivers/board.h"
@@ -93,7 +94,7 @@ static uint8_t spi_read_bytes[2] = {0, 0};
 static uint8_t spi_write_bytes[2] = {0, 0};
 
 void spi_callback() {
-    gpio_toggle_pin(DEBUG_PIN);
+    //gpio_toggle_pin(DEBUG_PIN);
     spi_collector_start_service();
 }
 
@@ -106,16 +107,26 @@ static void encoder_test() {
     timer_schedule(TIMER_ID_SPI_COLLECTOR, TIMER_SAMPLE_RATE_SPI_COLLECTOR, TIMER_PRIORITY_SPI_COLLECTOR, spi_callback);
     //uart_println("Starting SPI collector service");
     while (1) {
+        float data[6] = {
+            spi_collector_get_encoder_a(),
+            spi_collector_get_encoder_a_pole(),
+            spi_collector_get_encoder_b(),
+            spi_collector_get_encoder_b_pole(),
+            spi_collector_get_tension_a(),
+            spi_collector_get_tension_b(),
+        };
+
+        uart_println_float_arr(data, 6);
         //while (spi_async_is_busy());    
         //spi_collector_start_service();
-        uart_print_int(spi_collector_get_encoder_a() & 0x3FFF);
-        uart_put(' ');
-        uart_print_int(spi_collector_get_encoder_b() & 0x3FFF);
-        uart_put(' ');
-        uart_print_int(spi_collector_get_tension_a() >> 6);
-        uart_put(' ');
-        uart_print_int(spi_collector_get_tension_b() >> 6);
-        uart_put('\n');
+        //uart_print_int(spi_collector_get_encoder_a() & 0x3FFF);
+        //uart_put(' ');
+        //uart_print_int(spi_collector_get_encoder_b() & 0x3FFF);
+        //uart_put(' ');
+        //uart_print_int(spi_collector_get_tension_a() >> 6);
+        //uart_put(' ');
+        //uart_print_int(spi_collector_get_tension_b() >> 6);
+        //uart_put('\n');
         //uart_print(".");
         //spi_async_start_transfer(&SPI_CONF_MTR_ENCODER_A, spi_write_bytes, spi_read_bytes, 2, spi_callback);
     }

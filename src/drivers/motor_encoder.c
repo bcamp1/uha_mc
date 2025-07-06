@@ -6,6 +6,7 @@
  */ 
 
 #include "motor_encoder.h"
+#include "spi_collector.h"
 #include "../foc/foc_math_fpu.h"
 #include "../periphs/uart.h"
 
@@ -27,9 +28,15 @@ void motor_encoder_init(const MotorEncoderConfig* config) {
 }
 
 float motor_encoder_get_position(const MotorEncoderConfig* config) {
-	uint16_t result = spi_write_read16(config->spi, 0) & 0x3FFF;
-	float revolution_fraction = 2.0f * PI * ((float) result / ((float) 0x3FFF));
-	return revolution_fraction;   
+    // uint16_t result;
+    // if (config->spi == &SPI_CONF_MTR_ENCODER_A) {
+    //     result = spi_collector_get_encoder_a() & 0x3FFF; 
+    // } else {
+    //     result = spi_collector_get_encoder_b() & 0x3FFF; 
+    // }
+	// float revolution_fraction = 2.0f * PI * ((float) result / ((float) 0x3FFF));
+	// return revolution_fraction;   
+    return 0.0f;
 }
 
 float motor_encoder_get_pole_position(const MotorEncoderConfig* config) {

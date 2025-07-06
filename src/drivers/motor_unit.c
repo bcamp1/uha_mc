@@ -32,17 +32,7 @@ void motor_unit_init(const MotorUnitConfig* config) {
 
 #define TORQUE_LIMIT (0.4f)
 
-void motor_unit_set_torque(const MotorUnitConfig* config, float torque, float encoder_theta) {
-    // Get encoder position and target position (90 degree lead)
-    float encoder_pos = motor_encoder_get_pole_pos_from_theta(config->encoder, encoder_theta);
-
-    //float target_pos = encoder_pos + (0.5f * PI);
-    //if (torque < 0) {
-    //target_pos = encoder_pos - (0.5f * PI);
-    //}
-
-    //float encoder_pos = motor_encoder_get_pole_position(config->encoder);
-
+void motor_unit_set_torque(const MotorUnitConfig* config, float torque, float pole_position) {
     // Scale down torque + saturate
     if (torque > 1.0f) torque = 1.0f;
     if (torque < -1.0f) torque = -1.0f;
@@ -56,7 +46,7 @@ void motor_unit_set_torque(const MotorUnitConfig* config, float torque, float en
     float q = torque;
 
     //gpio_set_pin(DEBUG_PIN);
-    foc_get_duties(encoder_pos, d, q, &a, &b, &c);
+    foc_get_duties(pole_position, d, q, &a, &b, &c);
     //gpio_clear_pin(DEBUG_PIN);
 
     // Convert to integers

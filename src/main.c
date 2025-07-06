@@ -15,6 +15,8 @@
 #include "control/controller_tests.h"
 #include "control/controller.h"
 #include "drivers/roller.h"
+#include "drivers/motor_unit.h"
+#include "drivers/uha_motor_driver.h"
 #include "drivers/motor_encoder.h"
 #include "drivers/tension_arm.h"
 #include "drivers/stopwatch.h"
@@ -103,6 +105,13 @@ static void encoder_test() {
     //controller_init_all_hardware();
     //spi_async_init(&SPI_CONF_MTR_ENCODER_A);
     spi_collector_init();
+    spi_collector_set_torque_a(0.0f);
+    spi_collector_set_torque_b(-0.0f);
+    uha_motor_driver_init(&UHA_MTR_DRVR_CONF_A);
+    uha_motor_driver_init(&UHA_MTR_DRVR_CONF_B);
+
+    //motor_unit_init(&MOTOR_UNIT_A);
+    //motor_unit_init(&MOTOR_UNIT_B);
     uart_println("Initialized SPI Collector");
     timer_schedule(TIMER_ID_SPI_COLLECTOR, TIMER_SAMPLE_RATE_SPI_COLLECTOR, TIMER_PRIORITY_SPI_COLLECTOR, spi_callback);
     //uart_println("Starting SPI collector service");

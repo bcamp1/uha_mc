@@ -10,4 +10,6 @@ float spi_collector_get_encoder_a_pole();
 float spi_collector_get_encoder_b_pole();
 float spi_collector_get_tension_a();
 float spi_collector_get_tension_b();
+void spi_collector_set_torque_a(float torque);
+void spi_collector_set_torque_b(float torque);
 

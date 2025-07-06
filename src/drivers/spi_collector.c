@@ -6,6 +6,7 @@
 #include "../drivers/delay.h"
 #include "board.h"
 #include "tension_arm.h"
+#include "motor_unit.h"
 #include "motor_encoder.h"
 #include "core_cm4.h" 
 #include "../foc/foc_math_fpu.h"
@@ -45,6 +46,10 @@ static const float tension_a_bottom_position = 588;
 static const float tension_b_top_position = 725;
 static const float tension_b_bottom_position = 606;
 static const float motor_poles = 4.0f;
+
+// Motor torques
+static volatile float torque_a = 0.0f;
+static volatile float torque_b = 0.0f;
 
 float spi_collector_get_encoder_a() {
     return encoder_a_pos;
@@ -97,6 +102,11 @@ static void process_floats() {
     tension_b_pos = (float) dirty_bits[3];
 }
 
+static void process_foc() {
+    motor_unit_set_torque(&MOTOR_UNIT_A, torque_a, encoder_a_pole_pos);
+    motor_unit_set_torque(&MOTOR_UNIT_B, torque_b, encoder_b_pole_pos);
+}
+
 void spi_collector_callback() {
     //uart_print("Collector callback index="); 
     //uart_println_int(current_index);
@@ -113,6 +123,7 @@ void spi_collector_callback() {
         __disable_irq();
         gpio_set_pin(DEBUG_PIN);
         process_floats();
+        process_foc();
         gpio_clear_pin(DEBUG_PIN);
         __enable_irq();
         /*
@@ -142,5 +153,13 @@ void spi_collector_start_service() {
     spi_change_mode(&SPI_CONF_MTR_ENCODER_A);
     //uart_println("Queuing another callback");
     spi_async_start_transfer(configs[current_index], tx_data, rx_data, 2, spi_collector_callback);
+}
+
+void spi_collector_set_torque_a(float torque) {
+    torque_a = torque;
+}
+
+void spi_collector_set_torque_b(float torque) {
+    torque_b = torque;
 }
 

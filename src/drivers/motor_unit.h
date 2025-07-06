@@ -22,7 +22,7 @@ extern const MotorUnitConfig MOTOR_UNIT_A;
 extern const MotorUnitConfig MOTOR_UNIT_B;
 
 void motor_unit_init(const MotorUnitConfig* config);
-void motor_unit_set_torque(const MotorUnitConfig* config, float torque, float encoder_pos);
+void motor_unit_set_torque(const MotorUnitConfig* config, float torque, float pole_position);
 void motor_unit_energize_coils(const MotorUnitConfig* config, float a, float b, float c);
 
 

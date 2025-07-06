@@ -16,6 +16,10 @@ static spi_callback_t user_callback;
 static volatile bool spi_busy = false;
 static const SPIConfig* current_spi_conf = NULL;
 
+// Timing configs
+#define BAUD_CYCLES         (30)
+#define BETWEEN_BYTE_CYCLES (0xa)
+
 void spi_async_init(const SPIConfig* inst) {
 	/* Enable clocks */
 	wntr_sercom_init_clock((Sercom*)inst->sercom, GCLK_PCHCTRL_GEN_GCLK1);
@@ -40,16 +44,18 @@ void spi_async_init(const SPIConfig* inst) {
 
 	/* Set baud to max (GCLK / 2) 6 MHz */
 	//inst->sercom->BAUD.reg = SERCOM_SPI_BAUD_BAUD(2000);
-	inst->sercom->BAUD.reg = (uint8_t) 10; //SERCOM_SPI_BAUD_BAUD(1000);
+	inst->sercom->BAUD.reg = (uint8_t) BAUD_CYCLES; //SERCOM_SPI_BAUD_BAUD(1000);
 
     // Enable interrupt(s)
     //inst->sercom->INTENSET.bit.DRE = 1;
     //inst->sercom->INTENSET.bit.RXC = 1;
 
     // NVIC interrupt enable
-	//NVIC_EnableIRQ(SERCOM4_2_IRQn);
+    NVIC_SetPriority(SERCOM4_0_IRQn, 2);  // 0 is highest priority
+    NVIC_SetPriority(SERCOM4_2_IRQn, 2);  // 0 is highest priority
 	NVIC_EnableIRQ(SERCOM4_0_IRQn);
 	NVIC_EnableIRQ(SERCOM4_2_IRQn);
+
 
 	/* Configure pins for the correct function. */
 	gpio_init_pin(inst->mosi, GPIO_DIR_OUT, inst->mosi_alt);
@@ -68,6 +74,7 @@ void spi_async_init(const SPIConfig* inst) {
 
 void spi_async_start_transfer(const SPIConfig* inst, const uint8_t *tx_buf, uint8_t *rx_buf, uint16_t length, spi_callback_t callback) {
     if (spi_busy || length == 0) return;
+    //gpio_set_pin(DEBUG_PIN);
 
 	// Bring nCS low
 	gpio_clear_pin(inst->cs);
@@ -83,6 +90,7 @@ void spi_async_start_transfer(const SPIConfig* inst, const uint8_t *tx_buf, uint
     spi_busy = true;
 
     SERCOM4->SPI.INTENCLR.bit.RXC = 1;
+    //gpio_clear_pin(DEBUG_PIN);
     SERCOM4->SPI.INTENSET.bit.DRE = 1;
 }
     
@@ -105,6 +113,7 @@ bool spi_async_is_busy() {
 }
 
 static void spi_async_isr() {
+    //uart_put('.');
     if (SERCOM4->SPI.INTFLAG.bit.RXC) {
         // Byte recieved
         uint8_t data = SERCOM4->SPI.DATA.reg;
@@ -117,19 +126,16 @@ static void spi_async_isr() {
         } else {
             // Full transfer complete
 	        gpio_set_pin(current_spi_conf->cs);
-            //delay(0xFF);
             SERCOM4->SPI.INTENCLR.bit.DRE = 1;
             SERCOM4->SPI.INTENCLR.bit.RXC = 1;
             spi_busy = false;
             if (user_callback) user_callback();
         }
     } else if (SERCOM4->SPI.INTFLAG.bit.DRE) {
-        if (!spi_busy) return;
-
         // Send next byte
-        delay(0x3);
         if (tx_index < transfer_len) {
             SERCOM4->SPI.DATA.reg = tx_buf_ptr ? tx_buf_ptr[tx_index] : 0xFF;
+            delay(BETWEEN_BYTE_CYCLES);
             tx_index++;
         }
         SERCOM4->SPI.INTENCLR.bit.DRE = 1;

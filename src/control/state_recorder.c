@@ -5,8 +5,6 @@
 #include "../drivers/board.h"
 #include "controller.h"
 
-#define STATE_RECORDER_SAMPLE_RATE  (50.0f)
-#define STATE_RECORDER_TIMER_ID     (2)
 
 static volatile bool flag = false;
 
@@ -16,7 +14,7 @@ static void set_flag() {
 }
 
 void state_recorder_schedule() {
-    timer_schedule(STATE_RECORDER_TIMER_ID, STATE_RECORDER_SAMPLE_RATE, set_flag);
+    timer_schedule(TIMER_ID_STATE_RECORDER, TIMER_SAMPLE_RATE_STATE_RECORDER, TIMER_PRIORITY_STATE_RECORDER, set_flag);
 }
 
 bool state_recorder_should_transmit() {

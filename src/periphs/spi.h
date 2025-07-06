@@ -40,5 +40,5 @@ extern const SPIConfig SPI_CONF_MTR_ENCODER_B;
 
 void spi_init(const SPIConfig* inst);
 uint16_t spi_write_read16(const SPIConfig* inst, uint16_t data);
-uint16_t spi_change_mode(const SPIConfig* inst);
+void spi_change_mode(const SPIConfig* inst);
 

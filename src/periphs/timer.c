@@ -14,11 +14,13 @@
 #define CLK_FREQ (120000000.0f)
 #define CLK_DIV  (256.0f)
 
-static const Tc* timers[5] = {TC0, TC1, TC2, TC3};
-static func_ptr_t callbacks[5] = {NULL, NULL, NULL, NULL};
+static const Tc* timers[4] = {TC0, TC1, TC2, TC3};
+static func_ptr_t callbacks[4] = {NULL, NULL, NULL, NULL};
 	
 static void process_interrupt(uint16_t timer_id);
 static uint16_t calculate_count(float sample_rate);
+
+static uint16_t priorities[4] = {1, 1, 1, 1};
 
 void timer_init_all() {
 	// Enable TCC bus clocks
@@ -38,12 +40,12 @@ void timer_init_all() {
 	
 	GCLK->PCHCTRL[TC3_GCLK_ID].reg = GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0;
 	while (!(GCLK->PCHCTRL[TC3_GCLK_ID].reg & GCLK_PCHCTRL_CHEN));  // Wait for clock enable
-                                                                    
+
     // Set NVIC Priorities                                                            
-    NVIC_SetPriority(TC0_IRQn, 1);
-    NVIC_SetPriority(TC1_IRQn, 1);
-    NVIC_SetPriority(TC2_IRQn, 1);
-    NVIC_SetPriority(TC3_IRQn, 1);
+    NVIC_SetPriority(TC0_IRQn, priorities[0]);
+    NVIC_SetPriority(TC1_IRQn, priorities[1]);
+    NVIC_SetPriority(TC2_IRQn, priorities[2]);
+    NVIC_SetPriority(TC3_IRQn, priorities[3]);
 	
 	// Enable NVIC interrupts
 	NVIC_EnableIRQ(TC0_IRQn);
@@ -52,7 +54,7 @@ void timer_init_all() {
 	NVIC_EnableIRQ(TC3_IRQn);
 }
 
-void timer_schedule(uint16_t timer_id, float sample_rate, func_ptr_t callback) {
+void timer_schedule(uint16_t timer_id, float sample_rate, uint16_t priority, func_ptr_t callback) {
 	TcCount16* TIMER = &timers[timer_id]->COUNT16;
 	TIMER->CTRLA.bit.ENABLE = 0;
 	// Wait for synchronization
@@ -60,6 +62,9 @@ void timer_schedule(uint16_t timer_id, float sample_rate, func_ptr_t callback) {
 	
 	// Add callback
 	callbacks[timer_id] = callback;
+
+    // Add priority
+	priorities[timer_id] = priority;
 	
 	// Initialize Timers 1-5
 	timer_init_all();

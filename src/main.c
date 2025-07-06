@@ -93,23 +93,30 @@ static uint8_t spi_read_bytes[2] = {0, 0};
 static uint8_t spi_write_bytes[2] = {0, 0};
 
 void spi_callback() {
-    uint16_t msb = spi_read_bytes[0];
-    uint16_t lsb = spi_read_bytes[1];
-    uint16_t together = ((msb << 8) | lsb) & 0x3FFF;
-    uart_println_int_base(together, 16); 
+    gpio_toggle_pin(DEBUG_PIN);
+    spi_collector_start_service();
 }
 
 static void encoder_test() {
+    NVIC_SetPriorityGrouping(0);
     //controller_init_all_hardware();
     //spi_async_init(&SPI_CONF_MTR_ENCODER_A);
     spi_collector_init();
     uart_println("Initialized SPI Collector");
+    timer_schedule(TIMER_ID_SPI_COLLECTOR, TIMER_SAMPLE_RATE_SPI_COLLECTOR, TIMER_PRIORITY_SPI_COLLECTOR, spi_callback);
     //uart_println("Starting SPI collector service");
     while (1) {
         //while (spi_async_is_busy());    
-        spi_collector_start_service();
-        delay(0xFFF);
-        uart_print(".");
+        //spi_collector_start_service();
+        uart_print_int(spi_collector_get_encoder_a() & 0x3FFF);
+        uart_put(' ');
+        uart_print_int(spi_collector_get_encoder_b() & 0x3FFF);
+        uart_put(' ');
+        uart_print_int(spi_collector_get_tension_a() >> 6);
+        uart_put(' ');
+        uart_print_int(spi_collector_get_tension_b() >> 6);
+        uart_put('\n');
+        //uart_print(".");
         //spi_async_start_transfer(&SPI_CONF_MTR_ENCODER_A, spi_write_bytes, spi_read_bytes, 2, spi_callback);
     }
     /*

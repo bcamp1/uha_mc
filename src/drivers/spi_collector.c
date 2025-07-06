@@ -60,13 +60,14 @@ void spi_collector_callback() {
     //uart_println_int_base(full & 0x3FFF, 16);
 
     // Done processing all 4? Post to clean
-    if (current_index == 1) {
+    if (current_index == 3) {
         __disable_irq();
         clean_bits[0] = dirty_bits[0];
         clean_bits[1] = dirty_bits[1];
         clean_bits[2] = dirty_bits[2];
         clean_bits[3] = dirty_bits[3];
         __enable_irq();
+        /*
         uart_print_int(clean_bits[0] & 0x3FFF);
         uart_put(' ');
         uart_print_int(clean_bits[1] & 0x3FFF);
@@ -75,6 +76,7 @@ void spi_collector_callback() {
         uart_put(' ');
         uart_print_int(clean_bits[3] >> 6);
         uart_put('\n');
+        */
     } else {
         // Send the next index
         current_index++;

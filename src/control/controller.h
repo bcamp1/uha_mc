@@ -3,7 +3,6 @@
 
 #include "control_state.h"
 
-#define CONTROLLER_TIMER_ID (1)
 
 typedef void (*ControllerFunc) (ControlState, float*, float*);
 

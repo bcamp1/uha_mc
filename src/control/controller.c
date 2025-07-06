@@ -119,11 +119,11 @@ void controller_enable_motors() {
 
 void controller_start_process() {
     timesteps = 0;
-    timer_schedule(CONTROLLER_TIMER_ID, sample_rate, controller_run_iteration);
+    timer_schedule(TIMER_ID_CONTROLLER, sample_rate, TIMER_PRIORITY_CONTROLLER, controller_run_iteration);
 }
 
 void controller_stop_process() {
-    timer_deschedule(CONTROLLER_TIMER_ID);
+    timer_deschedule(TIMER_ID_CONTROLLER);
     
     // Stop motors
     //motor_unit_set_torque(&MOTOR_UNIT_A, 0.0f);

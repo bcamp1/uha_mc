@@ -181,7 +181,7 @@ void spi_init(const SPIConfig* inst) {
 	while (inst->sercom->SYNCBUSY.bit.ENABLE) {};
 }
 
-uint16_t spi_change_mode(const SPIConfig* inst) {
+void spi_change_mode(const SPIConfig* inst) {
     // Disable SPI
     inst->sercom->CTRLA.bit.ENABLE = 0;
     while (inst->sercom->SYNCBUSY.bit.ENABLE);
@@ -189,7 +189,7 @@ uint16_t spi_change_mode(const SPIConfig* inst) {
     // Modify CPOL and CPHA
     inst->sercom->CTRLA.bit.CPOL = inst->polarity; // or 0
     inst->sercom->CTRLA.bit.CPHA = inst->phase; // or 0
-
+    
     // Enable SPI again
     inst->sercom->CTRLA.bit.ENABLE = 1;
     while (inst->sercom->SYNCBUSY.bit.ENABLE);

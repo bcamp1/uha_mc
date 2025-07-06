@@ -41,3 +41,4 @@ float tension_arm_get_position(const TensionArmConfig* config) {
 	}
 	return interpolation;
 }
+

@@ -41,10 +41,10 @@ static volatile float tension_b_pos = 0.0f;
 // Calibrations
 static const float encoder_a_offset = 1.38105f;
 static const float encoder_b_offset = 4.59148f;
-static const float tension_a_top_position = 466;
-static const float tension_a_bottom_position = 588;
-static const float tension_b_top_position = 725;
-static const float tension_b_bottom_position = 606;
+static const float tension_a_top_position = 470;
+static const float tension_a_bottom_position = 591;
+static const float tension_b_top_position = 746;
+static const float tension_b_bottom_position = 627;
 static const float motor_poles = 4.0f;
 
 // Motor torques
@@ -98,8 +98,21 @@ static void process_floats() {
 	while (encoder_b_pole_pos < 0) encoder_b_pole_pos += TWOPI;
 	while (encoder_b_pole_pos > TWOPI) encoder_b_pole_pos -= TWOPI;
 
-    tension_a_pos = (float) dirty_bits[2];
-    tension_b_pos = (float) dirty_bits[3];
+    // Process Tension Arm Positions
+	float interpolation_a = ((float) (tension_a_bottom_position - (dirty_bits[2] >> 6))) / ((float) (tension_a_top_position - tension_a_bottom_position));
+	if (interpolation_a < 0) {
+		interpolation_a = -interpolation_a;
+	}
+    tension_a_pos = interpolation_a;
+
+	float interpolation_b = ((float) (tension_b_bottom_position - (dirty_bits[3] >> 6))) / ((float) (tension_b_top_position - tension_b_bottom_position));
+	if (interpolation_b < 0) {
+		interpolation_b = -interpolation_b;
+	}
+
+    tension_b_pos = interpolation_b;
+    //tension_a_pos = (float) (dirty_bits[2] >> 6);
+    //tension_b_pos = (float) (dirty_bits[3] >> 6);
 }
 
 static void process_foc() {

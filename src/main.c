@@ -96,7 +96,7 @@ static uint8_t spi_read_bytes[2] = {0, 0};
 static uint8_t spi_write_bytes[2] = {0, 0};
 
 void spi_callback() {
-    //gpio_toggle_pin(DEBUG_PIN);
+    gpio_clear_pin(DEBUG_PIN);
     spi_collector_start_service();
 }
 
@@ -105,7 +105,7 @@ static void encoder_test() {
     //controller_init_all_hardware();
     //spi_async_init(&SPI_CONF_MTR_ENCODER_A);
     spi_collector_init();
-    spi_collector_set_torque_a(0.0f);
+    spi_collector_set_torque_a(0.4f);
     spi_collector_set_torque_b(-0.0f);
     uha_motor_driver_init(&UHA_MTR_DRVR_CONF_A);
     uha_motor_driver_init(&UHA_MTR_DRVR_CONF_B);
@@ -116,6 +116,8 @@ static void encoder_test() {
     timer_schedule(TIMER_ID_SPI_COLLECTOR, TIMER_SAMPLE_RATE_SPI_COLLECTOR, TIMER_PRIORITY_SPI_COLLECTOR, spi_callback);
     //uart_println("Starting SPI collector service");
     while (1) {
+        gpio_set_pin(DEBUG_PIN);
+        /*
         float data[6] = {
             spi_collector_get_encoder_a(),
             spi_collector_get_encoder_a_pole(),
@@ -126,18 +128,7 @@ static void encoder_test() {
         };
 
         uart_println_float_arr(data, 6);
-        //while (spi_async_is_busy());    
-        //spi_collector_start_service();
-        //uart_print_int(spi_collector_get_encoder_a() & 0x3FFF);
-        //uart_put(' ');
-        //uart_print_int(spi_collector_get_encoder_b() & 0x3FFF);
-        //uart_put(' ');
-        //uart_print_int(spi_collector_get_tension_a() >> 6);
-        //uart_put(' ');
-        //uart_print_int(spi_collector_get_tension_b() >> 6);
-        //uart_put('\n');
-        //uart_print(".");
-        //spi_async_start_transfer(&SPI_CONF_MTR_ENCODER_A, spi_write_bytes, spi_read_bytes, 2, spi_callback);
+        */
     }
     /*
        while (1) {

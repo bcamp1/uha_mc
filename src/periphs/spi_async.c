@@ -74,7 +74,7 @@ void spi_async_init(const SPIConfig* inst) {
 
 void spi_async_start_transfer(const SPIConfig* inst, const uint8_t *tx_buf, uint8_t *rx_buf, uint16_t length, spi_callback_t callback) {
     if (spi_busy || length == 0) return;
-    //gpio_set_pin(DEBUG_PIN);
+    gpio_set_pin(DEBUG_PIN);
 
 	// Bring nCS low
 	gpio_clear_pin(inst->cs);
@@ -90,7 +90,7 @@ void spi_async_start_transfer(const SPIConfig* inst, const uint8_t *tx_buf, uint
     spi_busy = true;
 
     SERCOM4->SPI.INTENCLR.bit.RXC = 1;
-    //gpio_clear_pin(DEBUG_PIN);
+    gpio_clear_pin(DEBUG_PIN);
     SERCOM4->SPI.INTENSET.bit.DRE = 1;
 }
     

@@ -95,26 +95,12 @@ static void controller_test() {
 static uint8_t spi_read_bytes[2] = {0, 0};
 static uint8_t spi_write_bytes[2] = {0, 0};
 
-void spi_callback() {
-    gpio_clear_pin(DEBUG_PIN);
-    spi_collector_start_service();
-}
-
 static void encoder_test() {
-    NVIC_SetPriorityGrouping(0);
-    //controller_init_all_hardware();
-    //spi_async_init(&SPI_CONF_MTR_ENCODER_A);
+    //NVIC_SetPriorityGrouping(0);
     spi_collector_init();
     spi_collector_set_torque_a(0.4f);
     spi_collector_set_torque_b(-0.0f);
-    uha_motor_driver_init(&UHA_MTR_DRVR_CONF_A);
-    uha_motor_driver_init(&UHA_MTR_DRVR_CONF_B);
-
-    //motor_unit_init(&MOTOR_UNIT_A);
-    //motor_unit_init(&MOTOR_UNIT_B);
-    uart_println("Initialized SPI Collector");
-    timer_schedule(TIMER_ID_SPI_COLLECTOR, TIMER_SAMPLE_RATE_SPI_COLLECTOR, TIMER_PRIORITY_SPI_COLLECTOR, spi_callback);
-    //uart_println("Starting SPI collector service");
+    spi_collector_enable_service();
     while (1) {
         gpio_set_pin(DEBUG_PIN);
         /*
@@ -145,10 +131,12 @@ int main(void) {
 	init_peripherals();
 	print_welcome();
     //timer_schedule(1, 500.0f, timer_test);
-    //controller_test();
     delay(0x4FFF);
-    uart_println("\nStarting Encoder Test");
-    encoder_test();
+    uart_println("\nStarting Controller Test");
+    controller_test();
+    //delay(0x4FFF);
+    //uart_println("\nStarting Encoder Test");
+    //encoder_test();
 
 	while (1) {
         delay(0x4FFF);

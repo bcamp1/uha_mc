@@ -7,6 +7,7 @@
 #include "../drivers/uha_motor_driver.h"
 #include "../drivers/motor_encoder.h"
 #include "../drivers/inc_encoder.h"
+#include "../drivers/spi_collector.h"
 #include "../drivers/tension_arm.h"
 #include "../drivers/stopwatch.h"
 #include "../drivers/roller.h"
@@ -61,11 +62,7 @@ void controller_send_state_uart() {
 
 
 void controller_init_all_hardware() {
-	// Init hardware
-    motor_unit_init(&MOTOR_UNIT_A);
-	motor_unit_init(&MOTOR_UNIT_B);
-    tension_arm_init(&TENSION_ARM_A);
-    tension_arm_init(&TENSION_ARM_B);
+    spi_collector_init();
     roller_init(); 
 }
 
@@ -76,12 +73,8 @@ void controller_set_config(ControllerConfig* c) {
 void controller_run_iteration() {
     gpio_set_pin(LED_PIN);
     
-    // Get reel positions
-    float takeup_reel_theta = motor_encoder_get_position(&MOTOR_ENCODER_A);
-    float supply_reel_theta = motor_encoder_get_position(&MOTOR_ENCODER_B);
-    
     // Get new control state
-    control_state = control_state_get_filtered_state(&control_state_filter, sample_rate, takeup_reel_theta, supply_reel_theta);
+    control_state = control_state_get_filtered_state(&control_state_filter, sample_rate);
 
     // Get error
     ControlState error_state = control_state_sub(config->reference, &control_state);
@@ -91,9 +84,9 @@ void controller_run_iteration() {
     float torque2 = 0;
     config->controller(error_state, &torque1, &torque2);
 
-    // Send torques to motor
-    motor_unit_set_torque(&MOTOR_UNIT_A, torque1, takeup_reel_theta);
-    motor_unit_set_torque(&MOTOR_UNIT_B, torque2, supply_reel_theta);
+    // Send torques to the motor
+    spi_collector_set_torque_a(torque1);
+    spi_collector_set_torque_b(torque2);
 
     // Update time
     time = controller_get_time();
@@ -106,27 +99,28 @@ float controller_get_time() {
 }
 
 void controller_disable_motors() {
-    uha_motor_driver_disable(&UHA_MTR_DRVR_CONF_A);
-    uha_motor_driver_disable(&UHA_MTR_DRVR_CONF_B);
+    //uha_motor_driver_disable(&UHA_MTR_DRVR_CONF_A);
+    //uha_motor_driver_disable(&UHA_MTR_DRVR_CONF_B);
+    spi_collector_disable_motors();
     motors_enabled = false;
 }
 
 void controller_enable_motors() {
-    uha_motor_driver_enable(&UHA_MTR_DRVR_CONF_A);
-    uha_motor_driver_enable(&UHA_MTR_DRVR_CONF_B);
+    //uha_motor_driver_enable(&UHA_MTR_DRVR_CONF_A);
+    //uha_motor_driver_enable(&UHA_MTR_DRVR_CONF_B);
+    spi_collector_enable_motors();
     motors_enabled = true;
 }
 
 void controller_start_process() {
     timesteps = 0;
+    spi_collector_enable_service();
     timer_schedule(TIMER_ID_CONTROLLER, sample_rate, TIMER_PRIORITY_CONTROLLER, controller_run_iteration);
 }
 
 void controller_stop_process() {
+    spi_collector_disable_motors();
+    spi_collector_disable_service();
     timer_deschedule(TIMER_ID_CONTROLLER);
-    
-    // Stop motors
-    //motor_unit_set_torque(&MOTOR_UNIT_A, 0.0f);
-    //motor_unit_set_torque(&MOTOR_UNIT_B, 0.0f);
 }
 

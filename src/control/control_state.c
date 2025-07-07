@@ -1,9 +1,8 @@
 #include "control_state.h"
-#include "../periphs/spi.h"
 #include "../periphs/uart.h"
 #include "../drivers/motor_encoder.h"
-#include "../drivers/tension_arm.h"
 #include "../drivers/inc_encoder.h"
+#include "../drivers/spi_collector.h"
 #include "../drivers/roller.h"
 #include <stdbool.h>
 
@@ -42,20 +41,15 @@ static volatile float prev_supply_tension = 0.0f;
 
 static volatile float prev_tape_speed = 0.0f;
 
-ControlState control_state_get_filtered_state(const ControlStateFilter* filter, float sample_rate, float takeup_reel_theta, float supply_reel_theta) {
-    // Get new reel positions via SPI
-    spi_change_mode(&SPI_CONF_MTR_ENCODER_A);
-    //float takeup_reel_theta = motor_encoder_get_position(&MOTOR_ENCODER_A);
-    //float supply_reel_theta = motor_encoder_get_position(&MOTOR_ENCODER_B);
+ControlState control_state_get_filtered_state(const ControlStateFilter* filter, float sample_rate) {
+    float takeup_reel_theta = spi_collector_get_encoder_a();
+    float supply_reel_theta = spi_collector_get_encoder_b();
+    float takeup_tension = spi_collector_get_tension_a();
+    float supply_tension = spi_collector_get_tension_b();
 
     // Calculate reel speeds
     float takeup_reel_speed = sample_rate * sub_angles(takeup_reel_theta, prev_takeup_reel_theta); 
     float supply_reel_speed = sample_rate * sub_angles(supply_reel_theta, prev_supply_reel_theta); 
-                                    
-    // Get new tension arm positions via SPI
-    spi_change_mode(&SPI_CONF_TENSION_ARM_A);
-    float takeup_tension = tension_arm_get_position(&TENSION_ARM_A);
-    float supply_tension = tension_arm_get_position(&TENSION_ARM_B);
 
     // Calculate tension arm speeds
     float takeup_tension_speed = sample_rate * (takeup_tension - prev_takeup_tension);

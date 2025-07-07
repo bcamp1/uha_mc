@@ -27,7 +27,6 @@ void spi_async_init(const SPIConfig* inst) {
 	/* Reset and configure */
 	inst->sercom->CTRLA.bit.ENABLE = 0;
 	while (inst->sercom->SYNCBUSY.bit.ENABLE) {};
-    uart_println("SPI Async Init");
 
 	inst->sercom->CTRLA.bit.SWRST = 1;
 	while (inst->sercom->SYNCBUSY.bit.SWRST || inst->sercom->CTRLA.bit.SWRST) {};
@@ -68,7 +67,6 @@ void spi_async_init(const SPIConfig* inst) {
 	/* Finally, enable it! */
 	inst->sercom->CTRLB.bit.RXEN = 1;
 	inst->sercom->CTRLA.bit.ENABLE = 1;
-    uart_println("1");
 	while (inst->sercom->SYNCBUSY.bit.ENABLE) {};
 }
 
@@ -113,7 +111,7 @@ bool spi_async_is_busy() {
 }
 
 static void spi_async_isr() {
-    gpio_toggle_pin(DEBUG_PIN);
+    gpio_clear_pin(DEBUG_PIN);
     //uart_put('.');
     if (SERCOM4->SPI.INTFLAG.bit.RXC) {
         // Byte recieved

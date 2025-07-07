@@ -10,6 +10,7 @@
 #include "motor_encoder.h"
 #include "core_cm4.h" 
 #include "../foc/foc_math_fpu.h"
+#include "../periphs/timer.h"
 
 #define COLLECTOR_ENCODER_A_INDEX 0
 #define COLLECTOR_ENCODER_B_INDEX 1
@@ -48,6 +49,7 @@ static const float tension_b_bottom_position = 627;
 static const float motor_poles = 4.0f;
 
 // Motor torques
+static volatile bool enable_motors = false;
 static volatile float torque_a = 0.0f;
 static volatile float torque_b = 0.0f;
 
@@ -80,6 +82,10 @@ void spi_collector_init() {
     spi_async_init(&SPI_CONF_TENSION_ARM_B); 
     spi_async_init(&SPI_CONF_MTR_ENCODER_B); 
     spi_async_init(&SPI_CONF_MTR_ENCODER_A); 
+    uha_motor_driver_init(&UHA_MTR_DRVR_CONF_A);
+    uha_motor_driver_init(&UHA_MTR_DRVR_CONF_B);
+    torque_a = 0.0f;
+    torque_b = 0.0f;
 }
 
 static void process_floats() {
@@ -111,13 +117,16 @@ static void process_floats() {
 	}
 
     tension_b_pos = interpolation_b;
-    //tension_a_pos = (float) (dirty_bits[2] >> 6);
-    //tension_b_pos = (float) (dirty_bits[3] >> 6);
 }
 
 static void process_foc() {
     motor_unit_set_torque(&MOTOR_UNIT_A, torque_a, encoder_a_pole_pos);
     motor_unit_set_torque(&MOTOR_UNIT_B, torque_b, encoder_b_pole_pos);
+}
+
+static void foc_off() {
+    motor_unit_set_torque(&MOTOR_UNIT_A, 0.0f, encoder_a_pole_pos);
+    motor_unit_set_torque(&MOTOR_UNIT_B, 0.0f, encoder_b_pole_pos);
 }
 
 void spi_collector_callback() {
@@ -136,7 +145,11 @@ void spi_collector_callback() {
         __disable_irq();
         //gpio_set_pin(DEBUG_PIN);
         process_floats();
-        process_foc();
+        if (enable_motors) {
+            process_foc();
+        } else {
+           foc_off(); 
+        }
         //gpio_clear_pin(DEBUG_PIN);
         __enable_irq();
         /*
@@ -161,11 +174,31 @@ void spi_collector_callback() {
     //delay(0x1);
 }
 
-void spi_collector_start_service() {
+static void spi_collector_service_entry() {
     current_index = 0; 
     spi_change_mode(&SPI_CONF_MTR_ENCODER_A);
     //uart_println("Queuing another callback");
     spi_async_start_transfer(configs[current_index], tx_data, rx_data, 2, spi_collector_callback);
+}
+
+void spi_collector_enable_service() {
+    timer_schedule(TIMER_ID_SPI_COLLECTOR, TIMER_SAMPLE_RATE_SPI_COLLECTOR, TIMER_PRIORITY_SPI_COLLECTOR, spi_collector_service_entry);
+}
+
+void spi_collector_disable_service() {
+    timer_deschedule(TIMER_ID_SPI_COLLECTOR);
+}
+
+void spi_collector_enable_motors() {
+    torque_a = 0.0f;
+    torque_b = 0.0f;
+    enable_motors = true;
+}
+
+void spi_collector_disable_motors() {
+    torque_a = 0.0f;
+    torque_b = 0.0f;
+    enable_motors = false;
 }
 
 void spi_collector_set_torque_a(float torque) {

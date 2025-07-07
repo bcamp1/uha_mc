@@ -3,6 +3,7 @@
 #include "../periphs/uart.h"
 #include "../periphs/gpio.h"
 #include "../periphs/spi_async.h"
+#include "../control/controller.h"
 #include "../drivers/delay.h"
 #include "board.h"
 #include "tension_arm.h"
@@ -146,6 +147,7 @@ void spi_collector_callback() {
         //gpio_set_pin(DEBUG_PIN);
         process_floats();
         if (enable_motors) {
+            controller_run_iteration();
             process_foc();
         } else {
            foc_off(); 

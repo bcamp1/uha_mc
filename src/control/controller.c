@@ -20,7 +20,7 @@
 #include "sensor_state.h"
 #include "control_state.h"
 
-static const float sample_rate = 1000.0f;
+static const float sample_rate = 2500.0f;
 
 static volatile ControllerConfig* config = NULL;
 
@@ -114,7 +114,7 @@ void controller_enable_motors() {
 
 void controller_start_process() {
     timesteps = 0;
-    spi_collector_enable_service();
+    //spi_collector_enable_service();
     timer_schedule(TIMER_ID_CONTROLLER, sample_rate, TIMER_PRIORITY_CONTROLLER, controller_run_iteration);
 }
 

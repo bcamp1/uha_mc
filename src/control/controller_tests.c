@@ -4,6 +4,7 @@
 #include "../drivers/board.h"
 #include "../periphs/uart.h"
 #include "../drivers/stopwatch.h"
+#include "../drivers/spi_collector.h"
 #include "state_recorder.h"
 #include "../periphs/gpio.h"
 #include "control_state.h"
@@ -13,14 +14,14 @@ static void controller_func(ControlState error, float* torque1, float* torque2) 
     ControlState K_takeup = {
         .takeup_reel_speed = 0.0f, // 0.5
         .takeup_reel_acceleration = 0.0f, // 0.1
-        .takeup_tension = 0.5f,
+        .takeup_tension = 2.0f,
         .takeup_tension_speed = 0.0f,
         .supply_reel_speed = 0.0f,
         .supply_reel_acceleration = 0.0f,
         .supply_tension = 0.0f,
         .supply_tension_speed = 0.0f,
         .tape_position = 0.0f,
-        .tape_speed = -0.05f,
+        .tape_speed = -0.00f,
         .tape_acceleration = -0.01f,
     };
 
@@ -78,9 +79,12 @@ void controller_tests_run(ControllerConfig *config, bool send_logs, bool uart_to
     }
 
 	controller_set_config(config); 
-    controller_start_process();
+    //controller_start_process();
+    spi_collector_enable_service();
+
     char input_command = 0;
 	while (1) {
+        gpio_set_pin(DEBUG_PIN);
         //controller_print_state();
         if (send_logs && state_recorder_should_transmit()) {
             input_command = uart_get();

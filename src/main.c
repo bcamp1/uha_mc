@@ -30,6 +30,7 @@ static void print_welcome(void);
 
 static void init_peripherals(void) {
 	// Init clock to use 32K OSC in closed-loop 48MHz mode
+    // Then its boosted to 120MHz
 	wntr_system_clocks_init();
 	
 	// Enable floating-point unit

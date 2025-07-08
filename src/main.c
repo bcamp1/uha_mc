@@ -102,7 +102,7 @@ static void encoder_test() {
     spi_collector_set_torque_b(-0.0f);
     spi_collector_enable_service();
     while (1) {
-        gpio_set_pin(DEBUG_PIN);
+        //gpio_set_pin(DEBUG_PIN);
         /*
         float data[6] = {
             spi_collector_get_encoder_a(),

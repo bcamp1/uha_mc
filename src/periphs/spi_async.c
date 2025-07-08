@@ -111,7 +111,7 @@ bool spi_async_is_busy() {
 }
 
 static void spi_async_isr() {
-    gpio_clear_pin(DEBUG_PIN);
+    //gpio_clear_pin(DEBUG_PIN);
     //uart_put('.');
     if (SERCOM4->SPI.INTFLAG.bit.RXC) {
         // Byte recieved

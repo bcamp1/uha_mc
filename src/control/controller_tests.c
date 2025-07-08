@@ -84,7 +84,7 @@ void controller_tests_run(ControllerConfig *config, bool send_logs, bool uart_to
 
     char input_command = 0;
 	while (1) {
-        gpio_set_pin(DEBUG_PIN);
+        //gpio_set_pin(DEBUG_PIN);
         //controller_print_state();
         if (send_logs && state_recorder_should_transmit()) {
             input_command = uart_get();

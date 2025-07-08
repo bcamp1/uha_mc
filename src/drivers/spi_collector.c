@@ -143,7 +143,7 @@ void spi_collector_callback() {
 
     // Done processing all 4? Post to clean
     if (current_index == 3) {
-        __disable_irq();
+        //__disable_irq();
         //gpio_set_pin(DEBUG_PIN);
         process_floats();
         if (enable_motors) {
@@ -153,7 +153,7 @@ void spi_collector_callback() {
            foc_off(); 
         }
         //gpio_clear_pin(DEBUG_PIN);
-        __enable_irq();
+        //__enable_irq();
         /*
         uart_print_int(clean_bits[0] & 0x3FFF);
         uart_put(' ');

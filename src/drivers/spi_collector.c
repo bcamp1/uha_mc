@@ -12,6 +12,7 @@
 #include "core_cm4.h" 
 #include "../foc/foc_math_fpu.h"
 #include "../periphs/timer.h"
+#include "uha_motor_driver.h"
 
 #define COLLECTOR_ENCODER_A_INDEX 0
 #define COLLECTOR_ENCODER_B_INDEX 1
@@ -126,8 +127,10 @@ static void process_foc() {
 }
 
 static void foc_off() {
-    motor_unit_set_torque(&MOTOR_UNIT_A, 0.0f, encoder_a_pole_pos);
-    motor_unit_set_torque(&MOTOR_UNIT_B, 0.0f, encoder_b_pole_pos);
+    uha_motor_driver_set_high_z(&UHA_MTR_DRVR_CONF_A);
+    uha_motor_driver_set_high_z(&UHA_MTR_DRVR_CONF_A);
+    //motor_unit_set_torque(&MOTOR_UNIT_A, 0.0f, encoder_a_pole_pos);
+    //motor_unit_set_torque(&MOTOR_UNIT_B, 0.0f, encoder_b_pole_pos);
 }
 
 void spi_collector_callback() {
@@ -146,8 +149,8 @@ void spi_collector_callback() {
         //__disable_irq();
         //gpio_set_pin(DEBUG_PIN);
         process_floats();
+        controller_run_iteration();
         if (enable_motors) {
-            controller_run_iteration();
             process_foc();
         } else {
            foc_off(); 

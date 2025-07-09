@@ -13,7 +13,7 @@
 static void controller_func(ControlState error, float* torque1, float* torque2) {
     ControlState K_takeup = {
         .takeup_reel_speed = 0.5f, // 0.5
-        .takeup_reel_acceleration = 0.2f, // 0.1
+        .takeup_reel_acceleration = 0.0f, // 0.1
         .takeup_tension = 0.0f,
         .takeup_tension_speed = 0.0f,
         .supply_reel_speed = 0.0f,

@@ -12,9 +12,9 @@
 
 static void controller_func(ControlState error, float* torque1, float* torque2) {
     ControlState K_takeup = {
-        .takeup_reel_speed = 0.5f, // 0.5
+        .takeup_reel_speed = 0.0f, // 0.5
         .takeup_reel_acceleration = 0.0f, // 0.1
-        .takeup_tension = 0.0f,
+        .takeup_tension = 0.8f,
         .takeup_tension_speed = 0.0f,
         .supply_reel_speed = 0.0f,
         .supply_reel_acceleration = 0.0f,
@@ -33,7 +33,7 @@ static void controller_func(ControlState error, float* torque1, float* torque2) 
         .takeup_tension_speed = 0.0f,
         .supply_reel_speed = 0.0f,
         .supply_reel_acceleration = 0.0f,
-        .supply_tension = -0.0f,
+        .supply_tension = -0.8f,
         .supply_tension_speed = -0.0f,
         .tape_position = 0.0f,
         .tape_speed = 0.0f,
@@ -45,7 +45,7 @@ static void controller_func(ControlState error, float* torque1, float* torque2) 
 }
 
 static ControlState r = {
-    .takeup_reel_speed = -10.0f,
+    .takeup_reel_speed = 0.0f,
     .takeup_reel_acceleration = 0.0f,
     .takeup_tension = 0.5f,
     .takeup_tension_speed = 0.0f,

@@ -140,7 +140,8 @@ int main(void) {
     //encoder_test();
 
 	while (1) {
-        delay(0x4FFF);
+        delay(0x4FF);
+        uart_println("Hello world");
 		//float ips = roller_get_ips();
 		//float tape_pos = roller_get_tape_position(15.0f);
         //float data[2] = {ips, tape_pos};

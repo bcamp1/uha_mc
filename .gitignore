@@ -10,4 +10,8 @@ CMSIS/
 .cache
 flash.log
 logs/csv/recent.csv
+CMakeCache.txt
+CMakeFiles/
+lib/include/
+cmake_install.cmake
 

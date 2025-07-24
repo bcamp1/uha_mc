@@ -135,6 +135,7 @@ void uha_motor_driver_enable(const UHAMotorDriverConfig* config) {
 
 void uha_motor_driver_disable(const UHAMotorDriverConfig* config) {
 	gpio_clear_pin(config->en);
+    delay(0xFFF);
 }
 
 void uha_motor_driver_toggle(const UHAMotorDriverConfig* config) {

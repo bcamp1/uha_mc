@@ -12,9 +12,9 @@
 
 static void controller_func(ControlState error, float* torque1, float* torque2) {
     ControlState K_takeup = {
-        .takeup_reel_speed = 0.5f, // 0.5
+        .takeup_reel_speed = 0.0f, // 0.5
         .takeup_reel_acceleration = 0.0f, // 0.1
-        .takeup_tension = 0.0f,
+        .takeup_tension = 0.8f,
         .takeup_tension_speed = 0.0f,
         .supply_reel_speed = 0.0f,
         .supply_reel_acceleration = 0.0f,
@@ -33,7 +33,7 @@ static void controller_func(ControlState error, float* torque1, float* torque2) 
         .takeup_tension_speed = 0.0f,
         .supply_reel_speed = 0.0f,
         .supply_reel_acceleration = 0.0f,
-        .supply_tension = -0.0f,
+        .supply_tension = -0.8f,
         .supply_tension_speed = -0.0f,
         .tape_position = 0.0f,
         .tape_speed = 0.0f,
@@ -45,7 +45,7 @@ static void controller_func(ControlState error, float* torque1, float* torque2) 
 }
 
 static ControlState r = {
-    .takeup_reel_speed = -10.0f,
+    .takeup_reel_speed = 0.0f,
     .takeup_reel_acceleration = 0.0f,
     .takeup_tension = 0.5f,
     .takeup_tension_speed = 0.0f,
@@ -66,11 +66,9 @@ ControllerConfig controller_tests_config = {
 };
 
 void controller_tests_run(ControllerConfig *config, bool send_logs, bool uart_toggle, bool start_on) { 
-	bool motors_enabled = true;
 	controller_init_all_hardware();
 
 	if (!start_on) {
-		motors_enabled = false;
 		controller_disable_motors();
 	}
 
@@ -97,14 +95,12 @@ void controller_tests_run(ControllerConfig *config, bool send_logs, bool uart_to
 
         if (uart_toggle) {
             if (input_command == 'e') {
-                motors_enabled = true;
                 controller_enable_motors();
                 gpio_set_pin(LED_PIN);
                 if (!send_logs) {
-                    uart_println("Enabling Motors. Type 'e' to disable.");
+                    uart_println("Enabling Motors. Type 'p' to disable.");
                 }
             } else if (input_command == 'p') {
-                motors_enabled = false;
                 controller_disable_motors();
                 gpio_clear_pin(LED_PIN);
                 if (!send_logs) {

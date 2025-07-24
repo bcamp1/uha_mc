@@ -98,15 +98,15 @@ float controller_get_time() {
 }
 
 void controller_disable_motors() {
-    //uha_motor_driver_disable(&UHA_MTR_DRVR_CONF_A);
-    //uha_motor_driver_disable(&UHA_MTR_DRVR_CONF_B);
+    uha_motor_driver_disable(&UHA_MTR_DRVR_CONF_A);
+    uha_motor_driver_disable(&UHA_MTR_DRVR_CONF_B);
     spi_collector_disable_motors();
     motors_enabled = false;
 }
 
 void controller_enable_motors() {
-    //uha_motor_driver_enable(&UHA_MTR_DRVR_CONF_A);
-    //uha_motor_driver_enable(&UHA_MTR_DRVR_CONF_B);
+    uha_motor_driver_enable(&UHA_MTR_DRVR_CONF_A);
+    uha_motor_driver_enable(&UHA_MTR_DRVR_CONF_B);
     spi_collector_enable_motors();
     motors_enabled = true;
 }

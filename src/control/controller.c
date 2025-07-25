@@ -32,7 +32,7 @@ static volatile bool motors_enabled = true;
 static ControlState control_state;
 
 // Filters
-static SimpleFilter takeup_reel_speed_filter        = {0.99f, 0.0f};
+static SimpleFilter takeup_reel_speed_filter        = {0.999f, 0.0f};
 static SimpleFilter takeup_reel_acceleration_filter = {0.99f, 0.0f};
 static SimpleFilter takeup_tension_speed_filter     = {0.99f, 0.0f};
 static SimpleFilter supply_tension_speed_filter     = {0.99f, 0.0f};

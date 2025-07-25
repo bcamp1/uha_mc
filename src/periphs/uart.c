@@ -95,7 +95,9 @@ void uart_print_float(float num) {
 	if (num < 0) {
 		uart_put('-');
 		num = -num;
-	}
+	} else {
+        uart_put('+');
+    }
 	static char buffer[MAX_FLOAT_STR_LEN];  // Static to keep the buffer valid after returning
 	int integer_part = (int)num;  // Get the integer part
 	float fractional_part = num - integer_part;  // Get the fractional part

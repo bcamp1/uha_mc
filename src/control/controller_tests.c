@@ -11,10 +11,16 @@
 #include <stdbool.h>
 
 static void controller_func(ControlState error, float* torque1, float* torque2) {
+    
+    double takeup_coeff = 0.5;
+    if (error.takeup_reel_speed < 1.0) {
+        takeup_coeff = 3.0;
+    }
+
     ControlState K_takeup = {
-        .takeup_reel_speed = 0.0f, // 0.5
-        .takeup_reel_acceleration = 0.0f, // 0.1
-        .takeup_tension = 0.8f,
+        .takeup_reel_speed = takeup_coeff, // 0.5
+        .takeup_reel_acceleration = 0.1f, // 0.1
+        .takeup_tension = 0.0f,
         .takeup_tension_speed = 0.0f,
         .supply_reel_speed = 0.0f,
         .supply_reel_acceleration = 0.0f,
@@ -33,7 +39,7 @@ static void controller_func(ControlState error, float* torque1, float* torque2) 
         .takeup_tension_speed = 0.0f,
         .supply_reel_speed = 0.0f,
         .supply_reel_acceleration = 0.0f,
-        .supply_tension = -0.8f,
+        .supply_tension = -0.0f,
         .supply_tension_speed = -0.0f,
         .tape_position = 0.0f,
         .tape_speed = 0.0f,
@@ -45,7 +51,7 @@ static void controller_func(ControlState error, float* torque1, float* torque2) 
 }
 
 static ControlState r = {
-    .takeup_reel_speed = 0.0f,
+    .takeup_reel_speed = 11.0f,
     .takeup_reel_acceleration = 0.0f,
     .takeup_tension = 0.5f,
     .takeup_tension_speed = 0.0f,
@@ -82,8 +88,6 @@ void controller_tests_run(ControllerConfig *config, bool send_logs, bool uart_to
 
     char input_command = 0;
 	while (1) {
-        //gpio_set_pin(DEBUG_PIN);
-        //controller_print_state();
         if (send_logs && state_recorder_should_transmit()) {
             input_command = uart_get();
             state_recorder_transmit();
@@ -96,13 +100,11 @@ void controller_tests_run(ControllerConfig *config, bool send_logs, bool uart_to
         if (uart_toggle) {
             if (input_command == 'e') {
                 controller_enable_motors();
-                gpio_set_pin(LED_PIN);
                 if (!send_logs) {
                     uart_println("Enabling Motors. Type 'p' to disable.");
                 }
             } else if (input_command == 'p') {
                 controller_disable_motors();
-                gpio_clear_pin(LED_PIN);
                 if (!send_logs) {
                     uart_println("Disabling Motors. Type 'e' to enable.");
                 }

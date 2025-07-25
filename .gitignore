@@ -6,6 +6,7 @@ CMSIS/
 .DS_Store
 .vscode
 *.bin
+*.csv
 *.png
 .cache
 flash.log

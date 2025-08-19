@@ -37,8 +37,9 @@ static void init_peripherals(void) {
 	enable_fpu();
 
 	// Init useful debugging GPIO pins
-	gpio_init_pin(LED_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
-	gpio_init_pin(DEBUG_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
+	//gpio_init_pin(LED_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
+	gpio_init_pin(DBG1_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
+	gpio_init_pin(DBG2_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
 	
 	// Init the UART
 	uart_init();
@@ -130,17 +131,21 @@ static void encoder_test() {
 
 int main(void) {
 	init_peripherals();
-	print_welcome();
+	//print_welcome();
     //timer_schedule(1, 500.0f, timer_test);
-    delay(0x4FFF);
-    uart_println("\nStarting Controller Test");
-    controller_test();
+    //delay(0x4FFF);
+    //uart_println("\nStarting Controller Test");
+    //controller_test();
     //delay(0x4FFF);
     //uart_println("\nStarting Encoder Test");
     //encoder_test();
 
+    gpio_toggle_pin(DBG1_PIN);
 	while (1) {
-        delay(0x4FF);
+        //delay(0x4FF);
+        for (int i = 0; i < 0xFFFFF; i++) {}
+        gpio_toggle_pin(DBG1_PIN);
+        gpio_toggle_pin(DBG2_PIN);
         uart_println("Hello world");
 		//float ips = roller_get_ips();
 		//float tape_pos = roller_get_tape_position(15.0f);

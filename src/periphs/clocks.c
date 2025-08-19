@@ -19,7 +19,7 @@
 */
 
 /* Forward declarations */
-#define WNTR_SYSTEM_CLOCKS_USE_32K_CRYSTAL 1
+#define WNTR_SYSTEM_CLOCKS_USE_32K_CRYSTAL 0
 
 static void init_osc32k() __attribute__((unused));
 static void init_xosc32k() __attribute__((unused));

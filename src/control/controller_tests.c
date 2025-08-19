@@ -11,10 +11,17 @@
 #include <stdbool.h>
 
 static void controller_func(ControlState error, float* torque1, float* torque2) {
-    
-    double takeup_coeff = 0.5;
-    if (error.takeup_reel_speed < 1.0) {
-        takeup_coeff = 3.0;
+    double takeup_speed_err = error.takeup_reel_speed;
+    if (takeup_speed_err < 0) takeup_speed_err = -takeup_speed_err; 
+
+    double takeup_coeff = 0.0;
+
+    if (takeup_speed_err < 1.0) {
+        takeup_coeff = 1.5;
+    } else if (takeup_speed_err < 2.0) {
+        takeup_coeff = 0.5;
+    } else {
+        takeup_coeff = 0.3;
     }
 
     ControlState K_takeup = {
@@ -35,7 +42,7 @@ static void controller_func(ControlState error, float* torque1, float* torque2) 
     ControlState K_supply = {
         .takeup_reel_speed = 0.0f,
         .takeup_reel_acceleration = 0.0f,
-        .takeup_tension = 0.0f,
+        .takeup_tension = 0.5f,
         .takeup_tension_speed = 0.0f,
         .supply_reel_speed = 0.0f,
         .supply_reel_acceleration = 0.0f,
@@ -51,7 +58,7 @@ static void controller_func(ControlState error, float* torque1, float* torque2) 
 }
 
 static ControlState r = {
-    .takeup_reel_speed = 11.0f,
+    .takeup_reel_speed = -4.0f,
     .takeup_reel_acceleration = 0.0f,
     .takeup_tension = 0.5f,
     .takeup_tension_speed = 0.0f,

@@ -121,7 +121,7 @@ void control_state_transmit_uart(float time, ControlState state) {
     bool send_supply_tension_speed      = false;
     bool send_tape_position             = false;
     bool send_tape_speed                = true;
-    bool send_tape_acceleration         = true;
+    bool send_tape_acceleration         = false;
     int data_count = 0;
     float data[20] = {0};
     data[data_count] = time;

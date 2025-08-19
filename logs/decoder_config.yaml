@@ -8,7 +8,7 @@ data_info:
   - {name: Supply Reel Speed, ylabel: rads/s, plot: false}
   - {name: Supply Tension Arm, ylabel: Arm Height (%), plot: false, scale: 100.0}
   - {name: Tape Speed, ylabel: Tape Speed (ips), plot: false}
-  - {name: Tape Acceleration, ylabel: Tape Accel (ips/s), plot: false}
+#  - {name: Tape Acceleration, ylabel: Tape Accel (ips/s), plot: false}
 plot_settings:
   show_xlims: false
   x_min: 2.0

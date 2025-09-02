@@ -1,4 +1,6 @@
 #include "controller.h"
+
+/*
 #include "../drivers/uha_motor_driver.h"
 #include "../drivers/delay.h"
 #include "../drivers/board.h"
@@ -174,3 +176,4 @@ ControllerConfig controller_tests_config_rewind = {
 	.controller = controller_func_rewind,
     .reference = &r_rewind,
 };
+*/

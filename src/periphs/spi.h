@@ -32,11 +32,9 @@ typedef struct {
 } SPIConfig;
 
 extern const SPIConfig SPI_CONF_MTR_DRVR_A;
-extern const SPIConfig SPI_CONF_MTR_DRVR_B;
+extern const SPIConfig SPI_CONF_MTR_ENCODER;
 extern const SPIConfig SPI_CONF_TENSION_ARM_A;
 extern const SPIConfig SPI_CONF_TENSION_ARM_B;
-extern const SPIConfig SPI_CONF_MTR_ENCODER_A;
-extern const SPIConfig SPI_CONF_MTR_ENCODER_B;
 
 void spi_init(const SPIConfig* inst);
 uint16_t spi_write_read16(const SPIConfig* inst, uint16_t data);

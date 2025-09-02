@@ -1,4 +1,6 @@
 #include "spi_collector.h"
+
+/*
 #include "../periphs/spi.h"
 #include "../periphs/uart.h"
 #include "../periphs/gpio.h"
@@ -22,10 +24,10 @@
 static uint16_t current_index = 0;
 
 static const SPIConfig* configs[4] = {
-    &SPI_CONF_MTR_ENCODER_A,
-    &SPI_CONF_MTR_ENCODER_B,
-    &SPI_CONF_TENSION_ARM_A,
-    &SPI_CONF_TENSION_ARM_B,
+    &SPI_CONF_MTR_ENCODER,
+    &SPI_CONF_MTR_ENCODER,
+    &SPI_CONF_MTR_ENCODER,
+    &SPI_CONF_MTR_ENCODER,
 };
 
 static uint16_t dirty_bits[4] = {0, 0, 0, 0};
@@ -80,10 +82,10 @@ float spi_collector_get_tension_b() {
 }
 
 void spi_collector_init() {
-    spi_async_init(&SPI_CONF_TENSION_ARM_A); 
-    spi_async_init(&SPI_CONF_TENSION_ARM_B); 
-    spi_async_init(&SPI_CONF_MTR_ENCODER_B); 
-    spi_async_init(&SPI_CONF_MTR_ENCODER_A); 
+    //spi_async_init(&SPI_CONF_TENSION_ARM_A); 
+    //spi_async_init(&SPI_CONF_TENSION_ARM_B); 
+    //spi_async_init(&SPI_CONF_MTR_ENCODER_B); 
+    //spi_async_init(&SPI_CONF_MTR_ENCODER_A); 
     uha_motor_driver_init(&UHA_MTR_DRVR_CONF_A);
     uha_motor_driver_init(&UHA_MTR_DRVR_CONF_B);
     torque_a = 0.0f;
@@ -157,7 +159,6 @@ void spi_collector_callback() {
         }
         //gpio_clear_pin(DEBUG_PIN);
         //__enable_irq();
-        /*
         uart_print_int(clean_bits[0] & 0x3FFF);
         uart_put(' ');
         uart_print_int(clean_bits[1] & 0x3FFF);
@@ -166,12 +167,11 @@ void spi_collector_callback() {
         uart_put(' ');
         uart_print_int(clean_bits[3] >> 6);
         uart_put('\n');
-        */
     } else {
         // Send the next index
         current_index++;
         if (current_index == 2) {
-            spi_change_mode(&SPI_CONF_TENSION_ARM_A);
+            //spi_change_mode(&SPI_CONF_TENSION_ARM_A);
         }
         //uart_println("Queuing another callback");
         spi_async_start_transfer(configs[current_index], tx_data, rx_data, 2, spi_collector_callback);
@@ -181,7 +181,7 @@ void spi_collector_callback() {
 
 static void spi_collector_service_entry() {
     current_index = 0; 
-    spi_change_mode(&SPI_CONF_MTR_ENCODER_A);
+    //spi_change_mode(&SPI_CONF_MTR_ENCODER_A);
     //uart_println("Queuing another callback");
     spi_async_start_transfer(configs[current_index], tx_data, rx_data, 2, spi_collector_callback);
 }
@@ -213,4 +213,4 @@ void spi_collector_set_torque_a(float torque) {
 void spi_collector_set_torque_b(float torque) {
     torque_b = torque;
 }
-
+*/

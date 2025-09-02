@@ -22,9 +22,9 @@ bool state_recorder_should_transmit() {
 }
 
 void state_recorder_transmit() {
-    gpio_set_pin(DEBUG_PIN);
+    //gpio_set_pin(DEBUG_PIN);
     controller_send_state_uart();
-    gpio_clear_pin(DEBUG_PIN);
+    //gpio_clear_pin(DEBUG_PIN);
     flag = false;
 }
 

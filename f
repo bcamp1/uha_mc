@@ -5,9 +5,15 @@ if [ "$1" = "-b" ]; then
     cmake -S $UHA -B $UHA/build
 fi
 
-cd $UHA/build
+if [ "$1" = "-c" ]; then
+    cd build
+    make clean
+    cd ..
+fi
+
+cd build
 make flash || exit $?
-cd $UHA
+cd ..
 
 if [ "$1" = "-u" ]; then
     screen /dev/ttyUSB0 115200

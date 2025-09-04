@@ -16,6 +16,8 @@
 #include "drivers/delay.h"
 #include "drivers/motor_encoder.h"
 #include "drivers/stepper.h"
+#include "drivers/trq_pwm.h"
+#include "drivers/bldc.h"
 
 static void enable_fpu(void);
 static void init_peripherals(void);
@@ -83,13 +85,7 @@ static void encoder_test() {
     }
 }
 
-int main(void) {
-	init_peripherals();
-    delay(0xFFFF);
-
-    gpio_set_pin(PIN_DEBUG1);
-    gpio_clear_pin(PIN_DEBUG2);
-    
+static void stepper_test() {
     int32_t stepper_steps = 200;
     uint32_t stepper_delay = 0x4FF;
 
@@ -99,8 +95,31 @@ int main(void) {
     stepper_send_pulses(&STEPPER_CONF_1, stepper_steps, stepper_delay);
 
 	while (1) {
-        //stepper_send_pulses(&STEPPER_CONF_1, stepper_steps, stepper_delay);
-        //stepper_steps *= -1;
+        stepper_send_pulses(&STEPPER_CONF_1, stepper_steps, stepper_delay);
+        stepper_steps *= -1;
 	}
+}
+
+int main(void) {
+	init_peripherals();
+    delay(0xFFFF);
+
+    gpio_set_pin(PIN_DEBUG1);
+    gpio_clear_pin(PIN_DEBUG2);
+
+    //trq_pwm_init();
+    //trq_pwm_set_all_mags(0.5, 0.25, 0.8);
+
+    bldc_init_all();
+    bldc_enable_all();
+    bldc_set_all_torques(-0.3, 0.95, -0.6);
+   
+    //trq_pwm_set_mag(PWM_INDEX_A, 0.7);
+
+    while (1) {
+        gpio_toggle_pin(PIN_DEBUG1);
+        gpio_toggle_pin(PIN_DEBUG2);
+        delay(0xFFFF);
+    }
 }
 

@@ -14,7 +14,7 @@
 #include "delay.h"
 #include "instance/evsys.h"
 #include "stopwatch.h"
-#include "../drivers/board.h"
+#include "../board.h"
 #include <sam.h>
 
 #define GCLK_TCC0_TCC1_INDEX (25)

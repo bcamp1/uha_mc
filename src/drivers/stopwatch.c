@@ -1,6 +1,6 @@
 #include <sam.h>
 #include "stopwatch.h"
-#include "board.h"
+#include "../board.h"
 #include "../periphs/uart.h"
 //#include "../periphs/gpio.h"
 

@@ -3,7 +3,7 @@
 #include "uart.h"
 #include "spi_async.h"
 #include "../drivers/delay.h"
-#include "../drivers/board.h"
+#include "../board.h"
 /* 12 MHz clock for SPI */
 #define SERCOM_SPI_GCLK GCLK_PCHCTRL_GEN_GCLK4;
 

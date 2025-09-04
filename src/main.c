@@ -12,9 +12,10 @@
 #include "drivers/motor_encoder.h"
 #include "drivers/tension_arm.h"
 #include "drivers/stopwatch.h"
-#include "drivers/board.h"
+#include "board.h"
 #include "drivers/delay.h"
 #include "drivers/motor_encoder.h"
+#include "drivers/stepper.h"
 
 static void enable_fpu(void);
 static void init_peripherals(void);
@@ -30,8 +31,8 @@ static void init_peripherals(void) {
 
 	// Init useful debugging GPIO pins
 	//gpio_init_pin(LED_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
-	gpio_init_pin(DBG1_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
-	gpio_init_pin(DBG2_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
+	gpio_init_pin(PIN_DEBUG1, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
+	gpio_init_pin(PIN_DEBUG2, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
 	
 	// Init the UART
 	uart_init();
@@ -84,31 +85,22 @@ static void encoder_test() {
 
 int main(void) {
 	init_peripherals();
-	//print_welcome();
-    //timer_schedule(1, 500.0f, timer_test);
-    //delay(0x4FFF);
-    //uart_println("\nStarting Controller Test");
-    //controller_test();
-    //delay(0x4FFF);
-    //uart_println("\nStarting Encoder Test");
-    //encoder_test();
+    delay(0xFFFF);
 
-    gpio_set_pin(DBG1_PIN);
-    gpio_clear_pin(DBG2_PIN);
-    //encoder_test();
+    gpio_set_pin(PIN_DEBUG1);
+    gpio_clear_pin(PIN_DEBUG2);
+    
+    int32_t stepper_steps = 200;
+    uint32_t stepper_delay = 0x4FF;
+
+    stepper_init(&STEPPER_CONF_1);
+    delay(0xFFFFF);
+    stepper_enable(&STEPPER_CONF_1);
+    stepper_send_pulses(&STEPPER_CONF_1, stepper_steps, stepper_delay);
 
 	while (1) {
-        delay(0xFFFF);
-        gpio_toggle_pin(DBG1_PIN);
-        gpio_toggle_pin(DBG2_PIN);
-        //for (int i = 0; i < 0xFFFFF; i++) {}
-        //gpio_toggle_pin(DBG1_PIN);
-        //gpio_toggle_pin(DBG2_PIN);
-        //uart_println("Hello world");
-		//float ips = roller_get_ips();
-		//float tape_pos = roller_get_tape_position(15.0f);
-        //float data[2] = {ips, tape_pos};
-        //uart_println_float_arr(data, 2);
+        //stepper_send_pulses(&STEPPER_CONF_1, stepper_steps, stepper_delay);
+        //stepper_steps *= -1;
 	}
 }
 

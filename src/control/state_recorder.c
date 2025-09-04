@@ -2,7 +2,7 @@
 #include "../periphs/timer.h"
 #include "../periphs/gpio.h"
 //#include "../periphs/uart.h"
-#include "../drivers/board.h"
+#include "../board.h"
 #include "controller.h"
 
 

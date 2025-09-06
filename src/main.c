@@ -106,25 +106,14 @@ int main(void) {
 
     gpio_clear_pin(PIN_DEBUG1);
     gpio_clear_pin(PIN_DEBUG2);
-
-    //trq_pwm_init();
-    //trq_pwm_set_all_mags(0.5, 0.25, 0.8);
-
     bldc_init_all();
     bldc_enable_all();
-    bldc_set_all_torques(0.123, 0.95, -0.6);
-   
-    //trq_pwm_set_mag(PWM_INDEX_A, 0.7);
-    float min = 0.05;
-    float max = 0.95;
-    float duty = min;
+
+    uint16_t torque = 0;
 
     while (1) {
-        duty += 0.0001;
-        if (duty > max) duty = min;
-        bldc_set_torque(&BLDC_CONF_A, duty);
-        gpio_toggle_pin(PIN_DEBUG1);
-        gpio_toggle_pin(PIN_DEBUG2);
+        torque += 1;
+        bldc_set_torque(&BLDC_CONF_A, torque);
         delay(0x4FF);
     }
 }

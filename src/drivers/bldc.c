@@ -48,10 +48,8 @@ void bldc_init(const BLDCConfig* config) {
     spi_init(&SPI_CONF_BLDC_A);
 }
 
-void bldc_set_torque(const BLDCConfig* config, float torque) {
-    uint16_t out = 0x1234;
-    uint8_t in = 0;
-    spi_write_read16(&SPI_CONF_BLDC_A, out);
+void bldc_set_torque(const BLDCConfig* config, uint16_t torque) {
+    spi_write_read16(&SPI_CONF_BLDC_A, torque);
 }
 
 /*
@@ -66,12 +64,6 @@ void bldc_set_torque(const BLDCConfig* config, float torque) {
     trq_pwm_set_mag(config->pwm_index, torque);
 }
 */
-
-void bldc_set_all_torques(float torque_a, float torque_b, float torque_c) {
-    bldc_set_torque(&BLDC_CONF_A, torque_a);
-    bldc_set_torque(&BLDC_CONF_B, torque_b);
-    bldc_set_torque(&BLDC_CONF_C, torque_c);
-}
 
 void bldc_enable(const BLDCConfig* config) {
     gpio_set_pin(config->enable_pin);

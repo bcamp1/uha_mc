@@ -12,7 +12,7 @@
 /* 12 MHz clock for SPI */
 #define SERCOM_SPI_GCLK GCLK_PCHCTRL_GEN_GCLK4;
 
-const SPIConfig SPI_CONF_MTR_DRVR = {
+const SPIConfig SPI_CONF_TENSION_A = {
 	.sercom = (SercomSpi*) SERCOM3,
 	.dopo = 0,
 	.dipo = 2,
@@ -20,19 +20,19 @@ const SPIConfig SPI_CONF_MTR_DRVR = {
 	.polarity = 0,
 	.phase = 1,
 
-	.mosi = PIN_PA17,
+	.mosi = PIN_MOSI,
 	.mosi_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
 	
-	.miso = PIN_PA18,
+	.miso = PIN_MISO,
 	.miso_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
 
-	.sck = PIN_PA16,
+	.sck = PIN_SCK,
 	.sck_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
 	
-	.cs = PIN_PB31,
+	.cs = PIN_TENSION_A_CS,
 };
 
-const SPIConfig SPI_CONF_TENSION_ARM_A = {
+const SPIConfig SPI_CONF_TENSION_B = {
 	.sercom = (SercomSpi*) SERCOM3,
 	.dopo = 0,
 	.dipo = 2,
@@ -40,19 +40,19 @@ const SPIConfig SPI_CONF_TENSION_ARM_A = {
 	.polarity = 0,
 	.phase = 1,
 
-	.mosi = PIN_PA17,
+	.mosi = PIN_MOSI,
 	.mosi_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
 	
-	.miso = PIN_PA18,
+	.miso = PIN_MISO,
 	.miso_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
 
-	.sck = PIN_PA16,
+	.sck = PIN_SCK,
 	.sck_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
 	
-	.cs = PIN_PB31,
+	.cs = PIN_TENSION_B_CS,
 };
 
-const SPIConfig SPI_CONF_TENSION_ARM_B = {
+const SPIConfig SPI_CONF_BLDC_A = {
 	.sercom = (SercomSpi*) SERCOM3,
 	.dopo = 0,
 	.dipo = 2,
@@ -60,36 +60,56 @@ const SPIConfig SPI_CONF_TENSION_ARM_B = {
 	.polarity = 0,
 	.phase = 1,
 
-	.mosi = PIN_PA17,
+	.mosi = PIN_MOSI,
 	.mosi_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
 	
-	.miso = PIN_PA18,
+	.miso = PIN_MISO,
 	.miso_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
 
-	.sck = PIN_PA16,
+	.sck = PIN_SCK,
 	.sck_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
 	
-	.cs = PIN_PB31,
+	.cs = PIN_BLDC_A_CS,
 };
 
-const SPIConfig SPI_CONF_MTR_ENCODER = {
-	.sercom = (SercomSpi*) SERCOM4,
-	.dopo = 2,	// Pad 1 is SCK, pad 3 is MOSI
-	.dipo = 2, // Pad 2 is MISO
+const SPIConfig SPI_CONF_BLDC_B = {
+	.sercom = (SercomSpi*) SERCOM3,
+	.dopo = 0,
+	.dipo = 2,
 
 	.polarity = 0,
-	.phase = 0,
+	.phase = 1,
 
-	.mosi = PIN_PB15, // SERCOM4[3]
-	.mosi_alt = GPIO_ALTERNATE_C_SERCOM,
+	.mosi = PIN_MOSI,
+	.mosi_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
 	
-	.miso = PIN_PB14,
-	.miso_alt = GPIO_ALTERNATE_C_SERCOM,
+	.miso = PIN_MISO,
+	.miso_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
 
-	.sck = PIN_PB13,
-	.sck_alt = GPIO_ALTERNATE_C_SERCOM,
+	.sck = PIN_SCK,
+	.sck_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
 	
-	.cs = PIN_PB08,
+	.cs = PIN_BLDC_B_CS,
+};
+
+const SPIConfig SPI_CONF_BLDC_C = {
+	.sercom = (SercomSpi*) SERCOM3,
+	.dopo = 0,
+	.dipo = 2,
+
+	.polarity = 0,
+	.phase = 1,
+
+	.mosi = PIN_MOSI,
+	.mosi_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
+	
+	.miso = PIN_MISO,
+	.miso_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
+
+	.sck = PIN_SCK,
+	.sck_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
+	
+	.cs = PIN_BLDC_C_CS,
 };
 
 void spi_init(const SPIConfig* inst) {
@@ -115,7 +135,7 @@ void spi_init(const SPIConfig* inst) {
 
 	/* Set baud to max (GCLK / 2) 6 MHz */
 	//inst->sercom->BAUD.reg = SERCOM_SPI_BAUD_BAUD(2000);
-	inst->sercom->BAUD.reg = (uint8_t) 2000; //SERCOM_SPI_BAUD_BAUD(1000);
+	inst->sercom->BAUD.reg = (uint8_t) 1000; //SERCOM_SPI_BAUD_BAUD(1000);
 
     // Enable receive complete (RXC) interrupt
     //inst->sercom->INTENSET.bit.RXC = 1;

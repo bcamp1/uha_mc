@@ -3,6 +3,8 @@
 #include "../periphs/gpio.h"
 #include "delay.h"
 #include "trq_pwm.h"
+#include "../periphs/spi_async.h"
+#include "../periphs/spi.h"
 
 const BLDCConfig BLDC_CONF_A = {
 	.cs_pin     = PIN_BLDC_A_CS,
@@ -29,7 +31,7 @@ const BLDCConfig BLDC_CONF_C = {
 };
 
 void bldc_init_all() {
-    trq_pwm_init();
+    //trq_pwm_init();
     bldc_init(&BLDC_CONF_A);
     bldc_init(&BLDC_CONF_B);
     bldc_init(&BLDC_CONF_C);
@@ -37,14 +39,22 @@ void bldc_init_all() {
 
 void bldc_init(const BLDCConfig* config) {
     gpio_init_pin(config->cs_pin, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE); 
-    gpio_init_pin(config->trqdir_pin, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE); 
+    //gpio_init_pin(config->trqdir_pin, GPIO_DIR_IN, GPIO_ALTERNATE_NONE); 
     gpio_init_pin(config->enable_pin, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE); 
 
     gpio_clear_pin(config->cs_pin);
     gpio_clear_pin(config->trqdir_pin);
     gpio_clear_pin(config->enable_pin);
+    spi_init(&SPI_CONF_BLDC_A);
 }
 
+void bldc_set_torque(const BLDCConfig* config, float torque) {
+    uint16_t out = 0x1234;
+    uint8_t in = 0;
+    spi_write_read16(&SPI_CONF_BLDC_A, out);
+}
+
+/*
 void bldc_set_torque(const BLDCConfig* config, float torque) {
     if (torque < 0) {
         gpio_set_pin(config->trqdir_pin);
@@ -55,6 +65,7 @@ void bldc_set_torque(const BLDCConfig* config, float torque) {
 
     trq_pwm_set_mag(config->pwm_index, torque);
 }
+*/
 
 void bldc_set_all_torques(float torque_a, float torque_b, float torque_c) {
     bldc_set_torque(&BLDC_CONF_A, torque_a);

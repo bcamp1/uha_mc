@@ -16,7 +16,7 @@
 #define TCC_CMD_START	(0x1)
 #define TCC_CMD_STOP	(0x2)
 
-#define PWM_PRESCALER	(0x4)
+#define PWM_PRESCALER	(0x5)
 
 // Timer Settings
 #define TIMER_TOP		(0xFF)

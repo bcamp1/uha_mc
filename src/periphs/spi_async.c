@@ -17,7 +17,7 @@ static volatile bool spi_busy = false;
 static const SPIConfig* current_spi_conf = NULL;
 
 // Timing configs
-#define BAUD_CYCLES         (30)
+#define BAUD_CYCLES         (100)
 #define BETWEEN_BYTE_CYCLES (0xa)
 
 void spi_async_init(const SPIConfig* inst) {

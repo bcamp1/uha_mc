@@ -102,9 +102,9 @@ static void stepper_test() {
 
 int main(void) {
 	init_peripherals();
-    delay(0xFFFF);
+    delay(0x4FFF);
 
-    gpio_set_pin(PIN_DEBUG1);
+    gpio_clear_pin(PIN_DEBUG1);
     gpio_clear_pin(PIN_DEBUG2);
 
     //trq_pwm_init();
@@ -112,14 +112,20 @@ int main(void) {
 
     bldc_init_all();
     bldc_enable_all();
-    bldc_set_all_torques(-0.3, 0.95, -0.6);
+    bldc_set_all_torques(0.123, 0.95, -0.6);
    
     //trq_pwm_set_mag(PWM_INDEX_A, 0.7);
+    float min = 0.05;
+    float max = 0.95;
+    float duty = min;
 
     while (1) {
+        duty += 0.0001;
+        if (duty > max) duty = min;
+        bldc_set_torque(&BLDC_CONF_A, duty);
         gpio_toggle_pin(PIN_DEBUG1);
         gpio_toggle_pin(PIN_DEBUG2);
-        delay(0xFFFF);
+        delay(0x4FF);
     }
 }
 

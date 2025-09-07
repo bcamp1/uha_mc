@@ -109,12 +109,11 @@ int main(void) {
     bldc_init_all();
     bldc_enable_all();
 
-    uint16_t torque = 0;
+    tension_arm_init(&TENSION_ARM_A);
 
     while (1) {
-        torque += 1;
-        bldc_set_torque(&BLDC_CONF_A, torque);
-        delay(0x4FF);
+        float value = tension_arm_get_position(&TENSION_ARM_A);
+        uart_println_float(value);
     }
 }
 

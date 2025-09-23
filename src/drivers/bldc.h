@@ -1,13 +1,20 @@
 #pragma once
 
 #include <stdint.h>
+#include "../periphs/spi.h"
+
+#define BLDC_IDENT_UNKNOWN  (0b00)
+#define BLDC_IDENT_SUPPLY   (0b10)
+#define BLDC_IDENT_TAKEUP   (0b01)
+#define BLDC_IDENT_CAPSTAN  (0b11)
 
 typedef struct {
+    uint8_t ident_code;
 	uint8_t cs_pin;
-	uint8_t trqmag_pin;
-	uint8_t trqdir_pin;
+	uint8_t ident1_pin;
+	uint8_t ident0_pin;
 	uint8_t enable_pin;
-    uint8_t pwm_index;
+    const SPIConfig* spi_conf; 
 } BLDCConfig;
 
 extern const BLDCConfig BLDC_CONF_A;

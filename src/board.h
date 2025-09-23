@@ -23,20 +23,20 @@
 
 // BLDC Driver A Pins
 #define PIN_BLDC_A_CS       PIN_PA25
-#define PIN_BLDC_A_TRQMAG   PIN_PA23
-#define PIN_BLDC_A_TRQDIR   PIN_PA20
+#define PIN_BLDC_A_IDENT1   PIN_PA23
+#define PIN_BLDC_A_IDENT0   PIN_PA20
 #define PIN_BLDC_A_ENABLE   PIN_PA08
 
 // BLDC Driver B Pins
 #define PIN_BLDC_B_CS       PIN_PA24
-#define PIN_BLDC_B_TRQMAG   PIN_PA22
-#define PIN_BLDC_B_TRQDIR   PIN_PB17
+#define PIN_BLDC_B_IDENT1   PIN_PA22
+#define PIN_BLDC_B_IDENT0   PIN_PB17
 #define PIN_BLDC_B_ENABLE   PIN_PA09
 
 // BLDC Driver C Pins
 #define PIN_BLDC_C_CS       PIN_PA19
-#define PIN_BLDC_C_TRQMAG   PIN_PA21
-#define PIN_BLDC_C_TRQDIR   PIN_PB16
+#define PIN_BLDC_C_IDENT1   PIN_PA21
+#define PIN_BLDC_C_IDENT0   PIN_PB16
 #define PIN_BLDC_C_ENABLE   PIN_PA10
 
 // Stepper Driver 1 Pins

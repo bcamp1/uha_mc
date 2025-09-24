@@ -107,13 +107,15 @@ int main(void) {
     gpio_clear_pin(PIN_DEBUG1);
     gpio_clear_pin(PIN_DEBUG2);
     bldc_init_all();
+
+    delay(0x4FFFF);
     bldc_enable_all();
 
-    tension_arm_init(&TENSION_ARM_A);
+    //tension_arm_init(&TENSION_ARM_A);
 
     while (1) {
-        float value = tension_arm_get_position(&TENSION_ARM_A);
-        uart_println_float(value);
+        //float value = tension_arm_get_position(&TENSION_ARM_A);
+        //uart_println_float(value);
     }
 }
 

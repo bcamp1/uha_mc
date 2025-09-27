@@ -7,6 +7,15 @@
 
 const BLDCConfig BLDC_CONF_CAPSTAN = {
     .ident_code = BLDC_IDENT_CAPSTAN,
+	.cs_pin     = PIN_BLDC_C_CS,
+	.ident1_pin = PIN_BLDC_C_IDENT1,
+	.ident0_pin = PIN_BLDC_C_IDENT0,
+	.enable_pin = PIN_BLDC_C_ENABLE,
+    .spi_conf = &SPI_CONF_BLDC_C,
+};
+
+const BLDCConfig BLDC_CONF_TAKEUP = {
+    .ident_code = BLDC_IDENT_TAKEUP,
 	.cs_pin     = PIN_BLDC_A_CS,
 	.ident1_pin = PIN_BLDC_A_IDENT1,
 	.ident0_pin = PIN_BLDC_A_IDENT0,
@@ -14,22 +23,13 @@ const BLDCConfig BLDC_CONF_CAPSTAN = {
     .spi_conf = &SPI_CONF_BLDC_A,
 };
 
-const BLDCConfig BLDC_CONF_TAKEUP = {
-    .ident_code = BLDC_IDENT_TAKEUP,
+const BLDCConfig BLDC_CONF_SUPPLY = {
+    .ident_code = BLDC_IDENT_SUPPLY,
 	.cs_pin     = PIN_BLDC_B_CS,
 	.ident1_pin = PIN_BLDC_B_IDENT1,
 	.ident0_pin = PIN_BLDC_B_IDENT0,
 	.enable_pin = PIN_BLDC_B_ENABLE,
     .spi_conf = &SPI_CONF_BLDC_B,
-};
-
-const BLDCConfig BLDC_CONF_SUPPLY = {
-    .ident_code = BLDC_IDENT_SUPPLY,
-	.cs_pin     = PIN_BLDC_C_CS,
-	.ident1_pin = PIN_BLDC_C_IDENT1,
-	.ident0_pin = PIN_BLDC_C_IDENT0,
-	.enable_pin = PIN_BLDC_C_ENABLE,
-    .spi_conf = &SPI_CONF_BLDC_C,
 };
 
 void bldc_init_all() {
@@ -65,8 +65,15 @@ void bldc_init(const BLDCConfig* config) {
     spi_init(config->spi_conf);
 }
 
-void bldc_set_torque(const BLDCConfig* config, uint16_t torque) {
-    spi_write_read16(config->spi_conf, torque);
+void bldc_set_torque(const BLDCConfig* config, int16_t torque) {
+    spi_write_read16(config->spi_conf, (uint16_t) torque);
+}
+
+void bldc_set_torque_float(const BLDCConfig* config, float torque) {
+    if (torque > 1.0f) torque = 1.0f;
+    if (torque < -1.0f) torque = -1.0f;
+    int16_t torque_int = (int16_t) (torque * 32760.0f);
+    spi_write_read16(config->spi_conf, (uint16_t) torque_int);
 }
 
 /*

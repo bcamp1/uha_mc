@@ -17,13 +17,15 @@ typedef struct {
     const SPIConfig* spi_conf; 
 } BLDCConfig;
 
-extern const BLDCConfig BLDC_CONF_A;
-extern const BLDCConfig BLDC_CONF_B;
+extern const BLDCConfig BLDC_CONF_CAPSTAN;
+extern const BLDCConfig BLDC_CONF_TAKEUP;
+extern const BLDCConfig BLDC_CONF_SUPPLY;
 
 void bldc_init(const BLDCConfig* config);
 void bldc_enable(const BLDCConfig* config);
 void bldc_disable(const BLDCConfig* config);
-void bldc_set_torque(const BLDCConfig* config, uint16_t torque);
+void bldc_set_torque(const BLDCConfig* config, int16_t torque);
+void bldc_set_torque_float(const BLDCConfig* config, float torque);
 void bldc_init_all();
 void bldc_enable_all();
 void bldc_disable_all();

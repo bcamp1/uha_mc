@@ -7,6 +7,7 @@
 #include "spi.h"
 #include "gpio.h"
 #include "uart.h"
+#include "../drivers/delay.h"
 #include "../board.h"
 
 /* 12 MHz clock for SPI */
@@ -135,7 +136,8 @@ void spi_init(const SPIConfig* inst) {
 
 	/* Set baud to max (GCLK / 2) 6 MHz */
 	//inst->sercom->BAUD.reg = SERCOM_SPI_BAUD_BAUD(2000);
-	inst->sercom->BAUD.reg = (uint8_t) 30; //SERCOM_SPI_BAUD_BAUD(1000);
+    // 30 for fast
+	inst->sercom->BAUD.reg = (uint8_t) 2000; //SERCOM_SPI_BAUD_BAUD(1000);
 
     // Enable receive complete (RXC) interrupt
     //inst->sercom->INTENSET.bit.RXC = 1;
@@ -179,6 +181,7 @@ uint16_t spi_write_read16(const SPIConfig* inst, uint16_t data) {
 	
 	// Bring nCS low
 	gpio_clear_pin(inst->cs);
+    delay(0xF);
     //for (int i = 0; i < 0xFF; i++);
 	
 	// Transmit first byte
@@ -195,6 +198,7 @@ uint16_t spi_write_read16(const SPIConfig* inst, uint16_t data) {
 	
 	// Bring nCS high
     //for (int i = 0; i < 0xFF; i++);
+    delay(0xF);
 	gpio_set_pin(inst->cs);
 	uint16_t result = (read1 << 8) | read0;
 	return result;

@@ -8,6 +8,7 @@
 #include <sam.h>
 #include "periphs/gpio.h"
 #include "periphs/clocks.h"
+#include "periphs/timer.h"
 #include "periphs/uart.h"
 #include "drivers/motor_encoder.h"
 #include "drivers/tension_arm.h"
@@ -18,6 +19,7 @@
 #include "drivers/stepper.h"
 #include "drivers/trq_pwm.h"
 #include "drivers/bldc.h"
+#include "foc/fast_sin_cos.h"
 
 static void enable_fpu(void);
 static void init_peripherals(void);
@@ -100,22 +102,75 @@ static void stepper_test() {
 	}
 }
 
+static void tension_arm_test() {
+    while (true) {
+        float pos_a = tension_arm_get_position(&TENSION_ARM_A);
+        float pos_b = tension_arm_get_position(&TENSION_ARM_B);
+        float data[2] = {pos_a, pos_b};
+        uart_println_float_arr(data, 2);
+    }
+}
+
+static void control_loop() {
+    float pos_a = tension_arm_get_position(&TENSION_ARM_A);
+    float pos_b = tension_arm_get_position(&TENSION_ARM_B);
+
+    float k_a = 0.8;
+    float k_b = 0.8;
+
+    float r_a = 0.5f;
+    float r_b = 0.5f;
+
+    float e_a = r_a - pos_a;
+    float e_b = r_b - pos_b;
+
+    float u_a = k_a * e_a;
+    float u_b = k_b * e_b;
+
+    bldc_set_torque_float(&BLDC_CONF_TAKEUP, u_a);
+    bldc_set_torque_float(&BLDC_CONF_SUPPLY, u_b);
+}
+
 int main(void) {
 	init_peripherals();
     delay(0x4FFF);
 
     gpio_clear_pin(PIN_DEBUG1);
     gpio_clear_pin(PIN_DEBUG2);
+
+    timer_init_all();
+
+    tension_arm_init(&TENSION_ARM_A);
+    tension_arm_init(&TENSION_ARM_B);
+
     bldc_init_all();
+    //bldc_init(&BLDC_CONF_SUPPLY);
 
     delay(0x4FFFF);
+    //bldc_enable(&BLDC_CONF_SUPPLY);
     bldc_enable_all();
 
-    //tension_arm_init(&TENSION_ARM_A);
+    delay(0x8FFFF);
+
+    bldc_set_torque_float(&BLDC_CONF_SUPPLY, 0.0f);
+    bldc_set_torque_float(&BLDC_CONF_TAKEUP, 0.0f);
+
+    //float theta = 0.0f;
+    //float sin = 0.0f;
+    //float cos = 0.0f;
+
+    timer_schedule(0, 50, 1, control_loop);
 
     while (1) {
-        //float value = tension_arm_get_position(&TENSION_ARM_A);
-        //uart_println_float(value);
+        //theta += 2.0f;
+        //arm_sin_cos_f32(theta, &sin, &cos);
+        //x += 5;
+        //bldc_set_torque_float(&BLDC_CONF_CAPSTAN, 0.4f*sin);
+        //delay(0xFFF);
+        //bldc_set_torque_float(&BLDC_CONF_SUPPLY, 0.4f*sin);
+        //delay(0xFFF);
+        //bldc_set_torque_float(&BLDC_CONF_TAKEUP, 0.4f*sin);
+        //delay(0xFFF);
     }
 }
 

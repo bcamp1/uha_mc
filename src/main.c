@@ -115,7 +115,7 @@ static void control_loop() {
     float pos_a = tension_arm_get_position(&TENSION_ARM_A);
     float pos_b = tension_arm_get_position(&TENSION_ARM_B);
 
-    float k_a = 0.8;
+    float k_a = -0.8;
     float k_b = 0.8;
 
     float r_a = 0.5f;
@@ -135,6 +135,9 @@ int main(void) {
 	init_peripherals();
     delay(0x4FFF);
 
+    uart_println("Welcome to motherboard.");
+    uart_println("Setting up peripherals...");
+
     gpio_clear_pin(PIN_DEBUG1);
     gpio_clear_pin(PIN_DEBUG2);
 
@@ -148,7 +151,8 @@ int main(void) {
 
     delay(0x4FFFF);
     //bldc_enable(&BLDC_CONF_SUPPLY);
-    bldc_enable_all();
+    //bldc_enable_all();
+    bldc_disable_all();
 
     delay(0x8FFFF);
 
@@ -159,18 +163,23 @@ int main(void) {
     //float sin = 0.0f;
     //float cos = 0.0f;
 
-    timer_schedule(0, 50, 1, control_loop);
+    timer_schedule(0, 100, 1, control_loop);
 
     while (1) {
-        //theta += 2.0f;
-        //arm_sin_cos_f32(theta, &sin, &cos);
-        //x += 5;
-        //bldc_set_torque_float(&BLDC_CONF_CAPSTAN, 0.4f*sin);
-        //delay(0xFFF);
-        //bldc_set_torque_float(&BLDC_CONF_SUPPLY, 0.4f*sin);
-        //delay(0xFFF);
-        //bldc_set_torque_float(&BLDC_CONF_TAKEUP, 0.4f*sin);
-        //delay(0xFFF);
+        char user_input = uart_get();
+        switch (user_input) {
+            case 'e':
+                uart_println("Enabling motors...");
+                bldc_enable_all();
+                break;
+            case 'd':
+                uart_println("Disabling motors...");
+                bldc_disable_all();
+                break;
+            case 'c':
+                uart_println("Toggling capstan...");
+                break;
+        }
     }
 }
 

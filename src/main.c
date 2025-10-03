@@ -21,6 +21,10 @@
 #include "drivers/bldc.h"
 #include "foc/fast_sin_cos.h"
 
+#define FIRMWARE_VERSION "UHA MOTHERBOARD FIRMWARE v0.1"
+#define FIRMWARE_AUTHOR "AUTHOR: BRANSON CAMP"
+#define FIRMWARE_DATE "DATE: OCTOBER 2025"
+
 static void enable_fpu(void);
 static void init_peripherals(void);
 static void stopwatch_test();
@@ -115,28 +119,45 @@ static void control_loop() {
     float pos_a = tension_arm_get_position(&TENSION_ARM_A);
     float pos_b = tension_arm_get_position(&TENSION_ARM_B);
 
-    float k_a = -0.8;
-    float k_b = 0.8;
+    uart_print_float(pos_a);
+    uart_put(' ');
+    uart_println_float(pos_b);
 
-    float r_a = 0.5f;
-    float r_b = 0.5f;
+    //float k_a = -0.8;
+    //float k_b = 0.8;
 
-    float e_a = r_a - pos_a;
-    float e_b = r_b - pos_b;
+    //float r_a = 0.5f;
+    //float r_b = 0.5f;
 
-    float u_a = k_a * e_a;
-    float u_b = k_b * e_b;
+    //float e_a = r_a - pos_a;
+    //float e_b = r_b - pos_b;
 
-    bldc_set_torque_float(&BLDC_CONF_TAKEUP, u_a);
-    bldc_set_torque_float(&BLDC_CONF_SUPPLY, u_b);
+    //float u_a = k_a * e_a;
+    //float u_b = k_b * e_b;
+
+    static int16_t x = 0;
+
+    x++;
+
+    //bldc_set_torque_float(&BLDC_CONF_TAKEUP, u_a);
+    //bldc_set_torque_float(&BLDC_CONF_SUPPLY, u_b);
+    bldc_set_torque(&BLDC_CONF_TAKEUP, x);
+    bldc_set_torque(&BLDC_CONF_SUPPLY, x);
+    bldc_set_torque(&BLDC_CONF_CAPSTAN, x);
 }
 
 int main(void) {
 	init_peripherals();
-    delay(0x4FFF);
+    delay(0xFFF);
 
-    uart_println("Welcome to motherboard.");
-    uart_println("Setting up peripherals...");
+    // Print firmware info
+    uart_println("\n");
+    uart_println("--------------------");
+    uart_println(FIRMWARE_VERSION);
+    uart_println(FIRMWARE_AUTHOR);
+    uart_println(FIRMWARE_DATE);
+    uart_println("--------------------");
+    delay(0xFFFF);
 
     gpio_clear_pin(PIN_DEBUG1);
     gpio_clear_pin(PIN_DEBUG2);

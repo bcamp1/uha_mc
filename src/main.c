@@ -25,6 +25,15 @@
 #define FIRMWARE_AUTHOR "AUTHOR: BRANSON CAMP"
 #define FIRMWARE_DATE "DATE: OCTOBER 2025"
 
+typedef enum {
+    IDLE,
+    FF,
+    REW,
+    PLAYBACK,
+} State;
+
+static State state = IDLE;
+
 static void enable_fpu(void);
 static void init_peripherals(void);
 static void stopwatch_test();
@@ -115,28 +124,73 @@ static void tension_arm_test() {
     }
 }
 
+static void playback_controller(float tension_t, float tension_s, float* u_t, float* u_s) {
+    const float k_t = -0.8;
+    const float k_s = 0.8;
+
+    const float r_t = 0.5f;
+    const float r_s = 0.5f;
+
+    float e_a = r_t - tension_t;
+    float e_b = r_s - tension_s;
+
+    *u_t = k_t * e_a;
+    *u_s = k_s * e_b;
+}
+
+static void ff_controller(float tension_t, float tension_s, float* u_t, float* u_s) {
+    const float k_t = -0.8;
+    const float k_s = 0.8;
+
+    const float r_t = 1.0f;
+    const float r_s = 0.5f;
+
+    float e_a = r_t - tension_t;
+    float e_b = r_s - tension_s;
+
+    *u_t = k_t * e_a;
+    *u_s = k_s * e_b;
+
+    *u_t -= 0.4f;
+}
+
+static void rew_controller(float tension_t, float tension_s, float* u_t, float* u_s) {
+    const float k_t = -0.8;
+    const float k_s = 0.8;
+
+    const float r_t = 0.5f;
+    const float r_s = 1.0f;
+
+    float e_a = r_t - tension_t;
+    float e_b = r_s - tension_s;
+
+    *u_t = k_t * e_a;
+    *u_s = k_s * e_b;
+}
+
 static void control_loop() {
-    float pos_a = tension_arm_get_position(&TENSION_ARM_A);
-    float pos_b = tension_arm_get_position(&TENSION_ARM_B);
+    float tension_t = tension_arm_get_position(&TENSION_ARM_A);
+    float tension_s = tension_arm_get_position(&TENSION_ARM_B);
 
-    //uart_print_float(pos_a);
-    //uart_put(' ');
-    //uart_println_float(pos_b);
+    float u_t = 0.0f;
+    float u_s = 0.0f;
+    
+    switch (state) {
+        case PLAYBACK:
+            playback_controller(tension_t, tension_s, &u_t, &u_s);
+        break;
+        case FF:
+            ff_controller(tension_t, tension_s, &u_t, &u_s);
+        break;
+        case REW:
+            rew_controller(tension_t, tension_s, &u_t, &u_s);
+        break;
+        default:
+        break;
+    }
 
-    float k_a = -0.8;
-    float k_b = 0.8;
-
-    float r_a = 0.5f;
-    float r_b = 0.5f;
-
-    float e_a = r_a - pos_a;
-    float e_b = r_b - pos_b;
-
-    float u_a = k_a * e_a;
-    float u_b = k_b * e_b;
-
-    bldc_set_torque_float(&BLDC_CONF_TAKEUP, u_a);
-    bldc_set_torque_float(&BLDC_CONF_SUPPLY, u_b);
+    bldc_set_torque_float(&BLDC_CONF_TAKEUP, u_t);
+    bldc_set_torque_float(&BLDC_CONF_SUPPLY, u_s);
 }
 
 int main(void) {
@@ -176,22 +230,32 @@ int main(void) {
     //float theta = 0.0f;
     //float sin = 0.0f;
     //float cos = 0.0f;
-
+    
+    state = IDLE;
     timer_schedule(0, 500, 1, control_loop);
 
     while (1) {
         char user_input = uart_get();
         switch (user_input) {
-            case 'e':
-                uart_println("Enabling motors...");
+            case 'p':
+                uart_println("[STATE] Playback");
+                state = PLAYBACK;
                 bldc_enable_all();
                 break;
-            case 'd':
-                uart_println("Disabling motors...");
+            case 's':
+                uart_println("[STATE] Idle");
+                state = IDLE;
                 bldc_disable_all();
                 break;
-            case 'c':
-                uart_println("Toggling capstan...");
+            case 'f':
+                uart_println("[STATE] Fast Forward");
+                state = FF;
+                bldc_enable_all();
+                break;
+            case 'r':
+                uart_println("[STATE] Rewind");
+                state = REW;
+                bldc_enable_all();
                 break;
         }
     }

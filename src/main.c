@@ -119,31 +119,24 @@ static void control_loop() {
     float pos_a = tension_arm_get_position(&TENSION_ARM_A);
     float pos_b = tension_arm_get_position(&TENSION_ARM_B);
 
-    uart_print_float(pos_a);
-    uart_put(' ');
-    uart_println_float(pos_b);
+    //uart_print_float(pos_a);
+    //uart_put(' ');
+    //uart_println_float(pos_b);
 
-    //float k_a = -0.8;
-    //float k_b = 0.8;
+    float k_a = -0.8;
+    float k_b = 0.8;
 
-    //float r_a = 0.5f;
-    //float r_b = 0.5f;
+    float r_a = 0.5f;
+    float r_b = 0.5f;
 
-    //float e_a = r_a - pos_a;
-    //float e_b = r_b - pos_b;
+    float e_a = r_a - pos_a;
+    float e_b = r_b - pos_b;
 
-    //float u_a = k_a * e_a;
-    //float u_b = k_b * e_b;
+    float u_a = k_a * e_a;
+    float u_b = k_b * e_b;
 
-    static int16_t x = 0;
-
-    x++;
-
-    //bldc_set_torque_float(&BLDC_CONF_TAKEUP, u_a);
-    //bldc_set_torque_float(&BLDC_CONF_SUPPLY, u_b);
-    bldc_set_torque(&BLDC_CONF_TAKEUP, x);
-    bldc_set_torque(&BLDC_CONF_SUPPLY, x);
-    bldc_set_torque(&BLDC_CONF_CAPSTAN, x);
+    bldc_set_torque_float(&BLDC_CONF_TAKEUP, u_a);
+    bldc_set_torque_float(&BLDC_CONF_SUPPLY, u_b);
 }
 
 int main(void) {
@@ -184,7 +177,7 @@ int main(void) {
     //float sin = 0.0f;
     //float cos = 0.0f;
 
-    timer_schedule(0, 100, 1, control_loop);
+    timer_schedule(0, 500, 1, control_loop);
 
     while (1) {
         char user_input = uart_get();

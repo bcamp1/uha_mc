@@ -95,13 +95,15 @@ static void stepper_test() {
     int32_t stepper_steps = 200;
     uint32_t stepper_delay = 0x4FF;
 
-    stepper_init(&STEPPER_CONF_1);
+    const StepperConfig* step = &STEPPER_CONF_2;
+
+    stepper_init(step);
     delay(0xFFFFF);
-    stepper_enable(&STEPPER_CONF_1);
-    stepper_send_pulses(&STEPPER_CONF_1, stepper_steps, stepper_delay);
+    stepper_enable(step);
+    stepper_send_pulses(step, stepper_steps, stepper_delay);
 
 	while (1) {
-        stepper_send_pulses(&STEPPER_CONF_1, stepper_steps, stepper_delay);
+        stepper_send_pulses(step, stepper_steps, stepper_delay);
         stepper_steps *= -1;
 	}
 }
@@ -178,6 +180,8 @@ int main(void) {
     //float cos = 0.0f;
 
     timer_schedule(0, 500, 1, control_loop);
+
+    stepper_test();
 
     while (1) {
         char user_input = uart_get();

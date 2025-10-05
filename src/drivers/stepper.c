@@ -4,14 +4,14 @@
 #include "delay.h"
 
 const StepperConfig STEPPER_CONF_1 = {
-	.dir_pin    = PIN_STP1_STEP,
-	.step_pin   = PIN_STP1_DIR,
+	.dir_pin    = PIN_STP1_DIR,
+	.step_pin   = PIN_STP1_STEP,
 	.enable_pin = PIN_STP1_ENABLE,
 };
 
 const StepperConfig STEPPER_CONF_2 = {
-	.dir_pin    = PIN_STP2_DIR,
-	.step_pin   = PIN_STP2_STEP,
+	.dir_pin    = PIN_STP2_STEP,
+	.step_pin   = PIN_STP2_DIR,
 	.enable_pin = PIN_STP2_ENABLE,
 };
 

@@ -236,8 +236,6 @@ int main(void) {
     state = IDLE;
     timer_schedule(0, 500, 1, control_loop);
 
-    stepper_test();
-
     while (1) {
         char user_input = uart_get();
         switch (user_input) {

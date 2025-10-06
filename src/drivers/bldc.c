@@ -5,6 +5,8 @@
 #include "../periphs/spi_async.h"
 #include "../periphs/spi.h"
 
+#define SPI_SPEED_MAX (40.0f)
+
 const BLDCConfig BLDC_CONF_CAPSTAN = {
     .ident_code = BLDC_IDENT_CAPSTAN,
 	.cs_pin     = PIN_BLDC_C_CS,
@@ -63,18 +65,22 @@ void bldc_init(const BLDCConfig* config) {
     }
 
     spi_init(config->spi_conf);
-    bldc_set_torque(config, 0);
+    bldc_set_torque_float(config, 0.0f);
 }
 
-void bldc_set_torque(const BLDCConfig* config, int16_t torque) {
-    spi_write_read16(config->spi_conf, (uint16_t) torque);
+/*
+int16_t bldc_set_torque(const BLDCConfig* config, int16_t torque) {
+    return (int16_t) spi_write_read16(config->spi_conf, (uint16_t) torque);
 }
+*/
 
-void bldc_set_torque_float(const BLDCConfig* config, float torque) {
+float bldc_set_torque_float(const BLDCConfig* config, float torque) {
     if (torque > 1.0f) torque = 1.0f;
     if (torque < -1.0f) torque = -1.0f;
     int16_t torque_int = (int16_t) (torque * 32760.0f);
-    spi_write_read16(config->spi_conf, (uint16_t) torque_int);
+    int16_t speed_int = spi_write_read16(config->spi_conf, (uint16_t) torque_int);
+    float speed = (((float)speed_int) / 32767.0f) * SPI_SPEED_MAX;
+    return speed;
 }
 
 /*

@@ -20,4 +20,6 @@ typedef enum {
 void state_machine_init();
 void state_machine_take_action(StateAction a);
 void state_machine_tick();
+float state_machine_get_supply_speed();
+float state_machine_get_takeup_speed();
 

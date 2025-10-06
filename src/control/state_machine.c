@@ -10,6 +10,9 @@ static State next_state = STOPPED;
 uint32_t current_state_ticks = 0;
 bool is_closed_loop = true;
 
+float takeup_speed = 0.0f;
+float supply_speed = 0.0f;
+
 static void playback_controller(float tension_t, float tension_s, float* u_t, float* u_s);
 static void ff_controller(float tension_t, float tension_s, float* u_t, float* u_s);
 static void rew_controller(float tension_t, float tension_s, float* u_t, float* u_s);
@@ -101,8 +104,8 @@ void state_machine_tick() {
             break;
     }
 
-    bldc_set_torque_float(&BLDC_CONF_TAKEUP, u_t);
-    bldc_set_torque_float(&BLDC_CONF_SUPPLY, u_s);
+    takeup_speed = bldc_set_torque_float(&BLDC_CONF_TAKEUP, u_t);
+    supply_speed = bldc_set_torque_float(&BLDC_CONF_SUPPLY, u_s);
     current_state_ticks++;
 }
 
@@ -212,7 +215,7 @@ static void rew_controller(float tension_t, float tension_s, float* u_t, float* 
 }
 
 static void ff_to_stop_controller(float tension_t, float tension_s, float* u_t, float* u_s) {
-    set_state(STOPPED);
+    //set_state(STOPPED);
     const float k_t = -0.8;
     const float k_s = 0.8;
 
@@ -238,3 +241,10 @@ static void playback_to_stop_controller(float tension_t, float tension_s, float*
     set_state(STOPPED);
 }
 
+float state_machine_get_supply_speed() {
+    return supply_speed;
+}
+
+float state_machine_get_takeup_speed() {
+    return takeup_speed;
+}

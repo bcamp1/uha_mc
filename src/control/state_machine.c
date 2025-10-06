@@ -1,10 +1,14 @@
 #include "state_machine.h"
 #include "../drivers/tension_arm.h"
 #include "../drivers/bldc.h"
+#include "../drivers/delay.h"
+#include "../drivers/stepper.h"
+#include "../periphs/uart.h"
 
 static State state = STOPPED;
 static State next_state = STOPPED;
 uint32_t current_state_ticks = 0;
+bool is_closed_loop = true;
 
 static void playback_controller(float tension_t, float tension_s, float* u_t, float* u_s);
 static void ff_controller(float tension_t, float tension_s, float* u_t, float* u_s);
@@ -16,19 +20,63 @@ static void playback_to_stop_controller(float tension_t, float tension_s, float*
 static void set_state(State s) {
     state = s;
     current_state_ticks = 0;
+
+    uart_print("[STATE] ");
+    switch (state) {
+        case STOPPED:
+            uart_println("STOPPED");
+            break;
+        case PLAYBACK:
+            uart_println("PLAYBACK");
+            break;
+        case FF:
+            uart_println("FF");
+            break;
+        case REW:
+            uart_println("REW");
+            break;
+        case FF_TO_STOP:
+            uart_println("FF_TO_STOP");
+            break;
+        case REW_TO_STOP:
+            uart_println("REW_TO_STOP");
+            break;
+        case PLAYBACK_TO_STOP:
+            uart_println("PLAYBACK_TO_STOP");
+            break;
+    }
 }
 
 void state_machine_init() {
+    // Initialize necessary peripherals
+    tension_arm_init(&TENSION_ARM_A);
+    tension_arm_init(&TENSION_ARM_B);
+
+    bldc_init_all();
+
+    stepper_capstan_init();
+    
     state = STOPPED;
     current_state_ticks = 0;
+    is_closed_loop = true;
 }
 
 void state_machine_tick() {
+    if (!is_closed_loop) {
+        return;
+    }
+
     float tension_t = tension_arm_get_position(&TENSION_ARM_A);
     float tension_s = tension_arm_get_position(&TENSION_ARM_B);
 
     float u_t = 0.0f;
     float u_s = 0.0f;
+
+    if (state == STOPPED) {
+        bldc_disable_all();
+    } else {
+        bldc_enable_all();
+    }
     
     switch (state) {
         case STOPPED:
@@ -59,12 +107,14 @@ void state_machine_tick() {
 }
 
 void state_machine_take_action(StateAction a) {
+    is_closed_loop = false;
     switch (a) {
         case PLAY_ACTION:
             next_state = PLAYBACK;
             break;
         case STOP_ACTION:
             next_state = STOPPED;
+            stepper_capstan_disengage();
             break;
         case FF_ACTION:
             next_state = FF;
@@ -77,7 +127,25 @@ void state_machine_take_action(StateAction a) {
     if (state != next_state) {
         switch (state) {
             case STOPPED:
-                set_state(next_state);
+                switch(next_state) {
+                    case FF:
+                        stepper_capstan_disengage();
+                        set_state(FF);
+                        break;
+                    case REW:
+                        stepper_capstan_disengage();
+                        set_state(REW);
+                        break;
+                    case PLAYBACK:
+                        stepper_capstan_engage();
+                        set_state(PLAYBACK);
+                        break;
+                    default:
+                        stepper_capstan_disengage();
+                        set_state(STOPPED);
+                        next_state = STOPPED;
+                        break;
+                }
                 break;
             case FF:
                 set_state(FF_TO_STOP);
@@ -96,6 +164,7 @@ void state_machine_take_action(StateAction a) {
                 break;
         }
     }
+    is_closed_loop = true;
 }
 
 static void playback_controller(float tension_t, float tension_s, float* u_t, float* u_s) {
@@ -144,6 +213,21 @@ static void rew_controller(float tension_t, float tension_s, float* u_t, float* 
 
 static void ff_to_stop_controller(float tension_t, float tension_s, float* u_t, float* u_s) {
     set_state(STOPPED);
+    const float k_t = -0.8;
+    const float k_s = 0.8;
+
+    const float r_t = 1.0f;
+    const float r_s = 0.5f;
+
+    float e_a = r_t - tension_t;
+    float e_b = r_s - tension_s;
+
+    *u_t = k_t * e_a;
+    *u_s = k_s * e_b;
+
+    if (current_state_ticks >= 1000) {
+        set_state(STOPPED);
+    }
 }
 
 static void rew_to_stop_controller(float tension_t, float tension_s, float* u_t, float* u_s) {

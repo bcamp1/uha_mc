@@ -29,6 +29,7 @@
 static void enable_fpu(void);
 static void init_peripherals(void);
 static void stopwatch_test();
+static void parse_actions();
 
 static void init_peripherals(void) {
 	// Init clock to use 32K OSC in closed-loop 48MHz mode
@@ -42,12 +43,17 @@ static void init_peripherals(void) {
 	//gpio_init_pin(LED_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
 	gpio_init_pin(PIN_DEBUG1, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
 	gpio_init_pin(PIN_DEBUG2, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
+    gpio_clear_pin(PIN_DEBUG1);
+    gpio_clear_pin(PIN_DEBUG2);
 	
 	// Init the UART
 	uart_init();
     
     // Stop Watch
     stopwatch_init();
+    
+    // Timers
+    timer_init_all();
 }
 
 static void enable_fpu(void) {
@@ -96,7 +102,7 @@ static void stepper_test() {
     int32_t stepper_steps = 200;
     uint32_t stepper_delay = 0x4FF;
 
-    const StepperConfig* step = &STEPPER_CONF_2;
+    const StepperConfig* step = &STEPPER_CONF_CAPSTAN;
 
     stepper_init(step);
     delay(0xFFFFF);
@@ -131,26 +137,7 @@ int main(void) {
     uart_println("--------------------");
     delay(0xFFFF);
 
-    gpio_clear_pin(PIN_DEBUG1);
-    gpio_clear_pin(PIN_DEBUG2);
 
-    timer_init_all();
-
-    tension_arm_init(&TENSION_ARM_A);
-    tension_arm_init(&TENSION_ARM_B);
-
-    bldc_init_all();
-    //bldc_init(&BLDC_CONF_SUPPLY);
-
-    delay(0x4FFFF);
-    //bldc_enable(&BLDC_CONF_SUPPLY);
-    //bldc_enable_all();
-    bldc_disable_all();
-
-    delay(0x8FFFF);
-
-    bldc_set_torque_float(&BLDC_CONF_SUPPLY, 0.0f);
-    bldc_set_torque_float(&BLDC_CONF_TAKEUP, 0.0f);
 
     //float theta = 0.0f;
     //float sin = 0.0f;
@@ -159,30 +146,35 @@ int main(void) {
     state_machine_init();
     timer_schedule(0, 500, 1, state_machine_tick);
 
+    bool engaged = false;
     while (1) {
-        char user_input = uart_get();
-        switch (user_input) {
-            case 'p':
-                uart_println("[ACTION] Playback");
-                bldc_enable_all();
-                state_machine_take_action(PLAY_ACTION);
-                break;
-            case 's':
-                uart_println("[ACTION] Stop");
-                bldc_disable_all();
-                state_machine_take_action(STOP_ACTION);
-                break;
-            case 'f':
-                uart_println("[ACTION] Fast Forward");
-                bldc_enable_all();
-                state_machine_take_action(FF_ACTION);
-                break;
-            case 'r':
-                uart_println("[ACTION] Rewind");
-                bldc_enable_all();
-                state_machine_take_action(REW_ACTION);
-                break;
-        }
+        parse_actions();
+    }
+}
+
+void parse_actions() {
+    char user_input = uart_get();
+    switch (user_input) {
+        case 'p':
+            uart_println("[ACTION] Playback");
+            bldc_enable_all();
+            state_machine_take_action(PLAY_ACTION);
+            break;
+        case 's':
+            uart_println("[ACTION] Stop");
+            bldc_disable_all();
+            state_machine_take_action(STOP_ACTION);
+            break;
+        case 'f':
+            uart_println("[ACTION] Fast Forward");
+            bldc_enable_all();
+            state_machine_take_action(FF_ACTION);
+            break;
+        case 'r':
+            uart_println("[ACTION] Rewind");
+            bldc_enable_all();
+            state_machine_take_action(REW_ACTION);
+            break;
     }
 }
 

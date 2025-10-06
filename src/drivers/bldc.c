@@ -63,6 +63,7 @@ void bldc_init(const BLDCConfig* config) {
     }
 
     spi_init(config->spi_conf);
+    bldc_set_torque(config, 0);
 }
 
 void bldc_set_torque(const BLDCConfig* config, int16_t torque) {

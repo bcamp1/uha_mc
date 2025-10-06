@@ -3,13 +3,13 @@
 #include "../periphs/gpio.h"
 #include "delay.h"
 
-const StepperConfig STEPPER_CONF_1 = {
+const StepperConfig STEPPER_CONF_CAPSTAN = {
 	.dir_pin    = PIN_STP1_DIR,
 	.step_pin   = PIN_STP1_STEP,
 	.enable_pin = PIN_STP1_ENABLE,
 };
 
-const StepperConfig STEPPER_CONF_2 = {
+const StepperConfig STEPPER_CONF_TAPE_LIFTER = {
 	.dir_pin    = PIN_STP2_STEP,
 	.step_pin   = PIN_STP2_DIR,
 	.enable_pin = PIN_STP2_ENABLE,
@@ -54,5 +54,45 @@ void stepper_send_pulses(const StepperConfig* config, int32_t steps, uint32_t de
         gpio_clear_pin(config->step_pin);
         delay(delay_cycles);
     }
+}
+
+static bool capstan_engaged = false;
+static bool tape_lifter_engaged = false;
+
+void stepper_capstan_init() {
+    capstan_engaged = false;
+    stepper_init(&STEPPER_CONF_CAPSTAN);
+    delay(0xFFFF);
+    stepper_enable(&STEPPER_CONF_CAPSTAN);
+    stepper_send_pulses(&STEPPER_CONF_CAPSTAN, 200, 0x8F);
+    stepper_send_pulses(&STEPPER_CONF_CAPSTAN, 400, 0x8FF);
+    stepper_send_pulses(&STEPPER_CONF_CAPSTAN, -180, 0x8F);
+}
+
+void stepper_capstan_engage() {
+    if (!capstan_engaged) {
+        stepper_send_pulses(&STEPPER_CONF_CAPSTAN, 180, 0x8F);
+        capstan_engaged = true;
+    }
+}
+
+void stepper_capstan_disengage() {
+    if (capstan_engaged) {
+        stepper_send_pulses(&STEPPER_CONF_CAPSTAN, -180, 0x8F);
+        capstan_engaged = false;
+    }
+
+}
+
+void stepper_tape_lifter_init() {
+
+}
+
+void stepper_tape_lifter_engage() {
+
+}
+
+void stepper_tape_lifter_disengage() {
+
 }
 

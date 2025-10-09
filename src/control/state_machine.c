@@ -78,7 +78,14 @@ void state_machine_tick() {
     if (state == STOPPED) {
         bldc_disable_all();
     } else {
-        bldc_enable_all();
+        bldc_enable(&BLDC_CONF_SUPPLY);
+        bldc_enable(&BLDC_CONF_TAKEUP);
+    }
+
+    if (state == PLAYBACK) {
+        bldc_enable(&BLDC_CONF_CAPSTAN);
+    } else {
+        bldc_disable(&BLDC_CONF_CAPSTAN);
     }
     
     switch (state) {
@@ -140,7 +147,7 @@ void state_machine_take_action(StateAction a) {
                         set_state(REW);
                         break;
                     case PLAYBACK:
-                        stepper_capstan_engage();
+                        //stepper_capstan_engage();
                         set_state(PLAYBACK);
                         break;
                     default:

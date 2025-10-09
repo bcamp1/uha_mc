@@ -176,10 +176,11 @@ void parse_actions() {
             state_machine_take_action(REW_ACTION);
             break;
     }
-
+    /*
     uart_print_float(state_machine_get_supply_speed());
     uart_print(" ");
     uart_println_float(state_machine_get_takeup_speed());
+    */
     delay(0x8FFF);
 }
 

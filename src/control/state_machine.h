@@ -5,16 +5,18 @@ typedef enum {
     FF,
     REW,
     PLAYBACK,
-    FF_TO_STOP,
-    REW_TO_STOP,
-    PLAYBACK_TO_STOP,
+    FF_TO_IDLE,
+    REW_TO_IDLE,
+    PLAYBACK_TO_IDLE,
+    IDLE,
 } State;
 
 typedef enum {
     PLAY_ACTION,
     STOP_ACTION,
     FF_ACTION,
-    REW_ACTION
+    REW_ACTION,
+    NO_ACTION,
 } StateAction;
 
 void state_machine_init();

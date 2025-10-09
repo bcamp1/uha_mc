@@ -192,7 +192,7 @@ static void playback_controller(float tension_t, float tension_s, float* u_t, fl
 }
 
 static void ff_controller(float tension_t, float tension_s, float* u_t, float* u_s) {
-    const float k_t = -0.8;
+    const float k_t = 0.3;
     const float k_s = 0.8;
 
     const float r_t = 1.0f;
@@ -204,12 +204,12 @@ static void ff_controller(float tension_t, float tension_s, float* u_t, float* u
     *u_t = k_t * e_a;
     *u_s = k_s * e_b;
 
-    *u_t -= 0.4f;
+    *u_t -= 0.6f;
 }
 
 static void rew_controller(float tension_t, float tension_s, float* u_t, float* u_s) {
     const float k_t = -0.8;
-    const float k_s = 0.8;
+    const float k_s = -0.3;
 
     const float r_t = 0.5f;
     const float r_s = 1.0f;
@@ -219,10 +219,11 @@ static void rew_controller(float tension_t, float tension_s, float* u_t, float* 
 
     *u_t = k_t * e_a;
     *u_s = k_s * e_b;
+
+    *u_s += 0.6f;
 }
 
 static void ff_to_stop_controller(float tension_t, float tension_s, float* u_t, float* u_s) {
-    //set_state(STOPPED);
     const float k_t = -0.8;
     const float k_s = 0.8;
 
@@ -241,7 +242,21 @@ static void ff_to_stop_controller(float tension_t, float tension_s, float* u_t, 
 }
 
 static void rew_to_stop_controller(float tension_t, float tension_s, float* u_t, float* u_s) {
-    set_state(STOPPED);
+    const float k_t = -0.8;
+    const float k_s = 0.8;
+
+    const float r_t = 0.5f;
+    const float r_s = 1.0f;
+
+    float e_a = r_t - tension_t;
+    float e_b = r_s - tension_s;
+
+    *u_t = k_t * e_a;
+    *u_s = k_s * e_b;
+
+    if (current_state_ticks >= 1000) {
+        set_state(STOPPED);
+    }
 }
 
 static void playback_to_stop_controller(float tension_t, float tension_s, float* u_t, float* u_s) {

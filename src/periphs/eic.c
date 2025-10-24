@@ -24,6 +24,7 @@ void eic_init() {
 
     // Set NVIC priorities (roller encoder)
     NVIC_SetPriority(EIC_10_IRQn, 0);
+    NVIC_SetPriority(EIC_2_IRQn, 0);
 	
 	// Enable EIC interrupts
 	NVIC_EnableIRQ(EIC_0_IRQn);
@@ -83,8 +84,8 @@ void eic_init_pin(uint16_t pin, uint16_t ext_num, uint16_t int_mode, func_ptr_t 
 	while (EIC->SYNCBUSY.bit.ENABLE);
 }
 
-void EIC_10_Handler(void) {
-	process_interrupt(10);
+void EIC_2_Handler(void) {
+	process_interrupt(2);
 }
 
 static void process_interrupt(uint16_t ext_num) {

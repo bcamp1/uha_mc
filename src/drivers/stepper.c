@@ -71,14 +71,14 @@ void stepper_capstan_init() {
 
 void stepper_capstan_engage() {
     if (!capstan_engaged) {
-        stepper_send_pulses(&STEPPER_CONF_CAPSTAN, 182, 0x8F);
+        stepper_send_pulses(&STEPPER_CONF_CAPSTAN, 192, 0x8F);
         capstan_engaged = true;
     }
 }
 
 void stepper_capstan_disengage() {
     if (capstan_engaged) {
-        stepper_send_pulses(&STEPPER_CONF_CAPSTAN, -182, 0x8F);
+        stepper_send_pulses(&STEPPER_CONF_CAPSTAN, -192, 0x8F);
         capstan_engaged = false;
     }
 

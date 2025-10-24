@@ -19,6 +19,7 @@
 #include "drivers/stepper.h"
 #include "drivers/trq_pwm.h"
 #include "drivers/bldc.h"
+#include "drivers/inc_encoder.h"
 #include "foc/fast_sin_cos.h"
 #include "control/state_machine.h"
 
@@ -144,7 +145,11 @@ int main(void) {
     //float cos = 0.0f;
     
     state_machine_init();
+    //gpio_init_pin(PIN_ROLLER_PULSE, GPIO_DIR_IN, GPIO_ALTERNATE_NONE);
+    //
+    //inc_encoder_init();
     timer_schedule(0, 500, 1, state_machine_tick);
+    //tension_arm_test();
 
     bool engaged = false;
     while (1) {
@@ -153,6 +158,7 @@ int main(void) {
 }
 
 void parse_actions() {
+    //uart_println("Parsing");
     char user_input = uart_get();
     switch (user_input) {
         case 'p':

@@ -147,12 +147,13 @@ int main(void) {
     state_machine_init();
     //gpio_init_pin(PIN_ROLLER_PULSE, GPIO_DIR_IN, GPIO_ALTERNATE_NONE);
     //
-    //inc_encoder_init();
+    inc_encoder_init();
     timer_schedule(0, 500, 1, state_machine_tick);
     //tension_arm_test();
 
     bool engaged = false;
     while (1) {
+        uart_println_int(inc_encoder_get_ticks());
         parse_actions();
     }
 }
@@ -187,6 +188,11 @@ void parse_actions() {
     uart_print(" ");
     uart_println_float(state_machine_get_takeup_speed());
     */
+    if (gpio_get_pin(PIN_ROLLER_PULSE)) {
+        gpio_clear_pin(PIN_DEBUG2);
+    } else {
+        gpio_set_pin(PIN_DEBUG2);
+    }
     delay(0x8FFF);
 }
 

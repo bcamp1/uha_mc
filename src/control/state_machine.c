@@ -185,8 +185,8 @@ void state_machine_take_action(StateAction a) {
 }
 
 static void playback_controller(float tension_t, float tension_s, float* u_t, float* u_s) {
-    const float k_t = -0.8;
-    const float k_s = 0.8;
+    const float k_t = -1.0;
+    const float k_s = 1.0;
 
     const float r_t = 0.5f;
     const float r_s = 0.5f;

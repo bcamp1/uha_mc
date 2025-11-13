@@ -153,7 +153,7 @@ int main(void) {
 
     bool engaged = false;
     while (1) {
-        uart_println_int(inc_encoder_get_ticks());
+        uart_println_float(inc_encoder_get_position());
         parse_actions();
     }
 }

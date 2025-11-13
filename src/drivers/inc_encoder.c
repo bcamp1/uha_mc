@@ -24,9 +24,12 @@
 #define INC_ENCODER_TIMER_RATE (5.0f)
 #define INC_ENCODER_PPR (1024)
 
+#define TAPE_IPS (15.0f)
+
 #define STOPWATCH_PRECISION (5)
 
 static volatile const float rad_tick_amount = 0.006135923151542565f;
+static volatile const float roller_radius = 0.8; // inches
 
 static volatile int32_t pulses = 0;
 
@@ -34,8 +37,13 @@ int32_t inc_encoder_get_ticks() {
     return pulses;
 }
 
-float inc_encoder_get_pos() {
+float inc_encoder_get_rads() {
 	return rad_tick_amount * (float) pulses;
+}
+
+float inc_encoder_get_position() {
+    float tape_inches = inc_encoder_get_rads() * roller_radius;
+    return tape_inches / TAPE_IPS;
 }
 
 static void inc_encoder_pulse() {

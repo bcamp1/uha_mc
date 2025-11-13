@@ -16,7 +16,8 @@
 #define INC_ENCODER_DIR_PIN PIN_ROLLER_DIR
 
 void inc_encoder_init();
-float inc_encoder_get_pos();
+float inc_encoder_get_rads();
+float inc_encoder_get_position(); // Tape position in seconds
 int32_t inc_encoder_get_ticks();
 
 #endif /* INC_ENCODER_H_ */

@@ -153,8 +153,8 @@ int main(void) {
 
     bool engaged = false;
     while (1) {
-        uart_println_int(inc_encoder_get_ticks());
-        //uart_println_float(inc_encoder_get_position());
+        //uart_println_int(inc_encoder_get_ticks());
+        uart_println_float(inc_encoder_get_position());
         parse_actions();
     }
 }
@@ -194,6 +194,6 @@ void parse_actions() {
     } else {
         gpio_set_pin(PIN_DEBUG2);
     }
-    delay(0x8FFF);
+    delay(0x1FFF);
 }
 

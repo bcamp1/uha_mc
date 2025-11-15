@@ -5,6 +5,8 @@
  *  Author: brans
  */ 
 
+
+/*
 #include "motor_encoder.h"
 #include "spi_collector.h"
 #include "../foc/foc_math_fpu.h"
@@ -44,4 +46,5 @@ float motor_encoder_get_pole_pos_from_theta(const MotorEncoderConfig* config, fl
 	while (theta > 2*PI) theta -= 2*PI;
 	return theta;
 }
+*/
 

@@ -16,6 +16,7 @@ const StepperConfig STEPPER_CONF_TAPE_LIFTER = {
 };
 
 void stepper_init(const StepperConfig* config) {
+    /*
     gpio_init_pin(config->dir_pin, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
     gpio_init_pin(config->step_pin, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
     gpio_init_pin(config->enable_pin, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
@@ -23,6 +24,7 @@ void stepper_init(const StepperConfig* config) {
     gpio_clear_pin(config->dir_pin);
     gpio_clear_pin(config->step_pin);
     gpio_clear_pin(config->enable_pin);
+    */
 }
 
 void stepper_enable(const StepperConfig* config) {

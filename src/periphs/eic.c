@@ -84,8 +84,8 @@ void eic_init_pin(uint16_t pin, uint16_t ext_num, uint16_t int_mode, func_ptr_t 
 	while (EIC->SYNCBUSY.bit.ENABLE);
 }
 
-void EIC_2_Handler(void) {
-	process_interrupt(2);
+void EIC_7_Handler(void) {
+	process_interrupt(7);
 }
 
 static void process_interrupt(uint16_t ext_num) {

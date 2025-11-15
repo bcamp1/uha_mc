@@ -5,6 +5,7 @@
  *  Author: brans
  */ 
 
+/*
 #include "trq_pwm.h"
 #include "../periphs/gpio.h"
 #include "sam.h"
@@ -24,17 +25,6 @@
 // Clock
 #define GCLK_TCC0_TCC1_INDEX (25)
 #define GCLK_TCC2_TCC3_INDEX (29)
-
-/*
-Initialization steps:
-1. Enable clock
-2. CPTEN
-3. CTRLA.PRESCALER
-4. CTRLA.PRESCSYNC
-5. WAVE.WAVEGEN
-6. WAVE.POL
-7. DRVCTRL.INVEN
-*/
 void trq_pwm_init() {
 	// Init Pins
 	//init_pwm_pins();
@@ -78,4 +68,4 @@ void trq_pwm_set_mag(uint16_t index, float mag) {
     uint8_t mag_int = (uint16_t) (mag * 255.0f);
     PWM_TIMER->CC[index].reg = mag_int;
 }
-
+*/

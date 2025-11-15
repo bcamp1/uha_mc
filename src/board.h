@@ -50,9 +50,9 @@
 #define PIN_STP2_ENABLE PIN_PA07
 
 // Roller Encoder Pins
-#define PIN_ROLLER_INDEX PIN_PB01
-#define PIN_ROLLER_PULSE PIN_PB02
-#define PIN_ROLLER_DIR   PIN_PB03
+#define PIN_ROLLER_INDEX PIN_PB05
+#define PIN_ROLLER_PULSE PIN_PB07
+#define PIN_ROLLER_DIR   PIN_PB06
 
 // Tension Arm Encoders
 #define PIN_TENSION_A_CS PIN_PB30

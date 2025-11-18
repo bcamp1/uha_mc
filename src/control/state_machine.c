@@ -2,7 +2,7 @@
 #include "../drivers/tension_arm.h"
 #include "../drivers/bldc.h"
 #include "../drivers/delay.h"
-#include "../drivers/stepper.h"
+#include "../drivers/solenoid.h"
 #include "../periphs/uart.h"
 #include <stdbool.h>
 
@@ -59,9 +59,9 @@ void state_machine_init() {
     tension_arm_init(&TENSION_ARM_A);
     tension_arm_init(&TENSION_ARM_B);
 
-    bldc_init_all();
+    solenoid_pinch_init();
 
-    stepper_capstan_init();
+    bldc_init_all();
     
     state = STOPPED;
     current_state_ticks = 0;
@@ -141,15 +141,15 @@ void state_machine_take_action(StateAction a) {
                     set_state(PLAYBACK);
                     break;
                 case STOP_ACTION:
-                    stepper_capstan_disengage();
+                    solenoid_pinch_disengage();
                     set_state(STOPPED);
                     break;
                 case FF_ACTION:
-                    stepper_capstan_disengage();
+                    solenoid_pinch_disengage();
                     set_state(FF);
                     break;
                 case REW_ACTION:
-                    stepper_capstan_disengage();
+                    solenoid_pinch_disengage();
                     set_state(REW);
                     break;
                 case NO_ACTION:
@@ -170,7 +170,7 @@ void state_machine_take_action(StateAction a) {
             break;
         case PLAYBACK:
             if (a != PLAY_ACTION) {
-                stepper_capstan_disengage();
+                solenoid_pinch_disengage();
                 set_state(PLAYBACK_TO_IDLE);
                 next_action = a;
             }
@@ -198,7 +198,7 @@ static void playback_controller(float tension_t, float tension_s, float* u_t, fl
     *u_s = k_s * e_b;
 
     if (current_state_ticks == 250) {
-        stepper_capstan_engage();
+        solenoid_pinch_engage();
     }
 }
 

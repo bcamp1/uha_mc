@@ -20,6 +20,7 @@
 #include "drivers/trq_pwm.h"
 #include "drivers/bldc.h"
 #include "drivers/inc_encoder.h"
+#include "drivers/solenoid.h"
 #include "foc/fast_sin_cos.h"
 #include "control/state_machine.h"
 
@@ -150,6 +151,7 @@ int main(void) {
     inc_encoder_init();
     timer_schedule(0, 500, 1, state_machine_tick);
     //tension_arm_test();
+    //
 
     bool engaged = false;
     while (1) {

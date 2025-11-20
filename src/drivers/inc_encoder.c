@@ -47,7 +47,6 @@ float inc_encoder_get_position() {
 }
 
 static void inc_encoder_pulse() {
-    gpio_set_pin(PIN_DEBUG1);
     // Get Encoder Pos
 	bool dir = gpio_get_pin(PIN_ROLLER_DIR);
 	if (dir) {
@@ -55,7 +54,6 @@ static void inc_encoder_pulse() {
 	} else {
         pulses--;
 	}
-    gpio_clear_pin(PIN_DEBUG1);
 }
 
 void inc_encoder_init() {
@@ -66,8 +64,6 @@ void inc_encoder_init() {
 	
 	// Init dir pin
 	gpio_init_pin(PIN_ROLLER_DIR, GPIO_DIR_IN, GPIO_ALTERNATE_NONE);
-
-    gpio_set_pin(PIN_DEBUG1);
 }
 
 

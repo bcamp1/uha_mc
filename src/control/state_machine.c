@@ -1,9 +1,14 @@
 #include "state_machine.h"
 #include "../drivers/tension_arm.h"
+#include "../drivers/inc_encoder.h"
 #include "../drivers/bldc.h"
 #include "../drivers/delay.h"
 #include "../drivers/solenoid.h"
 #include "../periphs/uart.h"
+#include "../periphs/gpio.h"
+#include "../board.h"
+#include "filter.h"
+#include "simple_filter.h"
 #include <stdbool.h>
 
 static State state = STOPPED;
@@ -11,16 +16,43 @@ static StateAction next_action = NO_ACTION;
 uint32_t current_state_ticks = 0;
 bool is_closed_loop = true;
 
-float takeup_speed = 0.0f;
-float supply_speed = 0.0f;
+static ControlState control_state;
+static float tape_position_prev = 0.0f;
+static SimpleFilter tape_speed_filter;
+static const float T = (1.0 / STATE_MACHINE_FREQUENCY);
 
-static void playback_controller(float tension_t, float tension_s, float* u_t, float* u_s);
-static void ff_controller(float tension_t, float tension_s, float* u_t, float* u_s);
-static void rew_controller(float tension_t, float tension_s, float* u_t, float* u_s);
-static void ff_to_idle_controller(float tension_t, float tension_s, float* u_t, float* u_s);
-static void rew_to_idle_controller(float tension_t, float tension_s, float* u_t, float* u_s);
-static void playback_to_idle_controller(float tension_t, float tension_s, float* u_t, float* u_s);
-static bool idle_controller(float tension_t, float tension_s, float* u_t, float* u_s);
+// Controllers
+static Filter playback_takeup_controller;
+static Filter playback_supply_controller;
+
+static float takeup_speed;
+static float supply_speed;
+
+static void init_tape_speed_filter();
+static void init_controllers();
+static void playback_controller(float* u_t, float* u_s);
+static void ff_controller(float* u_t, float* u_s);
+static void rew_controller(float* u_t, float* u_s);
+static void ff_to_idle_controller(float* u_t, float* u_s);
+static void rew_to_idle_controller(float* u_t, float* u_s);
+static void playback_to_idle_controller(float* u_t, float* u_s);
+static bool idle_controller(float* u_t, float* u_s);
+
+float state_machine_get_tape_speed() {
+    return control_state.tape_speed;
+}
+
+static void init_tape_speed_filter() {
+    tape_speed_filter = (SimpleFilter) {
+        .alpha = 0.99f,
+        .y_kminus1 = 0.0f,
+    };
+}
+
+static void init_controllers() {
+    filter_init_pid(&playback_takeup_controller, -1.0f, 0.0f, -0.05f, T);
+    filter_init_pid(&playback_supply_controller, 1.0f, 0.0f, 0.05f, T);
+}
 
 static void set_state(State s) {
     state = s;
@@ -61,6 +93,12 @@ void state_machine_init() {
 
     solenoid_pinch_init();
 
+    // Initialize tape speed filter
+    init_tape_speed_filter();
+
+    // Initialize Controllers
+    init_controllers();
+
     bldc_init_all();
     
     state = STOPPED;
@@ -69,12 +107,24 @@ void state_machine_init() {
 }
 
 void state_machine_tick() {
+    gpio_set_pin(PIN_DEBUG1);
     if (!is_closed_loop) {
         return;
     }
-
+    
+    // Populate new state
     float tension_t = tension_arm_get_position(&TENSION_ARM_A);
     float tension_s = tension_arm_get_position(&TENSION_ARM_B);
+    tape_position_prev = control_state.tape_position;
+
+    float tape_position = inc_encoder_get_position();
+    float tape_delta = (tape_position - tape_position_prev) / T;
+    float tape_speed = simple_filter_next(tape_delta, &tape_speed_filter);
+
+    control_state.tape_position = tape_position;
+    control_state.tape_speed = tape_speed;
+    control_state.takeup_tension = tension_t;
+    control_state.supply_tension = tension_s;
 
     float u_t = 0.0f;
     float u_s = 0.0f;
@@ -96,25 +146,25 @@ void state_machine_tick() {
         case STOPPED:
             break;
         case PLAYBACK:
-            playback_controller(tension_t, tension_s, &u_t, &u_s);
+            playback_controller(&u_t, &u_s);
             break;
         case FF:
-            ff_controller(tension_t, tension_s, &u_t, &u_s);
+            ff_controller(&u_t, &u_s);
             break;
         case REW:
-            rew_controller(tension_t, tension_s, &u_t, &u_s);
+            rew_controller(&u_t, &u_s);
             break;
         case FF_TO_IDLE:
-            ff_to_idle_controller(tension_t, tension_s, &u_t, &u_s);
+            ff_to_idle_controller(&u_t, &u_s);
             break;
         case REW_TO_IDLE:
-            rew_to_idle_controller(tension_t, tension_s, &u_t, &u_s);
+            rew_to_idle_controller(&u_t, &u_s);
             break;
         case PLAYBACK_TO_IDLE:
-            playback_to_idle_controller(tension_t, tension_s, &u_t, &u_s);
+            playback_to_idle_controller(&u_t, &u_s);
             break;
         case IDLE:
-            bool ready = idle_controller(tension_t, tension_s, &u_t, &u_s);
+            bool ready = idle_controller(&u_t, &u_s);
             if (ready) {
                 state_machine_take_action(next_action);
                 next_action = NO_ACTION;
@@ -125,6 +175,7 @@ void state_machine_tick() {
     takeup_speed = bldc_set_torque_float(&BLDC_CONF_TAKEUP, u_t);
     supply_speed = bldc_set_torque_float(&BLDC_CONF_SUPPLY, u_s);
     current_state_ticks++;
+    gpio_clear_pin(PIN_DEBUG1);
 }
 
 void state_machine_take_action(StateAction a) {
@@ -184,33 +235,44 @@ void state_machine_take_action(StateAction a) {
     is_closed_loop = true;
 }
 
-static void playback_controller(float tension_t, float tension_s, float* u_t, float* u_s) {
+static void playback_controller(float* u_t, float* u_s) {
+    /*
     const float k_t = -1.0;
     const float k_s = 1.0;
 
     const float r_t = 0.5f;
     const float r_s = 0.5f;
 
-    float e_a = r_t - tension_t;
-    float e_b = r_s - tension_s;
+    float e_a = r_t - control_state.takeup_tension;
+    float e_b = r_s - control_state.supply_tension;
 
     *u_t = k_t * e_a;
     *u_s = k_s * e_b;
+    */
+    
+    const float r_t = 0.5f;
+    const float r_s = 0.5f;
 
-    if (current_state_ticks == 250) {
+    float e_t = r_t - control_state.takeup_tension;
+    float e_s = r_s - control_state.supply_tension;
+
+    *u_t = filter_next(e_t, &playback_takeup_controller);
+    *u_s = filter_next(e_s, &playback_supply_controller);
+
+    if (current_state_ticks == 500) {
         solenoid_pinch_engage();
     }
 }
 
-static void ff_controller(float tension_t, float tension_s, float* u_t, float* u_s) {
+static void ff_controller(float* u_t, float* u_s) {
     const float k_t = 0.3;
     const float k_s = 0.8;
 
     const float r_t = 1.0f;
     const float r_s = 0.5f;
 
-    float e_a = r_t - tension_t;
-    float e_b = r_s - tension_s;
+    float e_a = r_t - control_state.takeup_tension;
+    float e_b = r_s - control_state.supply_tension;
 
     *u_t = k_t * e_a;
     *u_s = k_s * e_b;
@@ -218,15 +280,15 @@ static void ff_controller(float tension_t, float tension_s, float* u_t, float* u
     *u_t -= 0.6f;
 }
 
-static void rew_controller(float tension_t, float tension_s, float* u_t, float* u_s) {
+static void rew_controller(float* u_t, float* u_s) {
     const float k_t = -0.8;
     const float k_s = -0.3;
 
     const float r_t = 0.5f;
     const float r_s = 1.0f;
 
-    float e_a = r_t - tension_t;
-    float e_b = r_s - tension_s;
+    float e_a = r_t - control_state.takeup_tension;
+    float e_b = r_s - control_state.supply_tension;
 
     *u_t = k_t * e_a;
     *u_s = k_s * e_b;
@@ -234,15 +296,15 @@ static void rew_controller(float tension_t, float tension_s, float* u_t, float* 
     *u_s += 0.6f;
 }
 
-static void ff_to_idle_controller(float tension_t, float tension_s, float* u_t, float* u_s) {
+static void ff_to_idle_controller(float* u_t, float* u_s) {
     const float k_t = -0.8;
     const float k_s = 0.8;
 
     const float r_t = 1.0f;
     const float r_s = 0.5f;
 
-    float e_a = r_t - tension_t;
-    float e_b = r_s - tension_s;
+    float e_a = r_t - control_state.takeup_tension;
+    float e_b = r_s - control_state.supply_tension;
 
     *u_t = k_t * e_a;
     *u_s = k_s * e_b;
@@ -252,15 +314,15 @@ static void ff_to_idle_controller(float tension_t, float tension_s, float* u_t, 
     }
 }
 
-static void rew_to_idle_controller(float tension_t, float tension_s, float* u_t, float* u_s) {
+static void rew_to_idle_controller(float* u_t, float* u_s) {
     const float k_t = -0.8;
     const float k_s = 0.8;
 
     const float r_t = 0.5f;
     const float r_s = 1.0f;
 
-    float e_a = r_t - tension_t;
-    float e_b = r_s - tension_s;
+    float e_a = r_t - control_state.takeup_tension;
+    float e_b = r_s - control_state.supply_tension;
 
     *u_t = k_t * e_a;
     *u_s = k_s * e_b;
@@ -270,33 +332,33 @@ static void rew_to_idle_controller(float tension_t, float tension_s, float* u_t,
     }
 }
 
-static void playback_to_idle_controller(float tension_t, float tension_s, float* u_t, float* u_s) {
+static void playback_to_idle_controller(float* u_t, float* u_s) {
     const float k_t = -1.0;
     const float k_s = 1.0;
 
     const float r_t = 0.5f;
     const float r_s = 0.5f;
 
-    float e_a = r_t - tension_t;
-    float e_b = r_s - tension_s;
+    float e_t = r_t - control_state.takeup_tension;
+    float e_s = r_s - control_state.supply_tension;
 
-    *u_t = k_t * e_a;
-    *u_s = k_s * e_b;
+    *u_t = k_t * e_t;
+    *u_s = k_s * e_s;
 
     if (current_state_ticks >= 500) {
         set_state(IDLE);
     }
 }
 
-static bool idle_controller(float tension_t, float tension_s, float* u_t, float* u_s) {
+static bool idle_controller(float* u_t, float* u_s) {
     const float k_t = -1.0;
     const float k_s = 1.0;
 
     const float r_t = 0.5f;
     const float r_s = 0.5f;
 
-    float e_a = r_t - tension_t;
-    float e_b = r_s - tension_s;
+    float e_a = r_t - control_state.takeup_tension;
+    float e_b = r_s - control_state.supply_tension;
 
     *u_t = k_t * e_a;
     *u_s = k_s * e_b;

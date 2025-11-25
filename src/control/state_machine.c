@@ -18,7 +18,13 @@ bool is_closed_loop = true;
 
 static ControlState control_state;
 static float tape_position_prev = 0.0f;
+
+// Filters
 static SimpleFilter tape_speed_filter;
+static SimpleFilter takeup_tension_filter;
+static SimpleFilter supply_tension_filter;
+
+// Sample Period
 static const float T = (1.0 / STATE_MACHINE_FREQUENCY);
 
 // Controllers
@@ -28,7 +34,7 @@ static Filter playback_supply_controller;
 static float takeup_speed;
 static float supply_speed;
 
-static void init_tape_speed_filter();
+static void init_filters();
 static void init_controllers();
 static void playback_controller(float* u_t, float* u_s);
 static void ff_controller(float* u_t, float* u_s);
@@ -42,16 +48,32 @@ float state_machine_get_tape_speed() {
     return control_state.tape_speed;
 }
 
-static void init_tape_speed_filter() {
+static void init_filters() {
     tape_speed_filter = (SimpleFilter) {
         .alpha = 0.99f,
+        .y_kminus1 = 0.0f,
+    };
+    takeup_tension_filter = (SimpleFilter) {
+        .alpha = 0.9f,
+        .y_kminus1 = 0.0f,
+    };
+    supply_tension_filter = (SimpleFilter) {
+        .alpha = 0.9f,
         .y_kminus1 = 0.0f,
     };
 }
 
 static void init_controllers() {
-    filter_init_pid(&playback_takeup_controller, -1.0f, 0.0f, -0.05f, T);
-    filter_init_pid(&playback_supply_controller, 1.0f, 0.0f, 0.05f, T);
+    const float takeup_P = 1.0f;
+    const float takeup_I = 0.0f;
+    const float takeup_D = 0.05f;
+
+    const float supply_P = 1.0f;
+    const float supply_I = 0.0f;
+    const float supply_D = 0.05f;
+
+    filter_init_pid(&playback_takeup_controller, -takeup_P, -takeup_I, -takeup_D, T);
+    filter_init_pid(&playback_supply_controller, supply_P, supply_I, supply_D, T);
 }
 
 static void set_state(State s) {
@@ -94,7 +116,7 @@ void state_machine_init() {
     solenoid_pinch_init();
 
     // Initialize tape speed filter
-    init_tape_speed_filter();
+    init_filters();
 
     // Initialize Controllers
     init_controllers();
@@ -107,24 +129,28 @@ void state_machine_init() {
 }
 
 void state_machine_tick() {
+
     gpio_set_pin(PIN_DEBUG1);
     if (!is_closed_loop) {
         return;
     }
     
-    // Populate new state
+    // New tensions
     float tension_t = tension_arm_get_position(&TENSION_ARM_A);
     float tension_s = tension_arm_get_position(&TENSION_ARM_B);
+    float takeup_tension = simple_filter_next(tension_t, &takeup_tension_filter);
+    float supply_tension = simple_filter_next(tension_s, &supply_tension_filter);
+    
+    // New tape speed
     tape_position_prev = control_state.tape_position;
-
     float tape_position = inc_encoder_get_position();
     float tape_delta = (tape_position - tape_position_prev) / T;
     float tape_speed = simple_filter_next(tape_delta, &tape_speed_filter);
 
     control_state.tape_position = tape_position;
     control_state.tape_speed = tape_speed;
-    control_state.takeup_tension = tension_t;
-    control_state.supply_tension = tension_s;
+    control_state.takeup_tension = takeup_tension;
+    control_state.supply_tension = supply_tension;
 
     float u_t = 0.0f;
     float u_s = 0.0f;

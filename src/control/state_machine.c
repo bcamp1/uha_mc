@@ -149,8 +149,12 @@ void state_machine_tick() {
 
     control_state.tape_position = tape_position;
     control_state.tape_speed = tape_speed;
-    control_state.takeup_tension = takeup_tension;
-    control_state.supply_tension = supply_tension;
+
+
+    control_state.filtered_takeup_tension = takeup_tension;
+    control_state.filtered_supply_tension = supply_tension;
+    control_state.takeup_tension = tension_t;
+    control_state.supply_tension = tension_s;
 
     float u_t = 0.0f;
     float u_s = 0.0f;
@@ -279,8 +283,8 @@ static void playback_controller(float* u_t, float* u_s) {
     const float r_t = 0.5f;
     const float r_s = 0.5f;
 
-    float e_t = r_t - control_state.takeup_tension;
-    float e_s = r_s - control_state.supply_tension;
+    float e_t = r_t - control_state.filtered_takeup_tension;
+    float e_s = r_s - control_state.filtered_supply_tension;
 
     *u_t = filter_next(e_t, &playback_takeup_controller);
     *u_s = filter_next(e_s, &playback_supply_controller);

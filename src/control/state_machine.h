@@ -23,6 +23,8 @@ typedef enum {
 } StateAction;
 
 typedef struct {
+    float filtered_takeup_tension;
+    float filtered_supply_tension;
     float takeup_tension;
     float supply_tension;
     float tape_position;

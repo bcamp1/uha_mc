@@ -39,8 +39,8 @@ static float supply_speed;
 static void init_filters();
 static void init_controllers();
 static void playback_controller(float* u_t, float* u_s);
-static void ff_controller(float* u_t, float* u_s);
-static void rew_controller(float* u_t, float* u_s);
+static void ff_controller(float* u_t, float* u_s, float torque);
+static void rew_controller(float* u_t, float* u_s, float torque);
 static void ff_to_idle_controller(float* u_t, float* u_s);
 static void rew_to_idle_controller(float* u_t, float* u_s);
 static void playback_to_idle_controller(float* u_t, float* u_s);
@@ -192,10 +192,10 @@ void state_machine_tick() {
             playback_controller(&u_t, &u_s);
             break;
         case FF:
-            ff_controller(&u_t, &u_s);
+            ff_controller(&u_t, &u_s, 0.5f);
             break;
         case REW:
-            rew_controller(&u_t, &u_s);
+            rew_controller(&u_t, &u_s, 0.5f);
             break;
         case FF_TO_IDLE:
             ff_to_idle_controller(&u_t, &u_s);
@@ -307,23 +307,23 @@ static void playback_controller(float* u_t, float* u_s) {
     }
 }
 
-static void ff_controller(float* u_t, float* u_s) {
-    const float k_t = 0.3;
-    const float k_s = 0.8;
+static void ff_controller(float* u_t, float* u_s, float torque) {
+    const float k_t = 0.0f;
+    const float k_s = 0.8f;
 
     const float r_t = 1.0f;
     const float r_s = 0.5f;
 
-    float e_a = r_t - control_state.takeup_tension;
-    float e_b = r_s - control_state.supply_tension;
+    float e_t = r_t - control_state.filtered_takeup_tension;
+    float e_s = r_s - control_state.filtered_supply_tension;
 
-    *u_t = k_t * e_a;
-    *u_s = k_s * e_b;
+    *u_t = filter_next(e_t, &ff_to_idle_playback_takeup_controller);
+    *u_s = filter_next(e_s, &ff_to_idle_playback_supply_controller);
 
-    *u_t -= 0.3f;
+    *u_t -= torque;
 }
 
-static void rew_controller(float* u_t, float* u_s) {
+static void rew_controller(float* u_t, float* u_s, float torque) {
     const float k_t = -0.8;
     const float k_s = -0.3;
 
@@ -336,7 +336,7 @@ static void rew_controller(float* u_t, float* u_s) {
     *u_t = k_t * e_a;
     *u_s = k_s * e_b;
 
-    *u_s += 0.6f;
+    *u_s += torque;
 }
 
 static void ff_to_idle_controller(float* u_t, float* u_s) {

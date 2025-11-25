@@ -30,6 +30,8 @@ static const float T = (1.0 / STATE_MACHINE_FREQUENCY);
 // Controllers
 static Filter playback_takeup_controller;
 static Filter playback_supply_controller;
+static Filter ff_to_idle_playback_takeup_controller;
+static Filter ff_to_idle_playback_supply_controller;
 
 static float takeup_speed;
 static float supply_speed;
@@ -64,16 +66,27 @@ static void init_filters() {
 }
 
 static void init_controllers() {
-    const float takeup_P = 1.0f;
+    const float takeup_P = 1.5f;
     const float takeup_I = 0.0f;
     const float takeup_D = 0.05f;
 
-    const float supply_P = 1.0f;
+    const float supply_P = 1.5f;
     const float supply_I = 0.0f;
     const float supply_D = 0.05f;
 
     filter_init_pid(&playback_takeup_controller, -takeup_P, -takeup_I, -takeup_D, T);
     filter_init_pid(&playback_supply_controller, supply_P, supply_I, supply_D, T);
+
+    const float ff_to_idle_takeup_P = 1.5f;
+    const float ff_to_idle_takeup_I = 0.0f;
+    const float ff_to_idle_takeup_D = 0.05f;
+
+    const float ff_to_idle_supply_P = 1.5f;
+    const float ff_to_idle_supply_I = 0.0f;
+    const float ff_to_idle_supply_D = 0.05f;
+
+    filter_init_pid(&ff_to_idle_playback_takeup_controller, -ff_to_idle_takeup_P, -ff_to_idle_takeup_I, -ff_to_idle_takeup_D, T);
+    filter_init_pid(&ff_to_idle_playback_supply_controller, ff_to_idle_supply_P, ff_to_idle_supply_I, ff_to_idle_supply_D, T);
 }
 
 static void set_state(State s) {
@@ -307,7 +320,7 @@ static void ff_controller(float* u_t, float* u_s) {
     *u_t = k_t * e_a;
     *u_s = k_s * e_b;
 
-    *u_t -= 0.6f;
+    *u_t -= 0.3f;
 }
 
 static void rew_controller(float* u_t, float* u_s) {
@@ -327,6 +340,7 @@ static void rew_controller(float* u_t, float* u_s) {
 }
 
 static void ff_to_idle_controller(float* u_t, float* u_s) {
+    /*
     const float k_t = -0.8;
     const float k_s = 0.8;
 
@@ -338,6 +352,16 @@ static void ff_to_idle_controller(float* u_t, float* u_s) {
 
     *u_t = k_t * e_a;
     *u_s = k_s * e_b;
+    */
+
+    const float r_t = 1.0f;
+    const float r_s = 0.5f;
+
+    float e_t = r_t - control_state.filtered_takeup_tension;
+    float e_s = r_s - control_state.filtered_supply_tension;
+
+    *u_t = filter_next(e_t, &ff_to_idle_playback_takeup_controller);
+    *u_s = filter_next(e_s, &ff_to_idle_playback_supply_controller);
 
     if (current_state_ticks >= 1000) {
         set_state(IDLE);
@@ -381,6 +405,7 @@ static void playback_to_idle_controller(float* u_t, float* u_s) {
 }
 
 static bool idle_controller(float* u_t, float* u_s) {
+    /*
     const float k_t = -1.0;
     const float k_s = 1.0;
 
@@ -392,6 +417,16 @@ static bool idle_controller(float* u_t, float* u_s) {
 
     *u_t = k_t * e_a;
     *u_s = k_s * e_b;
+*/
+
+    const float r_t = 0.5f;
+    const float r_s = 0.5f;
+
+    float e_t = r_t - control_state.filtered_takeup_tension;
+    float e_s = r_s - control_state.filtered_supply_tension;
+
+    *u_t = filter_next(e_t, &playback_takeup_controller);
+    *u_s = filter_next(e_s, &playback_supply_controller);
 
     const float reel_speed_thresh = 0.5;
 
@@ -399,8 +434,8 @@ static bool idle_controller(float* u_t, float* u_s) {
     if (supply_speed < reel_speed_thresh && supply_speed > -reel_speed_thresh) {
         if (takeup_speed < reel_speed_thresh && takeup_speed > -reel_speed_thresh) {
             return true;
-            if (e_a < 0.2f && e_a > -0.2f) {
-                if (e_b < 0.2f && e_b > -0.2f) {
+            if (e_t < 0.2f && e_t > -0.2f) {
+                if (e_s < 0.2f && e_s > -0.2f) {
                     return true;
                 }
             }

@@ -249,20 +249,6 @@ void state_machine_take_action(StateAction a) {
 }
 
 static void playback_controller(float* u_t, float* u_s) {
-    /*
-    const float k_t = -1.0;
-    const float k_s = 1.0;
-
-    const float r_t = 0.5f;
-    const float r_s = 0.5f;
-
-    float e_a = r_t - control_state.takeup_tension;
-    float e_b = r_s - control_state.supply_tension;
-
-    *u_t = k_t * e_a;
-    *u_s = k_s * e_b;
-    */
-    
     const float r_t = 0.5f;
     const float r_s = 0.5f;
 
@@ -278,9 +264,6 @@ static void playback_controller(float* u_t, float* u_s) {
 }
 
 static void ff_controller(float* u_t, float* u_s, float torque) {
-    const float k_t = 0.0f;
-    const float k_s = 0.8f;
-
     const float r_t = 1.0f;
     const float r_s = 0.5f;
 
@@ -294,36 +277,19 @@ static void ff_controller(float* u_t, float* u_s, float torque) {
 }
 
 static void rew_controller(float* u_t, float* u_s, float torque) {
-    const float k_t = -0.8;
-    const float k_s = -0.3;
-
     const float r_t = 0.5f;
     const float r_s = 1.0f;
 
-    float e_a = r_t - control_state.takeup_tension;
-    float e_b = r_s - control_state.supply_tension;
+    float e_t = r_t - control_state.filtered_takeup_tension;
+    float e_s = r_s - control_state.filtered_supply_tension;
 
-    *u_t = k_t * e_a;
-    *u_s = k_s * e_b;
+    *u_t = filter_next(e_t, &controller_rew_takeup);
+    *u_s = filter_next(e_s, &controller_rew_supply);
 
     *u_s += torque;
 }
 
 static void ff_to_idle_controller(float* u_t, float* u_s) {
-    /*
-    const float k_t = -0.8;
-    const float k_s = 0.8;
-
-    const float r_t = 1.0f;
-    const float r_s = 0.5f;
-
-    float e_a = r_t - control_state.takeup_tension;
-    float e_b = r_s - control_state.supply_tension;
-
-    *u_t = k_t * e_a;
-    *u_s = k_s * e_b;
-    */
-
     const float r_t = 1.0f;
     const float r_s = 0.5f;
 
@@ -339,17 +305,14 @@ static void ff_to_idle_controller(float* u_t, float* u_s) {
 }
 
 static void rew_to_idle_controller(float* u_t, float* u_s) {
-    const float k_t = -0.8;
-    const float k_s = 0.8;
-
     const float r_t = 0.5f;
     const float r_s = 1.0f;
 
-    float e_a = r_t - control_state.takeup_tension;
-    float e_b = r_s - control_state.supply_tension;
+    float e_t = r_t - control_state.filtered_takeup_tension;
+    float e_s = r_s - control_state.filtered_supply_tension;
 
-    *u_t = k_t * e_a;
-    *u_s = k_s * e_b;
+    *u_t = filter_next(e_t, &controller_rew_takeup);
+    *u_s = filter_next(e_s, &controller_rew_supply);
 
     if (current_state_ticks >= 1000) {
         set_state(IDLE);
@@ -357,17 +320,14 @@ static void rew_to_idle_controller(float* u_t, float* u_s) {
 }
 
 static void playback_to_idle_controller(float* u_t, float* u_s) {
-    const float k_t = -1.0;
-    const float k_s = 1.0;
-
     const float r_t = 0.5f;
     const float r_s = 0.5f;
 
-    float e_t = r_t - control_state.takeup_tension;
-    float e_s = r_s - control_state.supply_tension;
+    float e_t = r_t - control_state.filtered_takeup_tension;
+    float e_s = r_s - control_state.filtered_supply_tension;
 
-    *u_t = k_t * e_t;
-    *u_s = k_s * e_s;
+    *u_t = filter_next(e_t, &controller_idle_takeup);
+    *u_s = filter_next(e_s, &controller_idle_supply);
 
     if (current_state_ticks >= 500) {
         set_state(IDLE);
@@ -375,20 +335,6 @@ static void playback_to_idle_controller(float* u_t, float* u_s) {
 }
 
 static bool idle_controller(float* u_t, float* u_s) {
-    /*
-    const float k_t = -1.0;
-    const float k_s = 1.0;
-
-    const float r_t = 0.5f;
-    const float r_s = 0.5f;
-
-    float e_a = r_t - control_state.takeup_tension;
-    float e_b = r_s - control_state.supply_tension;
-
-    *u_t = k_t * e_a;
-    *u_s = k_s * e_b;
-*/
-
     const float r_t = 0.5f;
     const float r_s = 0.5f;
 

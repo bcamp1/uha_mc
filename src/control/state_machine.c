@@ -8,6 +8,7 @@
 #include "../periphs/gpio.h"
 #include "../board.h"
 #include "filter.h"
+#include "controllers.h"
 #include "simple_filter.h"
 #include <stdbool.h>
 
@@ -27,17 +28,10 @@ static SimpleFilter supply_tension_filter;
 // Sample Period
 static const float T = (1.0 / STATE_MACHINE_FREQUENCY);
 
-// Controllers
-static Filter playback_takeup_controller;
-static Filter playback_supply_controller;
-static Filter ff_to_idle_playback_takeup_controller;
-static Filter ff_to_idle_playback_supply_controller;
-
 static float takeup_speed;
 static float supply_speed;
 
 static void init_filters();
-static void init_controllers();
 static void playback_controller(float* u_t, float* u_s);
 static void ff_controller(float* u_t, float* u_s, float torque);
 static void rew_controller(float* u_t, float* u_s, float torque);
@@ -63,30 +57,6 @@ static void init_filters() {
         .alpha = 0.9f,
         .y_kminus1 = 0.0f,
     };
-}
-
-static void init_controllers() {
-    const float takeup_P = 1.5f;
-    const float takeup_I = 0.0f;
-    const float takeup_D = 0.05f;
-
-    const float supply_P = 1.5f;
-    const float supply_I = 0.0f;
-    const float supply_D = 0.05f;
-
-    filter_init_pid(&playback_takeup_controller, -takeup_P, -takeup_I, -takeup_D, T);
-    filter_init_pid(&playback_supply_controller, supply_P, supply_I, supply_D, T);
-
-    const float ff_to_idle_takeup_P = 1.5f;
-    const float ff_to_idle_takeup_I = 0.0f;
-    const float ff_to_idle_takeup_D = 0.05f;
-
-    const float ff_to_idle_supply_P = 1.5f;
-    const float ff_to_idle_supply_I = 0.0f;
-    const float ff_to_idle_supply_D = 0.05f;
-
-    filter_init_pid(&ff_to_idle_playback_takeup_controller, -ff_to_idle_takeup_P, -ff_to_idle_takeup_I, -ff_to_idle_takeup_D, T);
-    filter_init_pid(&ff_to_idle_playback_supply_controller, ff_to_idle_supply_P, ff_to_idle_supply_I, ff_to_idle_supply_D, T);
 }
 
 static void set_state(State s) {
@@ -132,7 +102,7 @@ void state_machine_init() {
     init_filters();
 
     // Initialize Controllers
-    init_controllers();
+    controllers_init_all(T);
 
     bldc_init_all();
     
@@ -299,8 +269,8 @@ static void playback_controller(float* u_t, float* u_s) {
     float e_t = r_t - control_state.filtered_takeup_tension;
     float e_s = r_s - control_state.filtered_supply_tension;
 
-    *u_t = filter_next(e_t, &playback_takeup_controller);
-    *u_s = filter_next(e_s, &playback_supply_controller);
+    *u_t = filter_next(e_t, &controller_playback_takeup);
+    *u_s = filter_next(e_s, &controller_playback_supply);
 
     if (current_state_ticks == 500) {
         solenoid_pinch_engage();
@@ -317,8 +287,8 @@ static void ff_controller(float* u_t, float* u_s, float torque) {
     float e_t = r_t - control_state.filtered_takeup_tension;
     float e_s = r_s - control_state.filtered_supply_tension;
 
-    *u_t = filter_next(e_t, &ff_to_idle_playback_takeup_controller);
-    *u_s = filter_next(e_s, &ff_to_idle_playback_supply_controller);
+    *u_t = filter_next(e_t, &controller_ff_takeup);
+    *u_s = filter_next(e_s, &controller_ff_supply);
 
     *u_t -= torque;
 }
@@ -360,8 +330,8 @@ static void ff_to_idle_controller(float* u_t, float* u_s) {
     float e_t = r_t - control_state.filtered_takeup_tension;
     float e_s = r_s - control_state.filtered_supply_tension;
 
-    *u_t = filter_next(e_t, &ff_to_idle_playback_takeup_controller);
-    *u_s = filter_next(e_s, &ff_to_idle_playback_supply_controller);
+    *u_t = filter_next(e_t, &controller_ff_takeup);
+    *u_s = filter_next(e_s, &controller_ff_supply);
 
     if (current_state_ticks >= 1000) {
         set_state(IDLE);
@@ -425,8 +395,8 @@ static bool idle_controller(float* u_t, float* u_s) {
     float e_t = r_t - control_state.filtered_takeup_tension;
     float e_s = r_s - control_state.filtered_supply_tension;
 
-    *u_t = filter_next(e_t, &playback_takeup_controller);
-    *u_s = filter_next(e_s, &playback_supply_controller);
+    *u_t = filter_next(e_t, &controller_idle_takeup);
+    *u_s = filter_next(e_s, &controller_idle_supply);
 
     const float reel_speed_thresh = 0.5;
 

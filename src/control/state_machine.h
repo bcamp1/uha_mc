@@ -12,6 +12,7 @@ typedef enum {
     REW_TO_IDLE,
     PLAYBACK_TO_IDLE,
     IDLE,
+    GOTO_MEM,
 } State;
 
 typedef enum {
@@ -19,6 +20,7 @@ typedef enum {
     STOP_ACTION,
     FF_ACTION,
     REW_ACTION,
+    MEM_ACTION,
     NO_ACTION,
 } StateAction;
 
@@ -37,4 +39,5 @@ void state_machine_tick();
 float state_machine_get_supply_speed();
 float state_machine_get_takeup_speed();
 float state_machine_get_tape_speed();
+void state_machine_goto_position(float position);
 

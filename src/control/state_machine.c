@@ -28,8 +28,12 @@ static SimpleFilter supply_tension_filter;
 // Sample Period
 static const float T = (1.0 / STATE_MACHINE_FREQUENCY);
 
+// Reel Speeds (Not currently used)
 static float takeup_speed;
 static float supply_speed;
+
+// Memory & Return to Zero 
+static float mem_target_position = 0.0f;
 
 static void init_filters();
 static void playback_controller(float* u_t, float* u_s);
@@ -38,6 +42,7 @@ static void rew_controller(float* u_t, float* u_s, float torque);
 static void ff_to_idle_controller(float* u_t, float* u_s);
 static void rew_to_idle_controller(float* u_t, float* u_s);
 static void playback_to_idle_controller(float* u_t, float* u_s);
+static void goto_mem_controller(float* u_t, float* u_s);
 static bool idle_controller(float* u_t, float* u_s);
 
 float state_machine_get_tape_speed() {
@@ -88,6 +93,10 @@ static void set_state(State s) {
             break;
         case IDLE:
             uart_println("IDLE");
+            break;
+        case GOTO_MEM:
+            uart_println("GOTO_MEM");
+            break;
     }
 }
 
@@ -183,6 +192,9 @@ void state_machine_tick() {
                 next_action = NO_ACTION;
             }
             break;
+        case GOTO_MEM:
+            goto_mem_controller(&u_t, &u_s);
+            break;
     }
 
     takeup_speed = bldc_set_torque_float(&BLDC_CONF_TAKEUP, u_t);
@@ -216,6 +228,10 @@ void state_machine_take_action(StateAction a) {
                     solenoid_pinch_disengage();
                     set_state(REW);
                     break;
+                case MEM_ACTION:
+                    solenoid_pinch_disengage();
+                    set_state(GOTO_MEM);
+                    break;
                 case NO_ACTION:
                     break;
             }
@@ -236,6 +252,15 @@ void state_machine_take_action(StateAction a) {
             if (a != PLAY_ACTION) {
                 solenoid_pinch_disengage();
                 set_state(PLAYBACK_TO_IDLE);
+                next_action = a;
+            }
+            break;
+        case GOTO_MEM:
+            if (mem_target_position > control_state.tape_position) {
+                set_state(FF_TO_IDLE);
+                next_action = a;
+            } else {
+                set_state(REW_TO_IDLE);
                 next_action = a;
             }
             break;
@@ -360,6 +385,45 @@ static bool idle_controller(float* u_t, float* u_s) {
     return false;
 }
 
+static void goto_mem_controller(float* u_t, float* u_s) {
+    const float full_gain_distance = 60.0f;
+    const float max_torque = 0.6f;
+    const float min_torque = 0.4f;
+    const float error_threshold = 0.5f;
+
+    float gain = 1.0f / full_gain_distance;
+
+    float current_pos = control_state.tape_position; 
+    float position_error = mem_target_position - current_pos;
+
+    if (position_error < error_threshold && position_error > -error_threshold) {
+        if (position_error > 0) {
+            set_state(FF_TO_IDLE);
+            next_action = STOP_ACTION;
+        } else {
+            set_state(FF_TO_IDLE);
+            next_action = STOP_ACTION;
+        }
+        return;
+    }
+
+    float gain_percent = position_error * gain;
+    bool is_ff = (gain_percent > 0);
+
+    if (!is_ff) gain_percent = -gain_percent;
+    if (gain_percent > 1.0f) gain_percent = 1.0f;
+
+    float torque = min_torque + gain_percent*(max_torque - min_torque);
+
+    //uart_println_float(torque);
+    
+    if (is_ff) {
+        ff_controller(u_t, u_s, torque);
+    } else {
+        rew_controller(u_t, u_s, torque);
+    }
+}
+
 float state_machine_get_supply_speed() {
     return supply_speed;
 }
@@ -367,3 +431,9 @@ float state_machine_get_supply_speed() {
 float state_machine_get_takeup_speed() {
     return takeup_speed;
 }
+
+void state_machine_goto_position(float position) {
+    mem_target_position = position;
+    state_machine_take_action(MEM_ACTION);
+}
+

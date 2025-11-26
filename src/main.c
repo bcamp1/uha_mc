@@ -186,6 +186,9 @@ void parse_actions() {
             bldc_enable_all();
             state_machine_take_action(REW_ACTION);
             break;
+        case 'm':
+            uart_println("[ACTION] Go to Memory");
+            state_machine_goto_position(20.0f);
     }
     /*
     uart_print_float(state_machine_get_supply_speed());

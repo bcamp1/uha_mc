@@ -2,7 +2,6 @@
 #include "../board.h"
 #include "../periphs/gpio.h"
 #include "delay.h"
-#include "../periphs/spi_async.h"
 #include "../periphs/spi.h"
 
 #define SPI_SPEED_MAX (40.0f)

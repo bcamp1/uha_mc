@@ -10,6 +10,7 @@
 #include "periphs/clocks.h"
 #include "periphs/timer.h"
 #include "periphs/uart.h"
+#include "periphs/i2c_slave.h"
 #include "drivers/motor_encoder.h"
 #include "drivers/tension_arm.h"
 #include "drivers/stopwatch.h"
@@ -126,6 +127,18 @@ static void tension_arm_test() {
     }
 }
 
+static void i2c_slave_test() {
+    i2c_slave_init(0x25);
+    while (true) {
+        i2c_slave_data_t data = i2c_slave_get_recent_data();
+        uart_print("Register: ");
+        uart_print_int_base(data.address_byte, 16);
+        uart_print(" Data: ");
+        uart_println_int_base(data.data_byte, 16);
+    }
+
+}
+
 int main(void) {
 	init_peripherals();
     delay(0xFFF);
@@ -139,7 +152,7 @@ int main(void) {
     uart_println("--------------------");
     delay(0xFFFF);
 
-
+    i2c_slave_test();
 
     //float theta = 0.0f;
     //float sin = 0.0f;

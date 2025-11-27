@@ -1,10 +1,10 @@
+/*
 #include "spi.h"
 #include "gpio.h"
 #include "uart.h"
 #include "spi_async.h"
 #include "../drivers/delay.h"
 #include "../board.h"
-/* 12 MHz clock for SPI */
 #define SERCOM_SPI_GCLK GCLK_PCHCTRL_GEN_GCLK4;
 
 static const uint8_t *tx_buf_ptr = NULL;
@@ -21,17 +21,14 @@ static const SPIConfig* current_spi_conf = NULL;
 #define BETWEEN_BYTE_CYCLES (0xa)
 
 void spi_async_init(const SPIConfig* inst) {
-	/* Enable clocks */
 	wntr_sercom_init_clock((Sercom*)inst->sercom, GCLK_PCHCTRL_GEN_GCLK1);
 
-	/* Reset and configure */
 	inst->sercom->CTRLA.bit.ENABLE = 0;
 	while (inst->sercom->SYNCBUSY.bit.ENABLE) {};
 
 	inst->sercom->CTRLA.bit.SWRST = 1;
 	while (inst->sercom->SYNCBUSY.bit.SWRST || inst->sercom->CTRLA.bit.SWRST) {};
 
-	/* Setup SPI controller and mode (0x3 = controller) */
 	inst->sercom->CTRLA.reg = (SERCOM_SPI_CTRLA_MODE(0x3) | SERCOM_SPI_CTRLA_DOPO(inst->dopo) | SERCOM_SPI_CTRLA_DIPO(inst->dipo));
 
 	if (inst->phase) {
@@ -41,7 +38,6 @@ void spi_async_init(const SPIConfig* inst) {
 		inst->sercom->CTRLA.bit.CPOL = 1;
 	}
 
-	/* Set baud to max (GCLK / 2) 6 MHz */
 	//inst->sercom->BAUD.reg = SERCOM_SPI_BAUD_BAUD(2000);
 	inst->sercom->BAUD.reg = (uint8_t) BAUD_CYCLES; //SERCOM_SPI_BAUD_BAUD(1000);
 
@@ -56,7 +52,6 @@ void spi_async_init(const SPIConfig* inst) {
 	NVIC_EnableIRQ(SERCOM4_2_IRQn);
 
 
-	/* Configure pins for the correct function. */
 	gpio_init_pin(inst->mosi, GPIO_DIR_OUT, inst->mosi_alt);
 	gpio_init_pin(inst->miso, GPIO_DIR_IN, inst->miso_alt);
 	gpio_init_pin(inst->sck, GPIO_DIR_OUT, inst->sck_alt);
@@ -64,7 +59,6 @@ void spi_async_init(const SPIConfig* inst) {
 	
 	gpio_set_pin(inst->cs);
 
-	/* Finally, enable it! */
 	inst->sercom->CTRLB.bit.RXEN = 1;
 	inst->sercom->CTRLA.bit.ENABLE = 1;
 	while (inst->sercom->SYNCBUSY.bit.ENABLE) {};
@@ -151,4 +145,4 @@ void SERCOM4_2_Handler(void) {
     //uart_println("(2) Handler");  
     spi_async_isr();
 }
-
+*/

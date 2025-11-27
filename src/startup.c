@@ -27,6 +27,7 @@
  *
  */
 #include <samd51.h>
+#include "periphs/uart.h"
 //#include "../periphs/uart.h"
 
 /* Initialize segments */
@@ -539,7 +540,7 @@ void HardFault_Handler(void) {
 
     // Infinite loop to prevent execution from proceeding
     while (1) {
-	//uart_println("HARD FAULT");
+	uart_println("HARD FAULT");
         // Halt or enter a safe state
 		
     }

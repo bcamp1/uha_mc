@@ -5,12 +5,39 @@
 #include "i2c_slave.h"
 #include "../board.h"
 #include "../sched.h"
+#include "../drivers/inc_encoder.h"
+
+static uint32_t float_to_raw_bits(float value) {
+    union {
+        float f;
+        uint32_t u;
+    } converter;
+
+    converter.f = value;
+    return converter.u;
+}
+
+static uint8_t get_byte(uint32_t value, uint8_t index) {
+    union {
+        uint32_t u32;
+        uint8_t bytes[4];
+    } converter;
+
+    if (index > 3) return 0;
+
+    converter.u32 = value;
+    return converter.bytes[index];
+}
 
 // SDA = PB12, SCL = PB13
 #define I2C_SLAVE_SERCOM SERCOM4
 
+#define REG_POSITION (0x44)
+
 static volatile i2c_slave_data_t recent_data = {0, 0};
 static volatile uint8_t byte_count = 0;
+
+static volatile uint32_t tape_position_data = 0;
 
 // Initialize SERCOM4 as I2C slave
 void i2c_slave_init(uint8_t slave_address) {
@@ -70,7 +97,7 @@ i2c_slave_data_t i2c_slave_get_recent_data(void) {
 // SERCOM4_0 = PREC (Stop Received)
 void SERCOM4_0_Handler(void) {
     if (I2C_SLAVE_SERCOM->I2CS.INTFLAG.bit.PREC) {
-        uart_println("STOP");
+        //uart_println("STOP");
         I2C_SLAVE_SERCOM->I2CS.INTFLAG.bit.PREC = 1; // Clear flag
     }
 }
@@ -78,7 +105,7 @@ void SERCOM4_0_Handler(void) {
 // SERCOM4_1 = AMATCH (Address Match)
 void SERCOM4_1_Handler(void) {
     if (I2C_SLAVE_SERCOM->I2CS.INTFLAG.bit.AMATCH) {
-        uart_println("AMATCH");
+        //uart_println("AMATCH");
         byte_count = 0;
         I2C_SLAVE_SERCOM->I2CS.INTFLAG.bit.AMATCH = 1; // Clear flag
     }
@@ -87,20 +114,37 @@ void SERCOM4_1_Handler(void) {
 // SERCOM4_2 = DRDY (Data Ready)
 void SERCOM4_2_Handler(void) {
     if (I2C_SLAVE_SERCOM->I2CS.INTFLAG.bit.DRDY) {
-        uart_println("DRDY");
+        //uart_println("DRDY");
         if (!I2C_SLAVE_SERCOM->I2CS.STATUS.bit.DIR) { // Master write
             uint8_t data = I2C_SLAVE_SERCOM->I2CS.DATA.reg; // Reading DATA auto-ACKs with smart mode
 
-            uart_print("RX: ");
-            uart_println_int_base(data, 16);
+            //uart_print("RX: ");
+            //uart_println_int_base(data, 16);
 
-            if (byte_count == 0) recent_data.address_byte = data;
+            if (byte_count == 0) {
+                recent_data.address_byte = data;
+                if (recent_data.address_byte == REG_POSITION) {
+                    tape_position_data = float_to_raw_bits(inc_encoder_get_position());
+                }
+            }
             else if (byte_count == 1) recent_data.data_byte = data;
 
             byte_count++;
         } else {
-            uart_println("READ");
-            I2C_SLAVE_SERCOM->I2CS.DATA.reg = 0xFF; // Master read - send dummy data
+            //uart_println("READ");
+
+            if (recent_data.address_byte == REG_POSITION) {
+                // Return tape position
+                uint8_t byte = get_byte(tape_position_data, 3 - byte_count);
+                I2C_SLAVE_SERCOM->I2CS.DATA.reg = byte;
+                //uart_print("TX: ");
+                //uart_println_int_base(byte, 16);
+            } else {
+                I2C_SLAVE_SERCOM->I2CS.DATA.reg = 0x77; // Master read - send dummy data
+                //uart_print("TX: ");
+                //uart_println_int_base(0x77, 16);
+            }
+            byte_count++;
         }
     }
 }

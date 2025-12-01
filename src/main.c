@@ -129,6 +129,7 @@ static void tension_arm_test() {
 }
 
 static void i2c_slave_test() {
+    inc_encoder_init();
     i2c_slave_init(0x25);
     while (true) {
         i2c_slave_data_t data = i2c_slave_get_recent_data();
@@ -154,7 +155,7 @@ int main(void) {
     uart_println("--------------------");
     delay(0xFFFF);
 
-    //i2c_slave_test();
+    i2c_slave_test();
 
     //float theta = 0.0f;
     //float sin = 0.0f;

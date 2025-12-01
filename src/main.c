@@ -15,6 +15,7 @@
 #include "drivers/tension_arm.h"
 #include "drivers/stopwatch.h"
 #include "board.h"
+#include "sched.h"
 #include "drivers/delay.h"
 #include "drivers/motor_encoder.h"
 #include "drivers/stepper.h"
@@ -153,7 +154,7 @@ int main(void) {
     uart_println("--------------------");
     delay(0xFFFF);
 
-    i2c_slave_test();
+    //i2c_slave_test();
 
     //float theta = 0.0f;
     //float sin = 0.0f;
@@ -163,9 +164,7 @@ int main(void) {
     //gpio_init_pin(PIN_ROLLER_PULSE, GPIO_DIR_IN, GPIO_ALTERNATE_NONE);
     //
     inc_encoder_init();
-    timer_schedule(0, STATE_MACHINE_FREQUENCY, 1, state_machine_tick);
-    //tension_arm_test();
-    //
+    timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, state_machine_tick);
 
     bool engaged = false;
     while (1) {

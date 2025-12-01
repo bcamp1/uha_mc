@@ -1,8 +1,6 @@
 #pragma once
 #include <stdbool.h>
 
-#define STATE_MACHINE_FREQUENCY (1000.0f)
-
 typedef enum {
     STOPPED,
     FF,

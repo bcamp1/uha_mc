@@ -4,6 +4,7 @@
 #include "uart.h"
 #include "i2c_slave.h"
 #include "../board.h"
+#include "../sched.h"
 
 // SDA = PB12, SCL = PB13
 #define I2C_SLAVE_SERCOM SERCOM4
@@ -48,8 +49,12 @@ void i2c_slave_init(uint8_t slave_address) {
     I2C_SLAVE_SERCOM->I2CS.CTRLA.bit.ENABLE = 1;
     while (I2C_SLAVE_SERCOM->I2CS.SYNCBUSY.bit.ENABLE);
 
+    // NVIC Priorities
+    NVIC_SetPriority(SERCOM4_0_IRQn, PRIO_SLAVE_I2C);
+    NVIC_SetPriority(SERCOM4_1_IRQn, PRIO_SLAVE_I2C);
+    NVIC_SetPriority(SERCOM4_2_IRQn, PRIO_SLAVE_I2C);
+
     // Enable NVIC interrupts
-    // SERCOM4_0 = PREC, SERCOM4_1 = AMATCH, SERCOM4_2 = DRDY
     NVIC_EnableIRQ(SERCOM4_0_IRQn); // PREC
     NVIC_EnableIRQ(SERCOM4_1_IRQn); // AMATCH
     NVIC_EnableIRQ(SERCOM4_2_IRQn); // DRDY

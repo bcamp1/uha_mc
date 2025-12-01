@@ -11,6 +11,7 @@
 #include "controllers.h"
 #include "simple_filter.h"
 #include <stdbool.h>
+#include "../sched.h"
 
 static State state = STOPPED;
 static StateAction next_action = NO_ACTION;
@@ -26,7 +27,7 @@ static SimpleFilter takeup_tension_filter;
 static SimpleFilter supply_tension_filter;
 
 // Sample Period
-static const float T = (1.0 / STATE_MACHINE_FREQUENCY);
+static const float T = (1.0 / FREQUENCY_STATE_MACHINE_TICK);
 
 // Reel Speeds (Not currently used)
 static float takeup_speed;

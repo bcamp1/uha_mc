@@ -8,6 +8,8 @@
 #include "eic.h"
 #include "sam.h"
 #include "gpio.h"
+#include "../board.h"
+#include "../sched.h"
 
 static func_ptr_t callbacks[16];
 
@@ -23,26 +25,10 @@ void eic_init() {
 	GCLK->PCHCTRL[EIC_GCLK_ID].bit.CHEN = 1;
 
     // Set NVIC priorities (roller encoder)
-    NVIC_SetPriority(EIC_10_IRQn, 0);
-    NVIC_SetPriority(EIC_2_IRQn, 0);
+    NVIC_SetPriority(IRQ_ROLLER, PRIO_ROLLER_ENCODER);
 	
 	// Enable EIC interrupts
-	NVIC_EnableIRQ(EIC_0_IRQn);
-	NVIC_EnableIRQ(EIC_1_IRQn);
-	NVIC_EnableIRQ(EIC_2_IRQn);
-	NVIC_EnableIRQ(EIC_3_IRQn);
-	NVIC_EnableIRQ(EIC_4_IRQn);
-	NVIC_EnableIRQ(EIC_5_IRQn);
-	NVIC_EnableIRQ(EIC_6_IRQn);
-	NVIC_EnableIRQ(EIC_7_IRQn);
-	NVIC_EnableIRQ(EIC_8_IRQn);
-	NVIC_EnableIRQ(EIC_9_IRQn);
-	NVIC_EnableIRQ(EIC_10_IRQn);
-	NVIC_EnableIRQ(EIC_11_IRQn);
-	NVIC_EnableIRQ(EIC_12_IRQn);
-	NVIC_EnableIRQ(EIC_13_IRQn);
-	NVIC_EnableIRQ(EIC_14_IRQn);
-	NVIC_EnableIRQ(EIC_15_IRQn);
+	NVIC_EnableIRQ(IRQ_ROLLER); // Roller encoder
 	
 	EIC->CTRLA.bit.ENABLE = 1; // Enable EIC
 	while (EIC->SYNCBUSY.bit.ENABLE);
@@ -84,8 +70,8 @@ void eic_init_pin(uint16_t pin, uint16_t ext_num, uint16_t int_mode, func_ptr_t 
 	while (EIC->SYNCBUSY.bit.ENABLE);
 }
 
-void EIC_7_Handler(void) {
-	process_interrupt(7);
+void HANDLER_ROLLER(void) {
+	process_interrupt(INDEX_ROLLER_PULSE);
 }
 
 static void process_interrupt(uint16_t ext_num) {

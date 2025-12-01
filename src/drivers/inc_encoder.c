@@ -60,7 +60,7 @@ void inc_encoder_init() {
     eic_init();
 	
 	// Init pulse eic pin
-	eic_init_pin(PIN_ROLLER_PULSE, 7, EIC_MODE_BOTH, inc_encoder_pulse);	
+	eic_init_pin(PIN_ROLLER_PULSE, INDEX_ROLLER_PULSE, EIC_MODE_BOTH, inc_encoder_pulse);	
 	
 	// Init dir pin
 	gpio_init_pin(PIN_ROLLER_DIR, GPIO_DIR_IN, GPIO_ALTERNATE_NONE);

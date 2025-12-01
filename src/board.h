@@ -53,6 +53,9 @@
 #define PIN_ROLLER_INDEX PIN_PB05
 #define PIN_ROLLER_PULSE PIN_PB07
 #define PIN_ROLLER_DIR   PIN_PB06
+#define INDEX_ROLLER_PULSE (7)
+#define IRQ_ROLLER EIC_7_IRQn
+#define HANDLER_ROLLER EIC_7_Handler
 
 // Tension Arm Encoders
 #define PIN_TENSION_A_CS PIN_PB30

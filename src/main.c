@@ -135,6 +135,7 @@ static void i2c_slave_test() {
         uart_print_int_base(data.address_byte, 16);
         uart_print(" Data: ");
         uart_println_int_base(data.data_byte, 16);
+        delay(0xFFFF);
     }
 
 }

@@ -1,6 +1,7 @@
 #include "samd51j20a.h"
 #include <stdint.h>
 #include "gpio.h"
+#include "uart.h"
 #include "i2c_slave.h"
 #include "../board.h"
 
@@ -35,7 +36,7 @@ void i2c_slave_init(uint8_t slave_address) {
     I2C_SLAVE_SERCOM->I2CS.ADDR.bit.ADDR = slave_address;
     I2C_SLAVE_SERCOM->I2CS.ADDR.bit.ADDRMASK = 0;
 
-    // Enable smart mode (auto ACK)
+    // Enable smart mode - automatic ACK
     I2C_SLAVE_SERCOM->I2CS.CTRLB.bit.SMEN = 1;
 
     // Enable interrupts
@@ -48,9 +49,10 @@ void i2c_slave_init(uint8_t slave_address) {
     while (I2C_SLAVE_SERCOM->I2CS.SYNCBUSY.bit.ENABLE);
 
     // Enable NVIC interrupts
-    NVIC_EnableIRQ(SERCOM4_0_IRQn);
-    NVIC_EnableIRQ(SERCOM4_1_IRQn);
-    NVIC_EnableIRQ(SERCOM4_3_IRQn);
+    // SERCOM4_0 = PREC, SERCOM4_1 = AMATCH, SERCOM4_2 = DRDY
+    NVIC_EnableIRQ(SERCOM4_0_IRQn); // PREC
+    NVIC_EnableIRQ(SERCOM4_1_IRQn); // AMATCH
+    NVIC_EnableIRQ(SERCOM4_2_IRQn); // DRDY
 }
 
 // Return last received 2-byte data
@@ -60,41 +62,48 @@ i2c_slave_data_t i2c_slave_get_recent_data(void) {
 
 // ------------------- Interrupt Handlers -------------------
 
-// Address match interrupt
+// SERCOM4_0 = PREC (Stop Received)
 void SERCOM4_0_Handler(void) {
-    if (I2C_SLAVE_SERCOM->I2CS.INTFLAG.bit.AMATCH) {
-        byte_count = 0;
-
-        // If master wants to read, CMD can be handled here (optional)
-        I2C_SLAVE_SERCOM->I2CS.CTRLB.bit.CMD = 0x3; // ACK + continue
-
-        // Clear interrupt
-        I2C_SLAVE_SERCOM->I2CS.INTFLAG.bit.AMATCH = 1;
+    if (I2C_SLAVE_SERCOM->I2CS.INTFLAG.bit.PREC) {
+        uart_println("STOP");
+        I2C_SLAVE_SERCOM->I2CS.INTFLAG.bit.PREC = 1; // Clear flag
     }
 }
 
-// Data ready interrupt
+// SERCOM4_1 = AMATCH (Address Match)
 void SERCOM4_1_Handler(void) {
+    if (I2C_SLAVE_SERCOM->I2CS.INTFLAG.bit.AMATCH) {
+        uart_println("AMATCH");
+        byte_count = 0;
+        I2C_SLAVE_SERCOM->I2CS.INTFLAG.bit.AMATCH = 1; // Clear flag
+    }
+}
+
+// SERCOM4_2 = DRDY (Data Ready)
+void SERCOM4_2_Handler(void) {
     if (I2C_SLAVE_SERCOM->I2CS.INTFLAG.bit.DRDY) {
+        uart_println("DRDY");
         if (!I2C_SLAVE_SERCOM->I2CS.STATUS.bit.DIR) { // Master write
-            uint8_t data = I2C_SLAVE_SERCOM->I2CS.DATA.reg; // Must read first
+            uint8_t data = I2C_SLAVE_SERCOM->I2CS.DATA.reg; // Reading DATA auto-ACKs with smart mode
+
+            uart_print("RX: ");
+            uart_println_int_base(data, 16);
 
             if (byte_count == 0) recent_data.address_byte = data;
             else if (byte_count == 1) recent_data.data_byte = data;
 
             byte_count++;
-
-            // ACK + continue
-            I2C_SLAVE_SERCOM->I2CS.CTRLB.bit.CMD = 0x3;
+        } else {
+            uart_println("READ");
+            I2C_SLAVE_SERCOM->I2CS.DATA.reg = 0xFF; // Master read - send dummy data
         }
-        // Clear DRDY flag
-        I2C_SLAVE_SERCOM->I2CS.INTFLAG.bit.DRDY = 1;
     }
 }
 
-// Stop condition interrupt
+// SERCOM4_3 = Other/Error (not used for basic I2C slave)
 void SERCOM4_3_Handler(void) {
-    if (I2C_SLAVE_SERCOM->I2CS.INTFLAG.bit.PREC) {
-        I2C_SLAVE_SERCOM->I2CS.INTFLAG.bit.PREC = 1; // clear flag
+    if (I2C_SLAVE_SERCOM->I2CS.INTFLAG.bit.ERROR) {
+        uart_println("ERROR!");
+        I2C_SLAVE_SERCOM->I2CS.INTFLAG.bit.ERROR = 1; // Clear error
     }
 }

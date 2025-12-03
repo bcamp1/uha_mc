@@ -13,5 +13,8 @@ extern Filter controller_playback_supply;
 extern Filter controller_idle_takeup;
 extern Filter controller_idle_supply;
 
+extern Filter controller_tape_speed_ff;
+extern Filter controller_tape_speed_rew;
+
 void controllers_init_all(float T);
 

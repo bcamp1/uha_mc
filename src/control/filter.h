@@ -31,12 +31,11 @@ void filter_reset(Filter* filter);
 // Compute next filter output
 float filter_next(float x_k, Filter* filter);
 
-// Initialize filter as a PID controller
+// Initialize filter as a PD controller (position form)
 // Kp: Proportional gain
-// Ki: Integral gain
 // Kd: Derivative gain
 // T: Sample time (seconds)
-void filter_init_pid(Filter* filter, float Kp, float Ki, float Kd, float T);
+void filter_init_pd(Filter* filter, float Kp, float Kd, float T);
 
 // Initialize filter as a zero filter (always outputs 0)
 void filter_init_zero(Filter* filter);

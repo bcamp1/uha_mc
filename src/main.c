@@ -165,14 +165,14 @@ int main(void) {
     //gpio_init_pin(PIN_ROLLER_PULSE, GPIO_DIR_IN, GPIO_ALTERNATE_NONE);
     //
     inc_encoder_init();
-    i2c_slave_init(0x25);
+    //i2c_slave_init(0x25);
     timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, state_machine_tick);
 
     bool engaged = false;
     while (1) {
         //uart_println_int(inc_encoder_get_ticks());
-        uart_println_float(inc_encoder_get_position());
-        //uart_println_float(state_machine_get_tape_speed());
+        //uart_println_float(inc_encoder_get_position());
+        uart_println_float(state_machine_get_tape_speed());
         parse_actions();
     }
 }

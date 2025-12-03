@@ -49,37 +49,20 @@ float filter_next(float x_k, Filter* filter) {
     return y_k;
 }
 
-void filter_init_pid(Filter* filter, float Kp, float Ki, float Kd, float T) {
-    float b0, b1, b2, a0, a1, a2;
+void filter_init_pd(Filter* filter, float Kp, float Kd, float T) {
+    // Position form PD controller (no integral action)
+    // u[k] = Kp*e[k] + Kd*(e[k] - e[k-1])/T
+    // H(z) = Kp + (Kd/T)*(1 - z^-1)
+    //      = (Kp + Kd/T) - (Kd/T)*z^-1
 
-    if (Ki == 0.0f) {
-        // Position form PD controller (no integral action)
-        // u[k] = Kp*e[k] + Kd*(e[k] - e[k-1])/T
-        // H(z) = Kp + (Kd/T)*(1 - z^-1)
-        //      = (Kp + Kd/T) - (Kd/T)*z^-1
+    float b0 = Kp + Kd / T;
+    float b1 = -Kd / T;
+    float b2 = 0.0f;
 
-        b0 = Kp + Kd / T;
-        b1 = -Kd / T;
-        b2 = 0.0f;
-
-        // No integrator in denominator
-        a0 = 1.0f;
-        a1 = 0.0f;
-        a2 = 0.0f;
-    } else {
-        // Velocity form PID with integral action (backward Euler method)
-        // u[k] = u[k-1] + Kp*(e[k] - e[k-1]) + Ki*T*e[k] + (Kd/T)*(e[k] - 2*e[k-1] + e[k-2])
-        // H(z) = (b0 + b1*z^-1 + b2*z^-2) / (1 - z^-1)
-
-        b0 = Kp + Ki * T + Kd / T;
-        b1 = -Kp - 2.0f * Kd / T;
-        b2 = Kd / T;
-
-        // Integrator: 1 / (1 - z^-1)
-        a0 = 1.0f;
-        a1 = -1.0f;
-        a2 = 0.0f;
-    }
+    // No integrator in denominator
+    float a0 = 1.0f;
+    float a1 = 0.0f;
+    float a2 = 0.0f;
 
     filter_init(filter, b0, b1, b2, a0, a1, a2);
 }

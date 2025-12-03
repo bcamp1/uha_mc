@@ -38,8 +38,8 @@ static float mem_target_position = 0.0f;
 
 static void init_filters();
 static void playback_controller(float* u_t, float* u_s);
-static void ff_controller(float* u_t, float* u_s, float torque);
-static void rew_controller(float* u_t, float* u_s, float torque);
+static void ff_controller(float* u_t, float* u_s, float tape_speed);
+static void rew_controller(float* u_t, float* u_s, float tape_speed);
 static void ff_to_idle_controller(float* u_t, float* u_s);
 static void rew_to_idle_controller(float* u_t, float* u_s);
 static void playback_to_idle_controller(float* u_t, float* u_s);
@@ -172,10 +172,10 @@ void state_machine_tick() {
             playback_controller(&u_t, &u_s);
             break;
         case FF:
-            ff_controller(&u_t, &u_s, 0.5f);
+            ff_controller(&u_t, &u_s, 2.0f);
             break;
         case REW:
-            rew_controller(&u_t, &u_s, 0.5f);
+            rew_controller(&u_t, &u_s, -0.5f);
             break;
         case FF_TO_IDLE:
             ff_to_idle_controller(&u_t, &u_s);
@@ -289,7 +289,7 @@ static void playback_controller(float* u_t, float* u_s) {
     }
 }
 
-static void ff_controller(float* u_t, float* u_s, float torque) {
+static void ff_controller(float* u_t, float* u_s, float tape_speed) {
     const float r_t = 1.0f;
     const float r_s = 0.5f;
 
@@ -299,10 +299,15 @@ static void ff_controller(float* u_t, float* u_s, float torque) {
     *u_t = filter_next(e_t, &controller_ff_takeup);
     *u_s = filter_next(e_s, &controller_ff_supply);
 
-    *u_t -= torque;
+    float e_tape_speed = tape_speed - control_state.tape_speed;
+    float u_tape_speed = filter_next(e_tape_speed, &controller_tape_speed_ff);
+
+    //uart_println_float(u_tape_speed);
+
+    *u_t += u_tape_speed ;
 }
 
-static void rew_controller(float* u_t, float* u_s, float torque) {
+static void rew_controller(float* u_t, float* u_s, float tape_speed) {
     const float r_t = 0.5f;
     const float r_s = 1.0f;
 
@@ -312,7 +317,10 @@ static void rew_controller(float* u_t, float* u_s, float torque) {
     *u_t = filter_next(e_t, &controller_rew_takeup);
     *u_s = filter_next(e_s, &controller_rew_supply);
 
-    *u_s += torque;
+    float e_tape_speed = tape_speed - control_state.tape_speed;
+    float u_tape_speed = filter_next(e_tape_speed, &controller_tape_speed_rew);
+
+    *u_s -= u_tape_speed ;
 }
 
 static void ff_to_idle_controller(float* u_t, float* u_s) {

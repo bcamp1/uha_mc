@@ -172,7 +172,7 @@ void state_machine_tick() {
             playback_controller(&u_t, &u_s);
             break;
         case FF:
-            ff_controller(&u_t, &u_s, 2.0f);
+            ff_controller(&u_t, &u_s, 0.5f);
             break;
         case REW:
             rew_controller(&u_t, &u_s, -0.5f);

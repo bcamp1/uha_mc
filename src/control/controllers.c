@@ -40,8 +40,8 @@ static void init_playback(float T) {
 }
 
 static void init_ff(float T) {
-    const float takeup_P = 1.5f;
-    const float takeup_D = 0.05f;
+    const float takeup_P = 1.0f;
+    const float takeup_D = 0.00f;
     filter_init_pd(&controller_ff_takeup, -takeup_P, -takeup_D, T);
 
     const float supply_P = 1.5f;
@@ -71,7 +71,7 @@ static void init_idle(float T) {
 
 static void init_tape_speed(float T) {
     const float takeup_P = 1.5f;
-    const float takeup_D = 0.05f;
+    const float takeup_D = 0.00f;
     filter_init_pd(&controller_tape_speed_ff, -takeup_P, -takeup_D, T);
 
     const float supply_P = 1.5f;

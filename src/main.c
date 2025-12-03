@@ -155,7 +155,7 @@ int main(void) {
     uart_println("--------------------");
     delay(0xFFFF);
 
-    i2c_slave_test();
+    //i2c_slave_test();
 
     //float theta = 0.0f;
     //float sin = 0.0f;
@@ -165,6 +165,7 @@ int main(void) {
     //gpio_init_pin(PIN_ROLLER_PULSE, GPIO_DIR_IN, GPIO_ALTERNATE_NONE);
     //
     inc_encoder_init();
+    i2c_slave_init(0x25);
     timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, state_machine_tick);
 
     bool engaged = false;

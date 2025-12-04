@@ -7,6 +7,8 @@ typedef struct {
 } SimpleFilter;
 
 float simple_filter_next(float u, SimpleFilter* filter);
+void simple_filter_clear(SimpleFilter* filter);
+SimpleFilter simple_filter_create(float alpha);
 
 #endif
 

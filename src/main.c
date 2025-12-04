@@ -25,6 +25,7 @@
 #include "drivers/solenoid.h"
 #include "foc/fast_sin_cos.h"
 #include "control/state_machine.h"
+#include "control/data_collector.h"
 
 #define FIRMWARE_VERSION "UHA MOTHERBOARD FIRMWARE v0.1"
 #define FIRMWARE_AUTHOR "AUTHOR: BRANSON CAMP"
@@ -172,7 +173,7 @@ int main(void) {
     while (1) {
         //uart_println_int(inc_encoder_get_ticks());
         //uart_println_float(inc_encoder_get_position());
-        uart_println_float(state_machine_get_tape_speed());
+        uart_println_float(data_collector_get_tape_speed());
         parse_actions();
     }
 }

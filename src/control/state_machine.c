@@ -12,31 +12,19 @@
 #include "simple_filter.h"
 #include <stdbool.h>
 #include "../sched.h"
+#include "data_collector.h"
 
 static State state = STOPPED;
 static StateAction next_action = NO_ACTION;
 uint32_t current_state_ticks = 0;
 bool is_closed_loop = true;
 
-static ControlState control_state;
-static float tape_position_prev = 0.0f;
-
-// Filters
-static SimpleFilter tape_speed_filter;
-static SimpleFilter takeup_tension_filter;
-static SimpleFilter supply_tension_filter;
-
 // Sample Period
 static const float T = (1.0 / FREQUENCY_STATE_MACHINE_TICK);
-
-// Reel Speeds (Not currently used)
-static float takeup_speed;
-static float supply_speed;
 
 // Memory & Return to Zero 
 static float mem_target_position = 0.0f;
 
-static void init_filters();
 static void playback_controller(float* u_t, float* u_s);
 static void ff_controller(float* u_t, float* u_s, float tape_speed);
 static void rew_controller(float* u_t, float* u_s, float tape_speed);
@@ -45,25 +33,6 @@ static void rew_to_idle_controller(float* u_t, float* u_s);
 static void playback_to_idle_controller(float* u_t, float* u_s);
 static void goto_mem_controller(float* u_t, float* u_s);
 static bool idle_controller(float* u_t, float* u_s);
-
-float state_machine_get_tape_speed() {
-    return control_state.tape_speed;
-}
-
-static void init_filters() {
-    tape_speed_filter = (SimpleFilter) {
-        .alpha = 0.99f,
-        .y_kminus1 = 0.0f,
-    };
-    takeup_tension_filter = (SimpleFilter) {
-        .alpha = 0.9f,
-        .y_kminus1 = 0.0f,
-    };
-    supply_tension_filter = (SimpleFilter) {
-        .alpha = 0.9f,
-        .y_kminus1 = 0.0f,
-    };
-}
 
 static void set_state(State s) {
     state = s;
@@ -107,9 +76,9 @@ void state_machine_init() {
     tension_arm_init(&TENSION_ARM_B);
 
     solenoid_pinch_init();
-
-    // Initialize tape speed filter
-    init_filters();
+    
+    // Initialize data collection
+    data_collector_init();
 
     // Initialize Controllers
     controllers_init_all(T);
@@ -127,27 +96,8 @@ void state_machine_tick() {
     if (!is_closed_loop) {
         return;
     }
-    
-    // New tensions
-    float tension_t = tension_arm_get_position(&TENSION_ARM_A);
-    float tension_s = tension_arm_get_position(&TENSION_ARM_B);
-    float takeup_tension = simple_filter_next(tension_t, &takeup_tension_filter);
-    float supply_tension = simple_filter_next(tension_s, &supply_tension_filter);
-    
-    // New tape speed
-    tape_position_prev = control_state.tape_position;
-    float tape_position = inc_encoder_get_position();
-    float tape_delta = (tape_position - tape_position_prev) / T;
-    float tape_speed = simple_filter_next(tape_delta, &tape_speed_filter);
-
-    control_state.tape_position = tape_position;
-    control_state.tape_speed = tape_speed;
-
-
-    control_state.filtered_takeup_tension = takeup_tension;
-    control_state.filtered_supply_tension = supply_tension;
-    control_state.takeup_tension = tension_t;
-    control_state.supply_tension = tension_s;
+   
+    data_collector_update();
 
     float u_t = 0.0f;
     float u_s = 0.0f;
@@ -198,8 +148,11 @@ void state_machine_tick() {
             break;
     }
 
-    takeup_speed = bldc_set_torque_float(&BLDC_CONF_TAKEUP, u_t);
-    supply_speed = bldc_set_torque_float(&BLDC_CONF_SUPPLY, u_s);
+    float takeup_speed = bldc_set_torque_float(&BLDC_CONF_TAKEUP, u_t);
+    float supply_speed = bldc_set_torque_float(&BLDC_CONF_SUPPLY, u_s);
+    
+    data_collector_set_reel_speeds(takeup_speed, supply_speed);
+
     current_state_ticks++;
     gpio_clear_pin(PIN_DEBUG1);
 }
@@ -257,6 +210,7 @@ void state_machine_take_action(StateAction a) {
             }
             break;
         case GOTO_MEM:
+            /*
             if (mem_target_position > control_state.tape_position) {
                 set_state(FF_TO_IDLE);
                 next_action = a;
@@ -264,6 +218,7 @@ void state_machine_take_action(StateAction a) {
                 set_state(REW_TO_IDLE);
                 next_action = a;
             }
+            */
             break;
         case FF_TO_IDLE:
         case REW_TO_IDLE:
@@ -278,8 +233,8 @@ static void playback_controller(float* u_t, float* u_s) {
     const float r_t = 0.5f;
     const float r_s = 0.5f;
 
-    float e_t = r_t - control_state.filtered_takeup_tension;
-    float e_s = r_s - control_state.filtered_supply_tension;
+    float e_t = r_t - data_collector_get_takeup_tension();
+    float e_s = r_s - data_collector_get_supply_tension();
 
     *u_t = filter_next(e_t, &controller_playback_takeup);
     *u_s = filter_next(e_s, &controller_playback_supply);
@@ -293,14 +248,14 @@ static void ff_controller(float* u_t, float* u_s, float tape_speed) {
     const float r_t = 1.0f;
     const float r_s = 0.5f;
 
-    float e_t = r_t - control_state.filtered_takeup_tension;
-    float e_s = r_s - control_state.filtered_supply_tension;
+    float e_t = r_t - data_collector_get_takeup_tension();
+    float e_s = r_s - data_collector_get_supply_tension();
 
     //*u_t = filter_next(e_t, &controller_ff_takeup);
     *u_t = 0.0f;
     *u_s = filter_next(e_s, &controller_ff_supply);
 
-    float e_tape_speed = tape_speed - control_state.tape_speed;
+    float e_tape_speed = tape_speed - data_collector_get_tape_speed();
     float u_tape_speed = filter_next(e_tape_speed, &controller_tape_speed_ff);
     
     *u_t += -0.3f;
@@ -310,11 +265,12 @@ static void ff_controller(float* u_t, float* u_s, float tape_speed) {
 }
 
 static void rew_controller(float* u_t, float* u_s, float tape_speed) {
+    /*
     const float r_t = 0.5f;
     const float r_s = 1.0f;
 
-    float e_t = r_t - control_state.filtered_takeup_tension;
-    float e_s = r_s - control_state.filtered_supply_tension;
+    float e_t = r_t - data_collector_get_takeup_tension();
+    float e_s = r_s - data_collector_get_supply_tension();
 
     *u_t = filter_next(e_t, &controller_rew_takeup);
     *u_s = filter_next(e_s, &controller_rew_supply);
@@ -323,14 +279,15 @@ static void rew_controller(float* u_t, float* u_s, float tape_speed) {
     float u_tape_speed = filter_next(e_tape_speed, &controller_tape_speed_rew);
 
     *u_s -= u_tape_speed ;
+    */
 }
 
 static void ff_to_idle_controller(float* u_t, float* u_s) {
     const float r_t = 1.0f;
     const float r_s = 0.5f;
 
-    float e_t = r_t - control_state.filtered_takeup_tension;
-    float e_s = r_s - control_state.filtered_supply_tension;
+    float e_t = r_t - data_collector_get_takeup_tension();
+    float e_s = r_s - data_collector_get_supply_tension();
 
     *u_t = filter_next(e_t, &controller_ff_takeup);
     *u_s = filter_next(e_s, &controller_ff_supply);
@@ -344,8 +301,8 @@ static void rew_to_idle_controller(float* u_t, float* u_s) {
     const float r_t = 0.5f;
     const float r_s = 1.0f;
 
-    float e_t = r_t - control_state.filtered_takeup_tension;
-    float e_s = r_s - control_state.filtered_supply_tension;
+    float e_t = r_t - data_collector_get_takeup_tension();
+    float e_s = r_s - data_collector_get_supply_tension();
 
     *u_t = filter_next(e_t, &controller_rew_takeup);
     *u_s = filter_next(e_s, &controller_rew_supply);
@@ -359,8 +316,8 @@ static void playback_to_idle_controller(float* u_t, float* u_s) {
     const float r_t = 0.5f;
     const float r_s = 0.5f;
 
-    float e_t = r_t - control_state.filtered_takeup_tension;
-    float e_s = r_s - control_state.filtered_supply_tension;
+    float e_t = r_t - data_collector_get_takeup_tension();
+    float e_s = r_s - data_collector_get_supply_tension();
 
     *u_t = filter_next(e_t, &controller_idle_takeup);
     *u_s = filter_next(e_s, &controller_idle_supply);
@@ -374,13 +331,16 @@ static bool idle_controller(float* u_t, float* u_s) {
     const float r_t = 0.5f;
     const float r_s = 0.5f;
 
-    float e_t = r_t - control_state.filtered_takeup_tension;
-    float e_s = r_s - control_state.filtered_supply_tension;
+    float e_t = r_t - data_collector_get_takeup_tension();
+    float e_s = r_s - data_collector_get_supply_tension();
 
     *u_t = filter_next(e_t, &controller_idle_takeup);
     *u_s = filter_next(e_s, &controller_idle_supply);
 
     const float reel_speed_thresh = 0.5;
+
+    float supply_speed = data_collector_get_supply_reel_speed();
+    float takeup_speed = data_collector_get_takeup_reel_speed();
 
     // Check if ready for next action
     if (supply_speed < reel_speed_thresh && supply_speed > -reel_speed_thresh) {
@@ -397,6 +357,7 @@ static bool idle_controller(float* u_t, float* u_s) {
 }
 
 static void goto_mem_controller(float* u_t, float* u_s) {
+    /*
     const float full_gain_distance = 60.0f;
     const float max_torque = 0.6f;
     const float min_torque = 0.4f;
@@ -433,14 +394,7 @@ static void goto_mem_controller(float* u_t, float* u_s) {
     } else {
         rew_controller(u_t, u_s, torque);
     }
-}
-
-float state_machine_get_supply_speed() {
-    return supply_speed;
-}
-
-float state_machine_get_takeup_speed() {
-    return takeup_speed;
+    */
 }
 
 void state_machine_goto_position(float position) {

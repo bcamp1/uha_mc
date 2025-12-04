@@ -172,7 +172,7 @@ void state_machine_tick() {
             playback_controller(&u_t, &u_s);
             break;
         case FF:
-            ff_controller(&u_t, &u_s, 0.5f);
+            ff_controller(&u_t, &u_s, 1.0f);
             break;
         case REW:
             rew_controller(&u_t, &u_s, -0.5f);
@@ -296,15 +296,17 @@ static void ff_controller(float* u_t, float* u_s, float tape_speed) {
     float e_t = r_t - control_state.filtered_takeup_tension;
     float e_s = r_s - control_state.filtered_supply_tension;
 
-    *u_t = filter_next(e_t, &controller_ff_takeup);
+    //*u_t = filter_next(e_t, &controller_ff_takeup);
+    *u_t = 0.0f;
     *u_s = filter_next(e_s, &controller_ff_supply);
 
     float e_tape_speed = tape_speed - control_state.tape_speed;
     float u_tape_speed = filter_next(e_tape_speed, &controller_tape_speed_ff);
-
+    
+    *u_t += -0.3f;
     //uart_println_float(u_tape_speed);
 
-    *u_t += u_tape_speed ;
+    //*u_t += u_tape_speed ;
 }
 
 static void rew_controller(float* u_t, float* u_s, float tape_speed) {

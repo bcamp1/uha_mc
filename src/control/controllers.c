@@ -70,8 +70,8 @@ static void init_idle(float T) {
 }
 
 static void init_tape_speed(float T) {
-    const float takeup_P = 1.5f;
-    const float takeup_D = 0.00f;
+    const float takeup_P = 0.6f;
+    const float takeup_D = 0.03f;
     filter_init_pd(&controller_tape_speed_ff, -takeup_P, -takeup_D, T);
 
     const float supply_P = 1.5f;

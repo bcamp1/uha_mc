@@ -67,6 +67,12 @@ void filter_init_pd(Filter* filter, float Kp, float Kd, float T) {
     filter_init(filter, b0, b1, b2, a0, a1, a2);
 }
 
+Filter filter_from_pd(float Kp, float Kd, float T) {
+    Filter f;
+    filter_init_pd(&f, Kp, Kd, T);
+    return f;
+}
+
 void filter_init_zero(Filter* filter) {
     // Zero filter: H(z) = 0
     // Output is always zero regardless of input

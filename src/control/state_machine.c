@@ -71,20 +71,6 @@ static void set_state(State s) {
 }
 
 void state_machine_init() {
-    // Initialize necessary peripherals
-    tension_arm_init(&TENSION_ARM_A);
-    tension_arm_init(&TENSION_ARM_B);
-
-    solenoid_pinch_init();
-    
-    // Initialize data collection
-    data_collector_init();
-
-    // Initialize Controllers
-    controllers_init_all(T);
-
-    bldc_init_all();
-    
     state = STOPPED;
     current_state_ticks = 0;
     is_closed_loop = true;

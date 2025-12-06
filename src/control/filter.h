@@ -37,6 +37,8 @@ float filter_next(float x_k, Filter* filter);
 // T: Sample time (seconds)
 void filter_init_pd(Filter* filter, float Kp, float Kd, float T);
 
+Filter filter_from_pd(float Kp, float Kd, float T);
+
 // Initialize filter as a zero filter (always outputs 0)
 void filter_init_zero(Filter* filter);
 

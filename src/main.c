@@ -26,6 +26,7 @@
 #include "foc/fast_sin_cos.h"
 #include "control/state_machine.h"
 #include "control/data_collector.h"
+#include "control/movement.h"
 
 #define FIRMWARE_VERSION "UHA MOTHERBOARD FIRMWARE v0.1"
 #define FIRMWARE_AUTHOR "AUTHOR: BRANSON CAMP"
@@ -35,6 +36,7 @@ static void enable_fpu(void);
 static void init_peripherals(void);
 static void stopwatch_test();
 static void parse_actions();
+static void parse_movement_actions();
 
 static void init_peripherals(void) {
 	// Init clock to use 32K OSC in closed-loop 48MHz mode
@@ -155,27 +157,55 @@ int main(void) {
     uart_println(FIRMWARE_DATE);
     uart_println("--------------------");
     delay(0xFFFF);
-
-    //i2c_slave_test();
-
-    //float theta = 0.0f;
-    //float sin = 0.0f;
-    //float cos = 0.0f;
     
-    state_machine_init();
-    //gpio_init_pin(PIN_ROLLER_PULSE, GPIO_DIR_IN, GPIO_ALTERNATE_NONE);
-    //
+    // Motor control-specific peripherals
+    tension_arm_init(&TENSION_ARM_A);
+    tension_arm_init(&TENSION_ARM_B);
     inc_encoder_init();
-    //i2c_slave_init(0x25);
-    timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, state_machine_tick);
+    bldc_init_all();
+    solenoid_pinch_init();
+    
+    data_collector_init();
+
+    //state_machine_init();
+    movement_init();
+
+    timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, movement_tick);
 
     bool engaged = false;
     while (1) {
         //uart_println_int(inc_encoder_get_ticks());
         //uart_println_float(inc_encoder_get_position());
-        uart_println_float(data_collector_get_tape_speed());
-        parse_actions();
+        //uart_println_float(data_collector_get_tape_speed());
+        parse_movement_actions();
     }
+}
+
+void parse_movement_actions() {
+    //uart_println("Parsing");
+    char user_input = uart_get();
+    switch (user_input) {
+        case 'p':
+            uart_println("[ACTION] Playback");
+            movement_set_target_playback();
+            break;
+        case 's':
+            uart_println("[ACTION] Stop");
+            movement_set_target_idle();
+            break;
+        case 'f':
+            uart_println("[ACTION] Fast Forward");
+            movement_set_target_ff(2.0f);
+            break;
+        case 'r':
+            uart_println("[ACTION] Rewind");
+            movement_set_target_rew(2.0f);
+            break;
+        case 'm':
+            uart_println("[ACTION] Go to Memory");
+            movement_set_target_mem(20.0f, 2.0f);
+    }
+    delay(0x1FFF);
 }
 
 void parse_actions() {

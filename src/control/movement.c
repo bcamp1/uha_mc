@@ -87,7 +87,7 @@ void movement_tick() {
 
     // Step 4: Transition states if they are ready to transition
     if (status == TRANSITION_READY) {
-        uart_println("ready");
+        //uart_println("ready");
         switch (state) {
             case MV_IDLE:
                 if (!target.is_idle) {

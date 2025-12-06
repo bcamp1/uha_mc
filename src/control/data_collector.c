@@ -14,7 +14,7 @@ static SimpleFilter supply_tension_filter;
 
 // Filter Parameters
 static const float tape_speed_filter_alpha = 0.99f;
-static const float tension_arm_filter_alpha = 0.9f;
+static const float tension_arm_filter_alpha = 0.95f;
 
 // Sample Period
 static const float T = (1.0 / FREQUENCY_STATE_MACHINE_TICK);
@@ -60,7 +60,7 @@ void data_collector_update() {
 }
 
 float data_collector_get_tape_speed() {
-    return data.tape_speed;
+    return data.tape_speed * 15.0f;
 }
 
 float data_collector_get_tape_position() {

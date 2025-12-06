@@ -176,7 +176,7 @@ int main(void) {
     while (1) {
         //uart_println_int(inc_encoder_get_ticks());
         //uart_println_float(inc_encoder_get_position());
-        //uart_println_float(data_collector_get_tape_speed());
+        uart_println_float(data_collector_get_tape_speed());
         parse_movement_actions();
     }
 }

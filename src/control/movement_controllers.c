@@ -31,7 +31,7 @@ TransitionStatus idle_controller(ControllerInfo info, MovementTarget target, Mov
         filter_init_pd(&secondary_filter, 1.0f, 0.05f, T);
     }
     
-    float r = 0.5f;
+    float r = 0.6f;
     float e_primary = r - info.primary_tension;
     float e_secondary = r - info.secondary_tension;
 
@@ -49,11 +49,14 @@ TransitionStatus idle_controller(ControllerInfo info, MovementTarget target, Mov
     
     prev_tension_p = info.primary_tension;
     prev_tension_s = info.secondary_tension;
-
+    
+    float time = info.ticks * T;
 
     if (delta_primary < transition_speed_thresh && delta_secondary < transition_speed_thresh) {
         if (info.primary_tension > transition_position_thresh && info.secondary_tension > transition_position_thresh) {
-            return TRANSITION_READY;
+            if (time > 0.25f) {
+                return TRANSITION_READY;
+            }
         }
     }
 
@@ -62,7 +65,7 @@ TransitionStatus idle_controller(ControllerInfo info, MovementTarget target, Mov
 
 TransitionStatus start_tension_controller(ControllerInfo info, MovementTarget target, MovementCommand* command) {
     const float transition_position_thresh = 0.95f;
-    const float primary_slew_rate = 0.8; // Torque per second
+    const float primary_slew_rate = 1.6f; // Torque per second
     const float max_torque = 2.0f;
     float time = info.ticks * T;
     float torque = primary_slew_rate * time;
@@ -96,7 +99,16 @@ TransitionStatus closed_loop_controller(ControllerInfo info, MovementTarget targ
 }
 
 TransitionStatus decelerate_controller(ControllerInfo info, MovementTarget target, MovementCommand* command) {
-    return TRANSITION_READY;
+    const float tape_speed_thresh = 0.8f;
+
+    MovementCommand c = simple_movement_command(info.ticks, info.primary_tension, info.secondary_tension, 0.1f);
+    command->u_primary = c.u_primary;
+    command->u_secondary = c.u_secondary;
+
+    if (info.tape_speed < tape_speed_thresh) {
+        return TRANSITION_READY;
+    }
+    return TRANSITION_NOT_READY;
 }
 
 TransitionStatus stop_tension_controller(ControllerInfo info, MovementTarget target, MovementCommand* command) {
@@ -158,12 +170,12 @@ static MovementCommand simple_movement_command(uint32_t ticks, float primary_ten
     static Filter primary_filter;
 
     if (ticks == 0) {
-        filter_init_pd(&primary_filter, 1.0f, 0.00f, T);
+        filter_init_pd(&primary_filter, 1.0f, 0.05f, T);
         filter_init_pd(&secondary_filter, 1.0f, 0.05f, T);
     }
 
     const float secondary_tension_reference = 0.6f;
-    const float primary_tension_reference = 1.0f;
+    const float primary_tension_reference = 1.1f;
     float error_secondary_tension = secondary_tension_reference - secondary_tension;
     float error_primary_tension = primary_tension_reference - primary_tension;
 

@@ -66,13 +66,31 @@ TransitionStatus idle_controller(ControllerInfo info, MovementTarget target, Mov
 
 TransitionStatus start_tension_controller(ControllerInfo info, MovementTarget target, MovementCommand* command) {
     const float transition_position_thresh = 0.95f;
-    const float primary_slew_rate = 1.6f; // Torque per second
+
+    const float primary_slew_rate = 0.4f; // Torque per second
     const float max_torque = 2.0f;
+    static float start_torque = 0.2f;
+    const float r = 0.6f;
+
+    static Filter primary_filter;
+    static Filter secondary_filter;
+
+    if (info.ticks == 0) {
+        filter_init_pd(&primary_filter, 1.0f, 0.05f, T);
+        filter_init_pd(&secondary_filter, 1.0f, 0.05f, T);
+        //start_torque = filter_next(r - info.primary_tension, &primary_filter);
+    }
+
     float time = info.ticks * T;
-    float torque = primary_slew_rate * time;
+    float torque = (primary_slew_rate * time) + start_torque;
     if (torque > max_torque) torque = max_torque;
-    idle_controller(info, target, command);
-    command->u_primary += torque;
+
+    float e_secondary = r - info.secondary_tension;
+    float u_secondary = filter_next(e_secondary, &secondary_filter);
+
+    command->u_secondary = u_secondary;
+    command->u_primary = torque;
+
     if (info.primary_tension > transition_position_thresh) {
         return TRANSITION_READY;
     }
@@ -83,7 +101,8 @@ TransitionStatus accelerate_controller(ControllerInfo info, MovementTarget targe
     static Filter tape_speed_controller;
     static float tape_speed_error_integrator;
     static float tape_speed_r;
-
+    
+    const float tape_speed_start = 10.0f;
     const float tape_speed_slew = 20.0f; // Units: IPS per second
     const float torque_floor = 0.1f;
     const float torque_ceil = 0.8f;

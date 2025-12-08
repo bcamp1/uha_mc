@@ -88,7 +88,7 @@ TransitionStatus accelerate_controller(ControllerInfo info, MovementTarget targe
     const float torque_floor = 0.1f;
     const float torque_ceil = 0.8f;
     const float PD_torque_ceil = 0.3f;
-    const float tape_speed_target = 200.0f;
+    const float tape_speed_target = 150.0f;
     const float Ki = 0.1f;
 
     if (info.ticks == 0) {
@@ -129,7 +129,7 @@ TransitionStatus closed_loop_controller(ControllerInfo info, MovementTarget targ
 TransitionStatus decelerate_controller(ControllerInfo info, MovementTarget target, MovementCommand* command) {
     const float tape_speed_thresh = 0.8f;
 
-    MovementCommand c = decelerate_movement_command(info.ticks, info.primary_tension, info.secondary_tension, -0.3f);
+    MovementCommand c = decelerate_movement_command(info.ticks, info.primary_tension, info.secondary_tension, 0.0f);
     command->u_primary = c.u_primary;
     command->u_secondary = c.u_secondary;
 
@@ -216,6 +216,9 @@ static MovementCommand accelerate_movement_command(uint32_t ticks, float primary
 }
 
 static MovementCommand decelerate_movement_command(uint32_t ticks, float primary_tension, float secondary_tension, float torque) {
+    // Torque adjustment to be more similar to accelerate_movement_command
+    torque -= 0.3f;
+
     static Filter secondary_filter;
     static Filter primary_filter;
 

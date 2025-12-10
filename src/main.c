@@ -176,6 +176,8 @@ int main(void) {
     while (1) {
         //uart_println_int(inc_encoder_get_ticks());
         //uart_println_float(inc_encoder_get_position());
+        uart_print_float(data_collector_get_tape_position());
+        uart_print(" ");
         uart_println_float(data_collector_get_tape_speed());
         parse_movement_actions();
     }
@@ -203,7 +205,7 @@ void parse_movement_actions() {
             break;
         case 'm':
             uart_println("[ACTION] Go to Memory");
-            movement_set_target_mem(20.0f, 2.0f);
+            movement_set_target_mem(120.0f, 2.0f);
     }
     delay(0x1FFF);
 }
@@ -234,7 +236,7 @@ void parse_actions() {
             break;
         case 'm':
             uart_println("[ACTION] Go to Memory");
-            state_machine_goto_position(20.0f);
+            state_machine_goto_position(120.0f);
     }
     /*
     uart_print_float(state_machine_get_supply_speed());

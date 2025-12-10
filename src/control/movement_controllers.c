@@ -9,6 +9,7 @@ typedef struct {
     float primary_tension;
     float secondary_tension;
     float tape_speed;
+    float tape_position;
 } ControllerInfo;
 
 static const float T = (1.0 / FREQUENCY_STATE_MACHINE_TICK);
@@ -16,6 +17,14 @@ static const float f = FREQUENCY_STATE_MACHINE_TICK;
 
 static MovementCommand accelerate_movement_command(uint32_t ticks, float primary_tension, float secondary_tension, float torque);
 static MovementCommand decelerate_movement_command(uint32_t ticks, float primary_tension, float secondary_tension, float torque);
+
+static float get_mem_distance(ControllerInfo info, MovementTarget target) {
+    float delta = target.tape_position - info.tape_position;
+    if (target.direction == FORWARD) {
+        return delta;
+    }
+    return -delta;
+}
 
 TransitionStatus idle_controller(ControllerInfo info, MovementTarget target, MovementCommand* command) {
     const float transition_speed_thresh = 0.5f;
@@ -138,11 +147,18 @@ TransitionStatus accelerate_controller(ControllerInfo info, MovementTarget targe
     command->u_primary = c.u_primary;
     command->u_secondary = c.u_secondary;
     //uart_println_float(c.u_primary);
+    
+    // Decide when to transition to decelerate for mem option
+    if (target.goto_position) {
+        if (get_mem_distance(info, target) < 60.0f) {
+            return TRANSITION_READY;
+        }
+    }
     return TRANSITION_NOT_READY;
 }
 
 TransitionStatus closed_loop_controller(ControllerInfo info, MovementTarget target, MovementCommand* command) {
-    return TRANSITION_NOT_READY;
+    return TRANSITION_READY;
 }
 
 TransitionStatus decelerate_controller(ControllerInfo info, MovementTarget target, MovementCommand* command) {
@@ -155,6 +171,105 @@ TransitionStatus decelerate_controller(ControllerInfo info, MovementTarget targe
     if (info.tape_speed < tape_speed_thresh) {
         return TRANSITION_READY;
     }
+    return TRANSITION_NOT_READY;
+}
+
+typedef enum {DEC_GOTO_MEDIUM, DEC_MEDIUM, DEC_GOTO_SLOW, DEC_SLOW} DecelerateMemState;
+
+TransitionStatus decelerate_mem_controller(ControllerInfo info, MovementTarget target, MovementCommand* command) {
+    static Filter tape_speed_controller;
+    static float tape_speed_error_integrator;
+    static float tape_speed_r;
+    static float tape_speed_start = 0.0f;
+    static DecelerateMemState dec_state = DEC_GOTO_MEDIUM;
+    static uint32_t dec_state_ticks = 0;
+    static float dec_state_time = 0.0f;
+
+    const float torque_floor = -0.4f;
+    const float torque_ceil = 0.4f;
+
+    const float medium_tape_speed_target = 50.0f;
+    const float slow_tape_speed_target = 10.0f;
+    const float Ki = 0.1f;
+
+    // Tape Distance thresholds
+    const float distance_thresh_medium = 20.0f; // seconds
+    const float distance_thresh_slow = 0.5f; // seconds
+
+    // Slew rates
+    const float slew_goto_medium = -20.0f; // IPS per second
+    const float slew_goto_slow = -20.0f; // IPS per second
+
+    if (info.ticks == 0) {
+        tape_speed_start = info.tape_speed;
+        filter_init_pd(&tape_speed_controller, 0.1f, 0.00f, T);
+        tape_speed_error_integrator = 0.0f;
+        tape_speed_r = 0.0f;
+        dec_state_ticks = 0;
+        dec_state_time = 0.0f;
+
+        if (tape_speed_start > medium_tape_speed_target) {
+            dec_state = DEC_GOTO_MEDIUM;
+        } else {
+            dec_state = DEC_GOTO_SLOW;
+        }
+    }
+
+    // Calculate times
+    float time = info.ticks * T;
+    float distance = get_mem_distance(info, target);
+    dec_state_time = dec_state_ticks * T;
+
+    // Calculate tape speed reference + state transitions
+    switch (dec_state) {
+        case DEC_GOTO_MEDIUM:
+            tape_speed_r = tape_speed_start + (dec_state_time * slew_goto_medium);
+            if (tape_speed_r < medium_tape_speed_target) {
+                tape_speed_r = medium_tape_speed_target;
+                dec_state_ticks = 0;
+                dec_state = DEC_MEDIUM;
+            }
+            break;
+        case DEC_MEDIUM:
+            tape_speed_r = medium_tape_speed_target;
+            if (distance < distance_thresh_medium) {
+                dec_state_ticks = 0;
+                dec_state = DEC_GOTO_SLOW;
+            }
+            break;
+        case DEC_GOTO_SLOW:
+            tape_speed_r = medium_tape_speed_target + (dec_state_time * slew_goto_slow);
+            if (tape_speed_r < slow_tape_speed_target) {
+                tape_speed_r = slow_tape_speed_target;
+                dec_state_ticks = 0;
+                dec_state = DEC_SLOW;
+            }
+            break;
+        case DEC_SLOW:
+            tape_speed_r = slow_tape_speed_target;
+            if (distance < distance_thresh_slow) {
+               return TRANSITION_READY; 
+            }
+            break;
+    }
+
+    float tape_speed_e = tape_speed_r - info.tape_speed; 
+    float torque_pd = filter_next(tape_speed_e, &tape_speed_controller);
+
+    tape_speed_error_integrator += (tape_speed_e * T);
+    float torque_i = Ki * tape_speed_error_integrator;
+    
+    float torque = torque_pd + torque_i;
+
+    if (torque < torque_floor) torque = torque_floor;
+    if (torque > torque_ceil) torque = torque_ceil;
+
+    MovementCommand c = decelerate_movement_command(info.ticks, info.primary_tension, info.secondary_tension, torque);
+    command->u_primary = c.u_primary;
+    command->u_secondary = c.u_secondary;
+    //uart_println_float(c.u_primary);
+
+    dec_state_ticks++;
     return TRANSITION_NOT_READY;
 }
 
@@ -176,12 +291,13 @@ void movement_controllers_init() {
 
 }
 
-TransitionStatus movement_controllers_tick(MovementState state, MovementTarget target, uint32_t ticks, float t_p, float t_s, float tape_speed, MovementCommand* command) {
+TransitionStatus movement_controllers_tick(MovementState state, MovementTarget target, uint32_t ticks, float t_p, float t_s, float tape_speed, float tape_position, MovementCommand* command) {
     ControllerInfo info = (ControllerInfo) {
         .ticks = ticks,
         .primary_tension = t_p,
         .secondary_tension = t_s,
         .tape_speed = tape_speed,
+        .tape_position = tape_position,
     };
 
     switch (state) {
@@ -198,6 +314,9 @@ TransitionStatus movement_controllers_tick(MovementState state, MovementTarget t
             return closed_loop_controller(info, target, command);
             break;
         case DECELERATE:
+            if (target.goto_position) {
+                return decelerate_mem_controller(info, target, command);
+            }
             return decelerate_controller(info, target, command);
             break;
         case STOP_TENSION:

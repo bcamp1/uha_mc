@@ -83,6 +83,7 @@ void movement_tick() {
         get_primary_tension(),
         get_secondary_tension(),
         get_tape_speed(),
+        data_collector_get_tape_position(),
         &command);
 
     // Step 4: Transition states if they are ready to transition

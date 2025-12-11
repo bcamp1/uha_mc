@@ -3,9 +3,11 @@
 #include "data_collector.h"
 #include "filter.h"
 #include "../sched.h"
+#include "../board.h"
 #include <stdint.h>
 #include "sam.h"
 #include "../periphs/uart.h"
+#include "../periphs/gpio.h"
 #include "../drivers/bldc.h"
 #include "../drivers/solenoid.h"
 
@@ -53,6 +55,7 @@ void movement_init() {
 }
 
 void movement_tick() {
+    gpio_set_pin(PIN_DEBUG1);
     ticks += 1;
 
     // Step 0: Update data
@@ -91,8 +94,8 @@ void movement_tick() {
         //uart_println("ready");
         switch (state) {
             case MV_IDLE:
-                if (!target.is_idle) {
-                    if (target.active && target.is_playback) {
+                if (target.active && !target.is_idle) {
+                    if (target.is_playback) {
                         set_state(MV_PLAYBACK);
                     } else {
                         set_state(START_TENSION);
@@ -131,67 +134,39 @@ void movement_tick() {
     //uart_println_float(motor_command.u_takeup);
     
     data_collector_set_reel_speeds(takeup_speed, supply_speed);
-
+    gpio_clear_pin(PIN_DEBUG1);
 }
 
 static void state_transition_commanded_target() {
-    if (commanded_target.direction != target.direction) {
-        switch (state) {
-            case MV_IDLE:
-                transfer_commanded_target_current();
-                break;
-            case START_TENSION:
-                set_state(STOP_TENSION);
-                transfer_commanded_target_future();
-                break;
-            case ACCELERATE:
-                set_state(DECELERATE);
-                transfer_commanded_target_future();
-                break;
-            case CLOSED_LOOP:
-                set_state(DECELERATE);
-                transfer_commanded_target_future();
-                break;
-            case DECELERATE:
-                transfer_commanded_target_future();
-                break;
-            case STOP_TENSION:
-                transfer_commanded_target_future();
-                break;
-            case MV_PLAYBACK:
-                set_state(MV_IDLE);
-                transfer_commanded_target_current();
-                break;
-        }
-    } else {
-        switch (state) {
-            // TODO: Smoother state transistions here
-            case MV_IDLE:
-                transfer_commanded_target_current();
-                break;
-            case START_TENSION:
-                set_state(STOP_TENSION);
-                transfer_commanded_target_future();
-                break;
-            case ACCELERATE:
-                set_state(DECELERATE);
-                transfer_commanded_target_future();
-                break;
-            case CLOSED_LOOP:
-                set_state(DECELERATE);
-                transfer_commanded_target_future();
-                break;
-            case DECELERATE:
-                transfer_commanded_target_future();
-                break;
-            case STOP_TENSION:
-                transfer_commanded_target_future();
-                break;
-            case MV_PLAYBACK:
-                set_state(MV_IDLE);
-                transfer_commanded_target_current();
-                break;
-        }
+    switch (state) {
+        case MV_IDLE:
+            transfer_commanded_target_current();
+            break;
+        case START_TENSION:
+            set_state(STOP_TENSION);
+            transfer_commanded_target_future();
+            break;
+        case ACCELERATE:
+            set_state(DECELERATE);
+            target.goto_position = false;
+            transfer_commanded_target_future();
+            break;
+        case CLOSED_LOOP:
+            set_state(DECELERATE);
+            target.goto_position = false;
+            transfer_commanded_target_future();
+            break;
+        case DECELERATE:
+            target.goto_position = false;
+            transfer_commanded_target_future();
+            break;
+        case STOP_TENSION:
+            transfer_commanded_target_future();
+            break;
+        case MV_PLAYBACK:
+            set_state(MV_IDLE);
+            transfer_commanded_target_current();
+            break;
     }
 }
 

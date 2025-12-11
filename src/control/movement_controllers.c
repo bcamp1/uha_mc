@@ -150,7 +150,7 @@ TransitionStatus accelerate_controller(ControllerInfo info, MovementTarget targe
     
     // Decide when to transition to decelerate for mem option
     if (target.goto_position) {
-        if (get_mem_distance(info, target) < 60.0f) {
+        if (get_mem_distance(info, target) < 40.0f) {
             return TRANSITION_READY;
         }
     }
@@ -188,8 +188,8 @@ TransitionStatus decelerate_mem_controller(ControllerInfo info, MovementTarget t
     const float torque_floor = -0.4f;
     const float torque_ceil = 0.4f;
 
-    const float medium_tape_speed_target = 50.0f;
-    const float slow_tape_speed_target = 10.0f;
+    const float medium_tape_speed_target = 80.0f;
+    const float slow_tape_speed_target = 15.0f;
     const float Ki = 0.1f;
 
     // Tape Distance thresholds

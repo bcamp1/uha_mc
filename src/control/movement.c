@@ -281,6 +281,7 @@ static void transfer_future_target_current() {
     uint32_t primask = __get_PRIMASK();  // Save interrupt state
     __disable_irq();                     // Disable all maskable interrupts
     target = future_target;
+    future_target.active = false;
     __set_PRIMASK(primask);              // Restore old interrupt state
     uart_println("target <- future target");
 }

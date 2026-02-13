@@ -9,7 +9,8 @@
 #include "periphs/gpio.h"
 #include "periphs/clocks.h"
 #include "periphs/timer.h"
-#include "periphs/uart.h"
+#include "drivers/rs422.h"
+#include "drivers/comms.h"
 #include "periphs/i2c_slave.h"
 #include "drivers/motor_encoder.h"
 #include "drivers/tension_arm.h"
@@ -51,9 +52,6 @@ static void init_peripherals(void) {
 	gpio_init_pin(PIN_DEBUG2, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
     gpio_clear_pin(PIN_DEBUG1);
     gpio_clear_pin(PIN_DEBUG2);
-	
-	// Init the UART
-	uart_init();
     
     // Stop Watch
     stopwatch_init();
@@ -70,37 +68,39 @@ static void enable_fpu(void) {
 	__ISB();  // Instruction Synchronization Barrier
 }
 
+/*
 static void stopwatch_test() {
     stopwatch_init();
     bool running = false;
-    uart_println("UART Stopwatch Test (press s)");
+    rs422_println("UART Stopwatch Test (press s)");
     
     while (1) {
         //uint32_t time = stopwatch_underlying_time();
-        //uart_println_int_base(time, 16);
-        if (uart_get() == 's') {
+        //rs422_println_int_base(time, 16);
+        if (rs422_get() == 's') {
             if (!running) {
-                uart_println("Starting stopwatch... s to stop");
+                rs422_println("Starting stopwatch... s to stop");
                 running = true;
                 stopwatch_start(0);
             } else {
                 float dt = ticks_to_time(stopwatch_stop(0, false));
                 running = false;
-                uart_print("Stopped. Took ");
-                uart_print_float(dt);
-                uart_println(" seconds.");
+                rs422_print("Stopped. Took ");
+                rs422_print_float(dt);
+                rs422_println(" seconds.");
             }
         }
     }
 }
+*/
 
 static void encoder_test() {
-    uart_println("Starting motor encoder test");
+    rs422_println("Starting motor encoder test");
     motor_encoder_init(&MOTOR_ENCODER_CONF);
 
     while (true) {
         float pos = motor_encoder_get_position(&MOTOR_ENCODER_CONF);
-        uart_println_float(pos);
+        rs422_println_float(pos);
     }
 }
 
@@ -109,7 +109,7 @@ static void tension_arm_test() {
         float pos_a = tension_arm_get_position(&TENSION_ARM_A);
         float pos_b = tension_arm_get_position(&TENSION_ARM_B);
         float data[2] = {pos_a, pos_b};
-        uart_println_float_arr(data, 2);
+        rs422_println_float_arr(data, 2);
     }
 }
 
@@ -118,10 +118,10 @@ static void i2c_slave_test() {
     i2c_slave_init(0x25);
     while (true) {
         i2c_slave_data_t data = i2c_slave_get_recent_data();
-        uart_print("Register: ");
-        uart_print_int_base(data.address_byte, 16);
-        uart_print(" Data: ");
-        uart_println_int_base(data.data_byte, 16);
+        rs422_print("Register: ");
+        rs422_print_int_base(data.address_byte, 16);
+        rs422_print(" Data: ");
+        rs422_println_int_base(data.data_byte, 16);
         delay(0xFFFF);
     }
 
@@ -129,9 +129,12 @@ static void i2c_slave_test() {
 
 int main(void) {
     init_peripherals();
+    comms_init();
+
+    const uint8_t data[3] = {0x01, 0x02, 0x03};
+
     while (1) {
-        gpio_toggle_pin(PIN_DEBUG2);
-        delay(0xFFFF);
+        comms_send_bytes(data, 3);
     }
 
     /*
@@ -139,12 +142,12 @@ int main(void) {
     delay(0xFFF);
 
     // Print firmware info
-    uart_println("\n");
-    uart_println("--------------------");
-    uart_println(FIRMWARE_VERSION);
-    uart_println(FIRMWARE_AUTHOR);
-    uart_println(FIRMWARE_DATE);
-    uart_println("--------------------");
+    rs422_println("\n");
+    rs422_println("--------------------");
+    rs422_println(FIRMWARE_VERSION);
+    rs422_println(FIRMWARE_AUTHOR);
+    rs422_println(FIRMWARE_DATE);
+    rs422_println("--------------------");
     delay(0xFFFF);
     
     // Motor control-specific peripherals
@@ -163,75 +166,75 @@ int main(void) {
 
     bool engaged = false;
     while (1) {
-        //uart_println_int(inc_encoder_get_ticks());
-        //uart_println_float(inc_encoder_get_position());
-        uart_print_float(data_collector_get_tape_position());
-        uart_print(" ");
-        uart_println_float(data_collector_get_tape_speed());
+        //rs422_println_int(inc_encoder_get_ticks());
+        //rs422_println_float(inc_encoder_get_position());
+        rs422_print_float(data_collector_get_tape_position());
+        rs422_print(" ");
+        rs422_println_float(data_collector_get_tape_speed());
         parse_movement_actions();
     }
 */
 }
 
 void parse_movement_actions() {
-    //uart_println("Parsing");
-    char user_input = uart_get();
+    //rs422_println("Parsing");
+    char user_input = rs422_get();
     switch (user_input) {
         case 'p':
-            uart_println("[ACTION] Playback");
+            rs422_println("[ACTION] Playback");
             movement_set_target_playback();
             break;
         case 's':
-            uart_println("[ACTION] Stop");
+            rs422_println("[ACTION] Stop");
             movement_set_target_idle();
             break;
         case 'f':
-            uart_println("[ACTION] Fast Forward");
+            rs422_println("[ACTION] Fast Forward");
             movement_set_target_ff(2.0f);
             break;
         case 'r':
-            uart_println("[ACTION] Rewind");
+            rs422_println("[ACTION] Rewind");
             movement_set_target_rew(2.0f);
             break;
         case 'm':
-            uart_println("[ACTION] Go to Memory");
+            rs422_println("[ACTION] Go to Memory");
             movement_set_target_mem(120.0f, 2.0f);
     }
     delay(0x1FFF);
 }
 
 void parse_actions() {
-    //uart_println("Parsing");
-    char user_input = uart_get();
+    //rs422_println("Parsing");
+    char user_input = rs422_get();
     switch (user_input) {
         case 'p':
-            uart_println("[ACTION] Playback");
+            rs422_println("[ACTION] Playback");
             bldc_enable_all();
             state_machine_take_action(PLAY_ACTION);
             break;
         case 's':
-            uart_println("[ACTION] Stop");
+            rs422_println("[ACTION] Stop");
             bldc_disable_all();
             state_machine_take_action(STOP_ACTION);
             break;
         case 'f':
-            uart_println("[ACTION] Fast Forward");
+            rs422_println("[ACTION] Fast Forward");
             bldc_enable_all();
             state_machine_take_action(FF_ACTION);
             break;
         case 'r':
-            uart_println("[ACTION] Rewind");
+            rs422_println("[ACTION] Rewind");
             bldc_enable_all();
             state_machine_take_action(REW_ACTION);
             break;
         case 'm':
-            uart_println("[ACTION] Go to Memory");
+            rs422_println("[ACTION] Go to Memory");
             state_machine_goto_position(120.0f);
     }
     /*
-    uart_print_float(state_machine_get_supply_speed());
-    uart_print(" ");
-    uart_println_float(state_machine_get_takeup_speed());
+    rs422_print_float(state_machine_get_supply_speed());
+    rs422_print(" ");
+    rs422_println_float(state_machine_get_takeup_speed());
     */
     if (gpio_get_pin(PIN_ROLLER_PULSE)) {
         gpio_clear_pin(PIN_DEBUG2);

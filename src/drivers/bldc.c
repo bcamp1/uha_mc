@@ -9,8 +9,8 @@
 const BLDCConfig BLDC_CONF_CAPSTAN = {
     .ident_code = BLDC_IDENT_CAPSTAN,
 	.cs_pin     = PIN_BLDC_C_CS,
-	.ident1_pin = PIN_BLDC_C_IDENT1,
-	.ident0_pin = PIN_BLDC_C_IDENT0,
+	.ident1_pin = PIN_BLDC_C_CONFIG2,
+	.ident0_pin = PIN_BLDC_C_CONFIG1,
 	.enable_pin = PIN_BLDC_C_ENABLE,
     .spi_conf = &SPI_CONF_BLDC_C,
 };
@@ -18,8 +18,8 @@ const BLDCConfig BLDC_CONF_CAPSTAN = {
 const BLDCConfig BLDC_CONF_TAKEUP = {
     .ident_code = BLDC_IDENT_TAKEUP,
 	.cs_pin     = PIN_BLDC_A_CS,
-	.ident1_pin = PIN_BLDC_A_IDENT1,
-	.ident0_pin = PIN_BLDC_A_IDENT0,
+	.ident1_pin = PIN_BLDC_A_CONFIG2,
+	.ident0_pin = PIN_BLDC_A_CONFIG1,
 	.enable_pin = PIN_BLDC_A_ENABLE,
     .spi_conf = &SPI_CONF_BLDC_A,
 };
@@ -27,8 +27,8 @@ const BLDCConfig BLDC_CONF_TAKEUP = {
 const BLDCConfig BLDC_CONF_SUPPLY = {
     .ident_code = BLDC_IDENT_SUPPLY,
 	.cs_pin     = PIN_BLDC_B_CS,
-	.ident1_pin = PIN_BLDC_B_IDENT1,
-	.ident0_pin = PIN_BLDC_B_IDENT0,
+	.ident1_pin = PIN_BLDC_B_CONFIG2,
+	.ident0_pin = PIN_BLDC_B_CONFIG1,
 	.enable_pin = PIN_BLDC_B_ENABLE,
     .spi_conf = &SPI_CONF_BLDC_B,
 };

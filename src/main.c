@@ -18,7 +18,6 @@
 #include "sched.h"
 #include "drivers/delay.h"
 #include "drivers/motor_encoder.h"
-#include "drivers/stepper.h"
 #include "drivers/trq_pwm.h"
 #include "drivers/bldc.h"
 #include "drivers/inc_encoder.h"
@@ -105,23 +104,6 @@ static void encoder_test() {
     }
 }
 
-static void stepper_test() {
-    int32_t stepper_steps = 200;
-    uint32_t stepper_delay = 0x4FF;
-
-    const StepperConfig* step = &STEPPER_CONF_CAPSTAN;
-
-    stepper_init(step);
-    delay(0xFFFFF);
-    stepper_enable(step);
-    stepper_send_pulses(step, stepper_steps, stepper_delay);
-
-	while (1) {
-        stepper_send_pulses(step, stepper_steps, stepper_delay);
-        stepper_steps *= -1;
-	}
-}
-
 static void tension_arm_test() {
     while (true) {
         float pos_a = tension_arm_get_position(&TENSION_ARM_A);
@@ -146,6 +128,13 @@ static void i2c_slave_test() {
 }
 
 int main(void) {
+    init_peripherals();
+    while (1) {
+        gpio_toggle_pin(PIN_DEBUG2);
+        delay(0xFFFF);
+    }
+
+    /*
 	init_peripherals();
     delay(0xFFF);
 
@@ -176,13 +165,12 @@ int main(void) {
     while (1) {
         //uart_println_int(inc_encoder_get_ticks());
         //uart_println_float(inc_encoder_get_position());
-        ///*
         uart_print_float(data_collector_get_tape_position());
         uart_print(" ");
         uart_println_float(data_collector_get_tape_speed());
-        //*/
         parse_movement_actions();
     }
+*/
 }
 
 void parse_movement_actions() {

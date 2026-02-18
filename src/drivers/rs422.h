@@ -3,14 +3,18 @@
  *
  * Created: 7/29/2024 3:41:36 PM
  *  Author: brans
- */ 
+ */
 
 #pragma once
+
+#include <stdint.h>
+
+#define RS422_EMPTY (-1)
 
 void rs422_init(void);
 
 // Input
-char rs422_get();
+int16_t rs422_get(void);
 
 // Strings
 void rs422_put(char ch);
@@ -32,4 +36,3 @@ void rs422_println_float_arr(float* data, int len);
 // Send binary data
 void rs422_send_float(float num);
 void rs422_send_float_arr(float* data, int len);
-

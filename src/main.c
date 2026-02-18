@@ -137,10 +137,10 @@ static void comms_test() {
     }
 }
 
+static volatile float torque_cmd = 0.0f;
+
 static void mock_movement_tick() {
-    bldc_set_torque_float(&BLDC_CONF_TAKEUP, 0.5f);
-    gpio_set_pin(PIN_DEBUG1);
-    gpio_clear_pin(PIN_DEBUG1);
+    bldc_set_torque_float(&BLDC_CONF_TAKEUP, torque_cmd);
 }
 
 int main(void) {
@@ -172,19 +172,45 @@ int main(void) {
 
     timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, mock_movement_tick);
 
+    comms_init();
+    delay(0xFF);
+    
+    int16_t result = -1;
+
+    uint8_t data[10];
+    uint8_t data_len;
     while (1) {
-        // rs422_println_int(inc_encoder_get_ticks());
-        // rs422_println_float(inc_encoder_get_position());
-        // rs422_print_float(data_collector_get_tape_position());
-        // rs422_print(" ");
-        // rs422_println_float(data_collector_get_tape_speed());
-        // parse_movement_actions();
+        if (comms_get_data(data, &data_len, 10)) {
+            torque_cmd = 0.4f;
+            switch (data[0]) {
+                case 0x1:
+                    torque_cmd = 0.0f;
+                    break;
+                case 0x2:
+                    torque_cmd = 0.4f;
+                    break;
+                case 0x3:
+                    torque_cmd = -0.8f;
+                    break;
+                case 0x4:
+                    torque_cmd = 0.8f;
+                    break;
+                case 0x5:
+                    torque_cmd = -0.3f;
+                    break;
+                case 0x6:
+                    torque_cmd = 0.3f;
+                    break;
+            }
+        }
+
+        delay(0xFFFF);
     }
 }
 
 void parse_movement_actions() {
     //rs422_println("Parsing");
-    char user_input = rs422_get();
+    int16_t user_input = rs422_get();
     switch (user_input) {
         case 'p':
             rs422_println("[ACTION] Playback");
@@ -211,7 +237,7 @@ void parse_movement_actions() {
 
 void parse_actions() {
     //rs422_println("Parsing");
-    char user_input = rs422_get();
+    int16_t user_input = rs422_get();
     switch (user_input) {
         case 'p':
             rs422_println("[ACTION] Playback");

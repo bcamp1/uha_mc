@@ -162,11 +162,6 @@ void uart_println_int(int num) {
 	uart_println_int_base(num, 10);
 }
 
-void SERCOM0_2_Handler(void) {
-	char data = UART_SERCOM->USART.DATA.reg & 0xff;
-	read_character = data;
-}
-
 void uart_send_float(float num) {
 	uint32_t raw = 0;
 	memcpy(&raw, &num, 4);

@@ -127,8 +127,7 @@ static void i2c_slave_test() {
 
 }
 
-int main(void) {
-    init_peripherals();
+static void comms_test() {
     comms_init();
 
     const uint8_t data[3] = {0x01, 0x02, 0x03};
@@ -136,44 +135,51 @@ int main(void) {
     while (1) {
         comms_send_bytes(data, 3);
     }
+}
 
-    /*
+static void mock_movement_tick() {
+    bldc_set_torque_float(&BLDC_CONF_TAKEUP, 0.5f);
+    gpio_set_pin(PIN_DEBUG1);
+    gpio_clear_pin(PIN_DEBUG1);
+}
+
+int main(void) {
 	init_peripherals();
     delay(0xFFF);
 
+    //gpio_set_pin(PIN_DEBUG1);
     // Print firmware info
-    rs422_println("\n");
-    rs422_println("--------------------");
-    rs422_println(FIRMWARE_VERSION);
-    rs422_println(FIRMWARE_AUTHOR);
-    rs422_println(FIRMWARE_DATE);
-    rs422_println("--------------------");
-    delay(0xFFFF);
+    //rs422_println("\n");
+    //rs422_println("--------------------");
+    //rs422_println(FIRMWARE_VERSION);
+    //rs422_println(FIRMWARE_AUTHOR);
+    //rs422_println(FIRMWARE_DATE);
+    //rs422_println("--------------------");
+    //delay(0xFFFF);
     
     // Motor control-specific peripherals
-    tension_arm_init(&TENSION_ARM_A);
-    tension_arm_init(&TENSION_ARM_B);
-    inc_encoder_init();
-    bldc_init_all();
-    solenoid_pinch_init();
+    //tension_arm_init(&TENSION_ARM_A);
+    //tension_arm_init(&TENSION_ARM_B);
+    //inc_encoder_init();
+    bldc_init(&BLDC_CONF_TAKEUP);
+    bldc_enable(&BLDC_CONF_TAKEUP);
+    //solenoid_pinch_init();
     
-    data_collector_init();
+    //data_collector_init();
 
     //state_machine_init();
-    movement_init();
+    //movement_init();
 
-    timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, movement_tick);
+    timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, mock_movement_tick);
 
-    bool engaged = false;
     while (1) {
-        //rs422_println_int(inc_encoder_get_ticks());
-        //rs422_println_float(inc_encoder_get_position());
-        rs422_print_float(data_collector_get_tape_position());
-        rs422_print(" ");
-        rs422_println_float(data_collector_get_tape_speed());
-        parse_movement_actions();
+        // rs422_println_int(inc_encoder_get_ticks());
+        // rs422_println_float(inc_encoder_get_position());
+        // rs422_print_float(data_collector_get_tape_position());
+        // rs422_print(" ");
+        // rs422_println_float(data_collector_get_tape_speed());
+        // parse_movement_actions();
     }
-*/
 }
 
 void parse_movement_actions() {

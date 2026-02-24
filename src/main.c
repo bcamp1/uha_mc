@@ -141,6 +141,7 @@ static volatile float torque_cmd = 0.0f;
 
 static void mock_movement_tick() {
     bldc_set_torque_float(&BLDC_CONF_TAKEUP, torque_cmd);
+    bldc_set_torque_float(&BLDC_CONF_SUPPLY, torque_cmd);
 }
 
 int main(void) {
@@ -163,6 +164,10 @@ int main(void) {
     //inc_encoder_init();
     bldc_init(&BLDC_CONF_TAKEUP);
     bldc_enable(&BLDC_CONF_TAKEUP);
+
+    bldc_init(&BLDC_CONF_SUPPLY);
+    bldc_enable(&BLDC_CONF_SUPPLY);
+
     //solenoid_pinch_init();
     
     //data_collector_init();

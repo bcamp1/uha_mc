@@ -159,9 +159,9 @@ int main(void) {
     //delay(0xFFFF);
     
     // Motor control-specific peripherals
-    //tension_arm_init(&TENSION_ARM_A);
-    //tension_arm_init(&TENSION_ARM_B);
-    //inc_encoder_init();
+    tension_arm_init(&TENSION_ARM_A);
+    tension_arm_init(&TENSION_ARM_B);
+    inc_encoder_init();
     bldc_init(&BLDC_CONF_TAKEUP);
     bldc_enable(&BLDC_CONF_TAKEUP);
 
@@ -170,12 +170,12 @@ int main(void) {
 
     //solenoid_pinch_init();
     
-    //data_collector_init();
+    data_collector_init();
 
     //state_machine_init();
-    //movement_init();
+    movement_init();
 
-    timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, mock_movement_tick);
+    timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, movement_tick);
 
     comms_init();
     delay(0xFF);
@@ -185,31 +185,39 @@ int main(void) {
     uint8_t data[10];
     uint8_t data_len;
     while (1) {
+        //rs422_println_float(data_collector_get_tape_position());
         if (comms_get_data(data, &data_len, 10)) {
-            torque_cmd = 0.4f;
+            //torque_cmd = 0.4f;
+            gpio_toggle_pin(PIN_DEBUG2);
             switch (data[0]) {
                 case 0x1:
-                    torque_cmd = 0.0f;
+                    //rs422_println("[ACTION] Stop");
+                    movement_set_target_idle();
                     break;
                 case 0x2:
-                    torque_cmd = 0.4f;
+                    //rs422_println("[ACTION] Playback");
+                    movement_set_target_playback();
                     break;
                 case 0x3:
-                    torque_cmd = -0.8f;
+                    //rs422_println("[ACTION] Rewind");
+                    movement_set_target_rew(2.0f);
                     break;
                 case 0x4:
-                    torque_cmd = 0.8f;
+                    //rs422_println("[ACTION] Fast Forward");
+                    movement_set_target_ff(2.0f);
                     break;
                 case 0x5:
-                    torque_cmd = -0.3f;
+                    //rs422_println("[ACTION] Go to Memory");
+                    movement_set_target_mem(120.0f, 2.0f);
                     break;
                 case 0x6:
-                    torque_cmd = 0.3f;
+                    //rs422_println("[ACTION] Go to Memory");
+                    movement_set_target_mem(120.0f, 2.0f);
                     break;
             }
         }
 
-        delay(0xFFFF);
+        delay(0xFF);
     }
 }
 

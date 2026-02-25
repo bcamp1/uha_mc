@@ -104,10 +104,12 @@ static void tx_enqueue(uint8_t ch) {
 }
 
 void rs422_put(char ch) {
+    /*
 	tx_enqueue((uint8_t)ch);
 	if (ch == '\n') {
 		tx_enqueue('\r');
 	}
+    */
 }
 
 int16_t rs422_get(void) {

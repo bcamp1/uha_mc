@@ -1,11 +1,11 @@
 // UHA Motherboard Scheduling Priorities and Frequencies
 #pragma once
 
-// Priorities
+// Priorities (lower number = higher priority on Cortex-M)
 #define PRIO_ROLLER_ENCODER (0)
-#define PRIO_STATE_MACHINE_TICK (1)
-#define PRIO_SLAVE_I2C (2)
-#define PRIO_RS422 (3)
+#define PRIO_RS422 (1)
+#define PRIO_STATE_MACHINE_TICK (2)
+#define PRIO_SLAVE_I2C (3)
 
 // Frequencies
 #define FREQUENCY_STATE_MACHINE_TICK (1000.0f)

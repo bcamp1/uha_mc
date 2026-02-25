@@ -11,7 +11,7 @@
 #include "periphs/timer.h"
 #include "drivers/rs422.h"
 #include "drivers/comms.h"
-#include "periphs/i2c_slave.h"
+#include "periphs/uart.h"
 #include "drivers/motor_encoder.h"
 #include "drivers/tension_arm.h"
 #include "drivers/stopwatch.h"
@@ -109,22 +109,8 @@ static void tension_arm_test() {
         float pos_a = tension_arm_get_position(&TENSION_ARM_A);
         float pos_b = tension_arm_get_position(&TENSION_ARM_B);
         float data[2] = {pos_a, pos_b};
-        rs422_println_float_arr(data, 2);
+        uart_println_float_arr(data, 2);
     }
-}
-
-static void i2c_slave_test() {
-    inc_encoder_init();
-    i2c_slave_init(0x25);
-    while (true) {
-        i2c_slave_data_t data = i2c_slave_get_recent_data();
-        rs422_print("Register: ");
-        rs422_print_int_base(data.address_byte, 16);
-        rs422_print(" Data: ");
-        rs422_println_int_base(data.data_byte, 16);
-        delay(0xFFFF);
-    }
-
 }
 
 static void comms_test() {
@@ -161,6 +147,10 @@ int main(void) {
     // Motor control-specific peripherals
     tension_arm_init(&TENSION_ARM_A);
     tension_arm_init(&TENSION_ARM_B);
+
+    //uart_init();
+    //tension_arm_test();
+
     inc_encoder_init();
     bldc_init(&BLDC_CONF_TAKEUP);
     bldc_enable(&BLDC_CONF_TAKEUP);
@@ -217,7 +207,7 @@ int main(void) {
             }
         }
 
-        delay(0xFF);
+        delay(0xFFF);
     }
 }
 

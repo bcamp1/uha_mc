@@ -128,8 +128,8 @@ void movement_tick() {
     // Step 5: Apply command to motors
     MotorCommand motor_command = get_motor_commands(command);
 
-    float takeup_speed = bldc_set_torque_float(&BLDC_CONF_TAKEUP, motor_command.u_takeup);
     float supply_speed = bldc_set_torque_float(&BLDC_CONF_SUPPLY, motor_command.u_supply);
+    float takeup_speed = bldc_set_torque_float(&BLDC_CONF_TAKEUP, motor_command.u_takeup);
 
     //uart_println_float(motor_command.u_takeup);
     

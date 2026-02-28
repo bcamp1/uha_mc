@@ -204,6 +204,8 @@ int main(void) {
         }
         
         comms_send_float(COMMS_CMD_TRANSMIT_TAPE_POS, data_collector_get_tape_position());
+        delay(0xFF);
+        comms_send_float(COMMS_CMD_TRANSMIT_TAPE_SPD, data_collector_get_tape_speed());
         delay(0xFFF);
     }
 }

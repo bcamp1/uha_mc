@@ -10,6 +10,7 @@
 #define COMMS_CMD_ACTION_FF         0x04
 #define COMMS_CMD_ACTION_MEM        0x05
 #define COMMS_CMD_ACTION_RTZ        0x06
+#define COMMS_CMD_TRANSMIT_TAPE_POS 0x08
 
 void comms_init();
 void comms_send_bytes(const uint8_t *data, uint8_t length);

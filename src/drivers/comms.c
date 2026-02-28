@@ -1,13 +1,11 @@
 #include "comms.h"
 #include "rs422.h"
-#include "delay.h"
+#include <string.h>
 
 #define SOF_BYTE 0xAA
-#define BYTE_DELAY 0xFF
-#define FRAME_DELAY 0xFFF
 
 static void comms_put(uint8_t ch) {
-    rs422_put(ch);
+    rs422_put_raw(ch);
 }
 
 void comms_init() {
@@ -27,6 +25,22 @@ void comms_send_bytes(const uint8_t *data, uint8_t length) {
     comms_put(checksum);
 }
 
+
+void comms_send_float(const uint8_t command, float data) {
+    uint8_t buf[5];
+    buf[0] = command;
+    memcpy(&buf[1], &data, 4);
+    comms_send_bytes(buf, 5);
+}
+
+void comms_print_debug(const char* debug_str) {
+    uint8_t buf[64];
+    buf[0] = COMMS_CMD_DEBUG;
+    uint8_t len = strlen(debug_str);
+    if (len > 63) len = 63;
+    memcpy(&buf[1], debug_str, len);
+    comms_send_bytes(buf, len + 1);
+}
 
 static bool get_byte_with_timeout(uint8_t* byte, uint32_t timeout) {
     for (uint32_t i = 0; i < timeout; i++) {
@@ -80,4 +94,10 @@ bool comms_get_data(uint8_t* data, uint8_t* data_len, uint8_t buf_size) {
     *data_len = length;
     return true;
 }
+
+float comms_data_to_float(uint8_t* data) {
+    float result;
+    memcpy(&result, data, 4);
+    return result;
+} 
 

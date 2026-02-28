@@ -21,7 +21,7 @@
 #define RS422_TX_PAD		(0)
 #define RS422_RX_PAD		(1)
 #define RS422_SERCOM		SERCOM0
-#define RS422_BAUD_9600	(0xD8A0)
+#define RS422_BAUD  	    (0x9000)
 
 #define RS422_BUF_SIZE 64
 
@@ -48,7 +48,7 @@ void rs422_init(void) {
 	RS422_SERCOM->USART.CTRLA.bit.RXPO = 0x1; // Pad 1
 	RS422_SERCOM->USART.CTRLA.bit.DORD = 1; // Order
 
-	RS422_SERCOM->USART.BAUD.reg = RS422_BAUD_9600;
+	RS422_SERCOM->USART.BAUD.reg = RS422_BAUD;
 
 	// Enable RXC interrupt (fires when byte received)
 	RS422_SERCOM->USART.INTENSET.bit.RXC = 1;
@@ -104,12 +104,14 @@ static void tx_enqueue(uint8_t ch) {
 }
 
 void rs422_put(char ch) {
-    /*
 	tx_enqueue((uint8_t)ch);
 	if (ch == '\n') {
 		tx_enqueue('\r');
 	}
-    */
+}
+
+void rs422_put_raw(char ch) {
+	tx_enqueue(ch);
 }
 
 int16_t rs422_get(void) {

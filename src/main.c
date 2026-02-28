@@ -162,15 +162,11 @@ int main(void) {
     
     data_collector_init();
 
-    //state_machine_init();
     movement_init();
-
     timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, movement_tick);
 
     comms_init();
     delay(0xFF);
-    
-    int16_t result = -1;
 
     uint8_t data[10];
     uint8_t data_len;
@@ -180,37 +176,39 @@ int main(void) {
             //torque_cmd = 0.4f;
             gpio_toggle_pin(PIN_DEBUG2);
             switch (data[0]) {
-                case 0x1:
+                case COMMS_CMD_ACTION_STOP:
                     //rs422_println("[ACTION] Stop");
                     movement_set_target_idle();
                     break;
-                case 0x2:
+                case COMMS_CMD_ACTION_PLAYBACK:
                     //rs422_println("[ACTION] Playback");
                     movement_set_target_playback();
                     break;
-                case 0x3:
+                case COMMS_CMD_ACTION_REWIND:
                     //rs422_println("[ACTION] Rewind");
                     movement_set_target_rew(2.0f);
                     break;
-                case 0x4:
+                case COMMS_CMD_ACTION_FF:
                     //rs422_println("[ACTION] Fast Forward");
                     movement_set_target_ff(2.0f);
                     break;
-                case 0x5:
+                case COMMS_CMD_ACTION_MEM:
                     //rs422_println("[ACTION] Go to Memory");
                     movement_set_target_mem(120.0f, 2.0f);
                     break;
-                case 0x6:
+                case COMMS_CMD_ACTION_RTZ:
                     //rs422_println("[ACTION] Go to Memory");
                     movement_set_target_mem(120.0f, 2.0f);
                     break;
             }
         }
-
-        delay(0xFFF);
+        
+        comms_send_float(COMMS_CMD_DEBUG_FLOAT, data_collector_get_tape_position());
+        delay(0xFF);
     }
 }
 
+// Depracated
 void parse_movement_actions() {
     //rs422_println("Parsing");
     int16_t user_input = rs422_get();
@@ -234,47 +232,6 @@ void parse_movement_actions() {
         case 'm':
             rs422_println("[ACTION] Go to Memory");
             movement_set_target_mem(120.0f, 2.0f);
-    }
-    delay(0x1FFF);
-}
-
-void parse_actions() {
-    //rs422_println("Parsing");
-    int16_t user_input = rs422_get();
-    switch (user_input) {
-        case 'p':
-            rs422_println("[ACTION] Playback");
-            bldc_enable_all();
-            state_machine_take_action(PLAY_ACTION);
-            break;
-        case 's':
-            rs422_println("[ACTION] Stop");
-            bldc_disable_all();
-            state_machine_take_action(STOP_ACTION);
-            break;
-        case 'f':
-            rs422_println("[ACTION] Fast Forward");
-            bldc_enable_all();
-            state_machine_take_action(FF_ACTION);
-            break;
-        case 'r':
-            rs422_println("[ACTION] Rewind");
-            bldc_enable_all();
-            state_machine_take_action(REW_ACTION);
-            break;
-        case 'm':
-            rs422_println("[ACTION] Go to Memory");
-            state_machine_goto_position(120.0f);
-    }
-    /*
-    rs422_print_float(state_machine_get_supply_speed());
-    rs422_print(" ");
-    rs422_println_float(state_machine_get_takeup_speed());
-    */
-    if (gpio_get_pin(PIN_ROLLER_PULSE)) {
-        gpio_clear_pin(PIN_DEBUG2);
-    } else {
-        gpio_set_pin(PIN_DEBUG2);
     }
     delay(0x1FFF);
 }

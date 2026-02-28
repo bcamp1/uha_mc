@@ -18,6 +18,7 @@ int16_t rs422_get(void);
 
 // Strings
 void rs422_put(char ch);
+void rs422_put_raw(char ch);
 void rs422_print(char* str);
 void rs422_println(char* str);
 

@@ -37,8 +37,8 @@ TransitionStatus idle_controller(ControllerInfo info, MovementTarget target, Mov
     static Filter secondary_filter;
 
     if (info.ticks == 0) {
-        filter_init_pd(&primary_filter, 1.0f, 0.05f, T);
-        filter_init_pd(&secondary_filter, 1.0f, 0.05f, T);
+        filter_init_pd(&primary_filter, 0.0f, 0.00f, T);
+        filter_init_pd(&secondary_filter, 0.0f, 0.00f, T);
     }
     
     float r = 0.6f;

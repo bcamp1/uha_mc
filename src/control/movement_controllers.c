@@ -38,7 +38,7 @@ TransitionStatus idle_controller(ControllerInfo info, MovementTarget target, Mov
 
     if (info.ticks == 0) {
         filter_init_pd(&primary_filter, 0.0f, 0.00f, T);
-        filter_init_pd(&secondary_filter, 0.0f, 0.00f, T);
+        filter_init_pd(&secondary_filter, 1.0f, 0.00f, T);
     }
     
     float r = 0.6f;
@@ -49,7 +49,11 @@ TransitionStatus idle_controller(ControllerInfo info, MovementTarget target, Mov
     float u_secondary = filter_next(e_secondary, &secondary_filter);
 
     command->u_primary = u_primary;
-    command->u_secondary = u_secondary;
+    //command->u_secondary = u_secondary;
+    command->u_secondary = 0.2f;
+    if (info.ticks % 1000 < 500) {
+        command->u_secondary = 0.3f;
+    }
 
     float delta_primary = (info.primary_tension - prev_tension_p) * f;
     float delta_secondary = (info.secondary_tension - prev_tension_s) * f;

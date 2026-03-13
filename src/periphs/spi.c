@@ -206,3 +206,56 @@ uint16_t spi_write_read16(const SPIConfig* inst, uint16_t data) {
 	return result;
 }
 
+uint32_t spi_write_read24(const SPIConfig* inst, uint32_t data) {
+	uint8_t byte0 = data & 0xFF;
+	uint8_t byte1 = (data >> 8) & 0xFF;
+	uint8_t byte2 = (data >> 16) & 0xFF;
+	uint8_t read2 = 0;
+	uint8_t read1 = 0;
+	uint8_t read0 = 0;
+
+	// Bring nCS low
+	gpio_clear_pin(inst->cs);
+    delay(CS_DELAY);
+
+	// Transmit byte 2 (MSB)
+	while (!inst->sercom->INTFLAG.bit.DRE) {}
+	inst->sercom->DATA.bit.DATA = byte2;
+	while (!inst->sercom->INTFLAG.bit.RXC) {}
+	read2 = inst->sercom->DATA.reg & 0xFF;
+
+	// Transmit byte 1
+	while (!inst->sercom->INTFLAG.bit.DRE) {}
+	inst->sercom->DATA.bit.DATA = byte1;
+	while (!inst->sercom->INTFLAG.bit.RXC) {}
+	read1 = inst->sercom->DATA.reg & 0xFF;
+
+	// Transmit byte 0 (LSB)
+	while (!inst->sercom->INTFLAG.bit.DRE) {}
+	inst->sercom->DATA.bit.DATA = byte0;
+	while (!inst->sercom->INTFLAG.bit.RXC) {}
+	read0 = inst->sercom->DATA.reg & 0xFF;
+
+	// Bring nCS high
+    delay(CS_DELAY);
+	gpio_set_pin(inst->cs);
+	uint32_t result = (read2 << 16) | (read1 << 8) | read0;
+	return result;
+}
+
+int32_t spi_write_read16_checksum(const SPIConfig* inst, uint16_t data) {
+	uint8_t byte0 = data & 0xFF;
+	uint8_t byte1 = (data >> 8) & 0xFF;
+	uint8_t checksum = (byte1 + byte0 + 0x55) & 0xFF;
+	uint32_t data24 = ((uint32_t)data << 8) | checksum;
+	uint32_t result = spi_write_read24(inst, data24);
+	uint8_t rx_byte1 = (result >> 16) & 0xFF;
+	uint8_t rx_byte0 = (result >> 8) & 0xFF;
+	uint8_t rx_checksum = result & 0xFF;
+	uint8_t expected = (rx_byte1 + rx_byte0 + 0x55) & 0xFF;
+	if (rx_checksum != expected) {
+		return -1;
+	}
+	return (rx_byte1 << 8) | rx_byte0;
+}
+

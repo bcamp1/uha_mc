@@ -39,5 +39,7 @@ extern const SPIConfig SPI_CONF_BLDC_C;
 
 void spi_init(const SPIConfig* inst);
 uint16_t spi_write_read16(const SPIConfig* inst, uint16_t data);
+uint32_t spi_write_read24(const SPIConfig* inst, uint32_t data);
+int32_t spi_write_read16_checksum(const SPIConfig* inst, uint16_t data);
 void spi_change_mode(const SPIConfig* inst);
 

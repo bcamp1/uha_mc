@@ -50,9 +50,9 @@ TransitionStatus idle_controller(ControllerInfo info, MovementTarget target, Mov
 
     command->u_primary = u_primary;
     //command->u_secondary = u_secondary;
-    command->u_secondary = 0.2f;
-    if (info.ticks % 1000 < 500) {
-        command->u_secondary = 0.3f;
+    command->u_secondary = 0.4f;
+    if (info.ticks % 2000 < 1000) {
+        command->u_secondary = -0.4f;
     }
 
     float delta_primary = (info.primary_tension - prev_tension_p) * f;

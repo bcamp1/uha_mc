@@ -77,7 +77,7 @@ float bldc_set_torque_float(const BLDCConfig* config, float torque) {
     if (torque > 1.0f) torque = 1.0f;
     if (torque < -1.0f) torque = -1.0f;
     int16_t torque_int = (int16_t) (torque * 32760.0f);
-    int16_t speed_int = spi_write_read16(config->spi_conf, (uint16_t) torque_int);
+    int16_t speed_int = spi_write_read16_checksum(config->spi_conf, (uint16_t) torque_int);
     float speed = (((float)speed_int) / 32767.0f) * SPI_SPEED_MAX;
     return speed;
 }

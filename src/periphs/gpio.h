@@ -26,6 +26,7 @@
 
 //void gpio_init();
 void gpio_init_pin(uint8_t pin, bool direction, uint8_t alternate_function);
+void gpio_init_pin_weak(uint8_t pin, bool direction, uint8_t alternate_function);
 void gpio_set_pin(uint8_t pin);
 void gpio_clear_pin(uint8_t pin);
 void gpio_toggle_pin(uint8_t pin);

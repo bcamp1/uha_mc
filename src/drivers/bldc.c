@@ -45,6 +45,7 @@ void bldc_init(const BLDCConfig* config) {
     gpio_init_pin(config->ident0_pin, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE); 
     gpio_init_pin(config->enable_pin, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE); 
 
+
     gpio_clear_pin(config->cs_pin);
     gpio_clear_pin(config->enable_pin);
     

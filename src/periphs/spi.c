@@ -13,7 +13,7 @@
 /* 12 MHz clock for SPI */
 #define SERCOM_SPI_GCLK GCLK_PCHCTRL_GEN_GCLK1;
 #define SPI_BAUD_RATE (80)
-#define CS_DELAY (0x2)
+#define CS_DELAY (0x20)
 
 const SPIConfig SPI_CONF_TENSION_A = {
 	.sercom = (SercomSpi*) SERCOM3,

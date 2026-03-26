@@ -90,7 +90,7 @@ void SERCOM0_0_Handler(void) {
 			tx_tail = (tx_tail + 1) % RS422_BUF_SIZE;
 		} else {
 			// Buffer empty — disable DRE interrupt until next rs422_put()
-			RS422_SERCOM->USART.INTENCLR.bit.DRE = 1;
+			RS422_SERCOM->USART.INTENCLR.reg = SERCOM_USART_INTENCLR_DRE;
 		}
 	}
 }

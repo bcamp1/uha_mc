@@ -151,7 +151,7 @@ int main(void) {
     //uart_init();
     //tension_arm_test();
 
-    //inc_encoder_init();
+    inc_encoder_init();
     bldc_init(&BLDC_CONF_TAKEUP);
     bldc_enable(&BLDC_CONF_TAKEUP);
 

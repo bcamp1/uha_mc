@@ -132,7 +132,15 @@ static void mock_movement_tick() {
 
 int main(void) {
 	init_peripherals();
+    uart_init();
     delay(0xFFF);
+
+    while (1) {
+        gpio_toggle_pin(PIN_DEBUG1);
+        gpio_toggle_pin(PIN_DEBUG2);
+        uart_println("Hello world!");
+        delay(0xFFF);
+    }
 
     //gpio_set_pin(PIN_DEBUG1);
     // Print firmware info
@@ -145,33 +153,34 @@ int main(void) {
     //delay(0xFFFF);
     
     // Motor control-specific peripherals
-    tension_arm_init(&TENSION_ARM_A);
-    tension_arm_init(&TENSION_ARM_B);
+    //tension_arm_init(&TENSION_ARM_A);
+    //tension_arm_init(&TENSION_ARM_B);
 
     //uart_init();
     //tension_arm_test();
 
-    inc_encoder_init();
-    bldc_init(&BLDC_CONF_TAKEUP);
-    bldc_enable(&BLDC_CONF_TAKEUP);
+    //inc_encoder_init();
+    //bldc_init(&BLDC_CONF_TAKEUP);
+    //bldc_enable(&BLDC_CONF_TAKEUP);
 
-    bldc_init(&BLDC_CONF_SUPPLY);
-    bldc_enable(&BLDC_CONF_SUPPLY);
+    //bldc_init(&BLDC_CONF_SUPPLY);
+    //bldc_enable(&BLDC_CONF_SUPPLY);
 
     //solenoid_pinch_init();
     
-    data_collector_init();
+    //data_collector_init();
 
-    movement_init();
-    timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, movement_tick);
+    //movement_init();
+    //timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, movement_tick);
 
-    comms_init();
-    delay(0xFF);
+    //comms_init();
+    //delay(0xFF);
 
-    uint8_t data[10];
-    uint8_t data_len;
-    while (1) {
+    //uint8_t data[10];
+    //uint8_t data_len;
+    //while (1) {
         //rs422_println_float(data_collector_get_tape_position());
+        /*
         if (comms_get_data(data, &data_len, 10)) {
             //torque_cmd = 0.4f;
             gpio_toggle_pin(PIN_DEBUG2);
@@ -207,7 +216,8 @@ int main(void) {
         delay(0xFF);
         comms_send_float(COMMS_CMD_TRANSMIT_TAPE_SPD, data_collector_get_tape_speed());
         delay(0xFFF);
-    }
+        */
+    //}
 }
 
 // Depracated

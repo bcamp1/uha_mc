@@ -39,3 +39,15 @@ float tension_arm_get_position(const TensionArmConfig* config) {
 	return interpolation;
 }
 
+float tension_arm_get_raw_position(const TensionArmConfig* config) {
+	uint16_t result = spi_write_read16(config->spi, 0x00);
+	uint16_t position = result >> 6;
+    float max = 0x03FF;
+    return ((float) position) / max;
+}
+
+uint16_t tension_arm_get_raw_bytes(const TensionArmConfig* config) {
+	uint16_t result = spi_write_read16(config->spi, 0x00);
+	uint16_t position = result;// >> 6;
+    return position;
+}

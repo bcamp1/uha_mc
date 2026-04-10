@@ -60,8 +60,8 @@ const SPIConfig SPI_CONF_BLDC_A = {
 	.dopo = 0,
 	.dipo = 2,
 
-	.polarity = 0,
-	.phase = 1,
+	.polarity = 1,
+	.phase = 0,
 
 	.mosi = PIN_MOSI,
 	.mosi_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
@@ -80,8 +80,8 @@ const SPIConfig SPI_CONF_BLDC_B = {
 	.dopo = 0,
 	.dipo = 2,
 
-	.polarity = 0,
-	.phase = 1,
+	.polarity = 1,
+	.phase = 0,
 
 	.mosi = PIN_MOSI,
 	.mosi_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
@@ -100,8 +100,8 @@ const SPIConfig SPI_CONF_BLDC_C = {
 	.dopo = 0,
 	.dipo = 2,
 
-	.polarity = 0,
-	.phase = 1,
+	.polarity = 1,
+	.phase = 0,
 
 	.mosi = PIN_MOSI,
 	.mosi_alt = GPIO_ALTERNATE_D_SERCOM_ALT,

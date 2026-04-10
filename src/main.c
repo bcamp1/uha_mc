@@ -133,12 +133,15 @@ static void mock_movement_tick() {
 int main(void) {
 	init_peripherals();
     uart_init();
+    tension_arm_init(&TENSION_ARM_A);
     delay(0xFFF);
 
     while (1) {
+        float pos_a = tension_arm_get_raw_position(&TENSION_ARM_A);
+    
         gpio_toggle_pin(PIN_DEBUG1);
         gpio_toggle_pin(PIN_DEBUG2);
-        uart_println("Hello world!");
+        uart_println_float(pos_a);
         delay(0xFFF);
     }
 

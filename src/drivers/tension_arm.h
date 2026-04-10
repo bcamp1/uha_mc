@@ -21,6 +21,8 @@ extern const TensionArmConfig TENSION_ARM_A;
 extern const TensionArmConfig TENSION_ARM_B;
 
 float tension_arm_get_position(const TensionArmConfig* config);
+float tension_arm_get_raw_position(const TensionArmConfig* config);
 void tension_arm_init(const TensionArmConfig* config);
+uint16_t tension_arm_get_raw_bytes(const TensionArmConfig* config);
 
 #endif /* EMS22A_H_ */

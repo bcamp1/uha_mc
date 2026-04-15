@@ -1,4 +1,4 @@
-#include "comms.h"
+#include "user_comms.h"
 #include "rs422.h"
 #include <string.h>
 

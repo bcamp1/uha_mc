@@ -10,7 +10,8 @@
 #include "periphs/clocks.h"
 #include "periphs/timer.h"
 #include "drivers/rs422.h"
-#include "drivers/comms.h"
+#include "drivers/rs485.h"
+#include "drivers/user_comms.h"
 #include "periphs/uart.h"
 #include "drivers/motor_encoder.h"
 #include "drivers/tension_arm.h"
@@ -134,6 +135,11 @@ int main(void) {
 	init_peripherals();
     uart_init();
     tension_arm_init(&TENSION_ARM_A);
+    //comms_init();
+    rs485_init();
+    gpio_init_pin(DEBUG_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
+    gpio_set_pin(DEBUG_PIN);
+
     delay(0xFFF);
 
     while (1) {
@@ -142,6 +148,7 @@ int main(void) {
         gpio_toggle_pin(PIN_DEBUG1);
         gpio_toggle_pin(PIN_DEBUG2);
         uart_println_float(pos_a);
+        rs485_send_byte(0x55);
         delay(0xFFF);
     }
 

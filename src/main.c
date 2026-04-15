@@ -148,7 +148,7 @@ int main(void) {
         gpio_toggle_pin(PIN_DEBUG1);
         gpio_toggle_pin(PIN_DEBUG2);
         uart_println_float(pos_a);
-        rs485_send_byte(0x55);
+        rs485_send_byte(pos_a * 0xFF);
         delay(0xFFF);
     }
 

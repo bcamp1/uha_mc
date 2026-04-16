@@ -31,11 +31,8 @@ typedef struct {
 	uint8_t cs;
 } SPIConfig;
 
-extern const SPIConfig SPI_CONF_TENSION_A;
-extern const SPIConfig SPI_CONF_TENSION_B;
-extern const SPIConfig SPI_CONF_BLDC_A;
-extern const SPIConfig SPI_CONF_BLDC_B;
-extern const SPIConfig SPI_CONF_BLDC_C;
+extern const SPIConfig SPI_CONF_TENSION_TAKEUP;
+extern const SPIConfig SPI_CONF_TENSION_SUPPLY;
 
 void spi_init(const SPIConfig* inst);
 uint16_t spi_write_read16(const SPIConfig* inst, uint16_t data);

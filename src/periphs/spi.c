@@ -15,7 +15,7 @@
 #define SPI_BAUD_RATE (80)
 #define CS_DELAY (0x20)
 
-const SPIConfig SPI_CONF_TENSION_A = {
+const SPIConfig SPI_CONF_TENSION_TAKEUP = {
 	.sercom = (SercomSpi*) SERCOM3,
 	.dopo = 0,
 	.dipo = 2,
@@ -32,10 +32,10 @@ const SPIConfig SPI_CONF_TENSION_A = {
 	.sck = PIN_SCK,
 	.sck_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
 	
-	.cs = PIN_TENSION_A_CS,
+	.cs = PIN_TENSION_TAKEUP_CS,
 };
 
-const SPIConfig SPI_CONF_TENSION_B = {
+const SPIConfig SPI_CONF_TENSION_SUPPLY = {
 	.sercom = (SercomSpi*) SERCOM3,
 	.dopo = 0,
 	.dipo = 2,
@@ -52,67 +52,7 @@ const SPIConfig SPI_CONF_TENSION_B = {
 	.sck = PIN_SCK,
 	.sck_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
 	
-	.cs = PIN_TENSION_B_CS,
-};
-
-const SPIConfig SPI_CONF_BLDC_A = {
-	.sercom = (SercomSpi*) SERCOM3,
-	.dopo = 0,
-	.dipo = 2,
-
-	.polarity = 1,
-	.phase = 0,
-
-	.mosi = PIN_MOSI,
-	.mosi_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
-	
-	.miso = PIN_MISO,
-	.miso_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
-
-	.sck = PIN_SCK,
-	.sck_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
-	
-	.cs = PIN_BLDC_A_CS,
-};
-
-const SPIConfig SPI_CONF_BLDC_B = {
-	.sercom = (SercomSpi*) SERCOM3,
-	.dopo = 0,
-	.dipo = 2,
-
-	.polarity = 1,
-	.phase = 0,
-
-	.mosi = PIN_MOSI,
-	.mosi_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
-	
-	.miso = PIN_MISO,
-	.miso_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
-
-	.sck = PIN_SCK,
-	.sck_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
-	
-	.cs = PIN_BLDC_B_CS,
-};
-
-const SPIConfig SPI_CONF_BLDC_C = {
-	.sercom = (SercomSpi*) SERCOM3,
-	.dopo = 0,
-	.dipo = 2,
-
-	.polarity = 1,
-	.phase = 0,
-
-	.mosi = PIN_MOSI,
-	.mosi_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
-	
-	.miso = PIN_MISO,
-	.miso_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
-
-	.sck = PIN_SCK,
-	.sck_alt = GPIO_ALTERNATE_D_SERCOM_ALT,
-	
-	.cs = PIN_BLDC_C_CS,
+	.cs = PIN_TENSION_SUPPLY_CS,
 };
 
 void spi_init(const SPIConfig* inst) {

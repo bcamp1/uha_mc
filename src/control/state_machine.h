@@ -1,3 +1,4 @@
+/*
 #pragma once
 #include <stdbool.h>
 
@@ -26,4 +27,4 @@ void state_machine_init();
 void state_machine_take_action(StateAction a);
 void state_machine_tick();
 void state_machine_goto_position(float position);
-
+*/

@@ -8,7 +8,7 @@
 #include "sam.h"
 #include "../periphs/uart.h"
 #include "../periphs/gpio.h"
-#include "../drivers/bldc.h"
+//#include "../drivers/bldc.h"
 #include "../drivers/solenoid.h"
 
 static float integrator = 0.0f;
@@ -48,10 +48,10 @@ void movement_init() {
     commanded_target.active = false;
     movement_set_target_idle();
     movement_controllers_init();
-    bldc_enable(&BLDC_CONF_SUPPLY);
-    bldc_enable(&BLDC_CONF_TAKEUP);
-    bldc_set_torque_float(&BLDC_CONF_TAKEUP, 0.0f);
-    bldc_set_torque_float(&BLDC_CONF_SUPPLY, 0.0f);
+    //bldc_enable(&BLDC_CONF_SUPPLY);
+    //bldc_enable(&BLDC_CONF_TAKEUP);
+    //bldc_set_torque_float(&BLDC_CONF_TAKEUP, 0.0f);
+    //bldc_set_torque_float(&BLDC_CONF_SUPPLY, 0.0f);
 }
 
 void movement_tick() {
@@ -128,8 +128,11 @@ void movement_tick() {
     // Step 5: Apply command to motors
     MotorCommand motor_command = get_motor_commands(command);
 
-    float supply_speed = bldc_set_torque_float(&BLDC_CONF_SUPPLY, motor_command.u_supply);
-    float takeup_speed = bldc_set_torque_float(&BLDC_CONF_TAKEUP, motor_command.u_takeup);
+    //float supply_speed = bldc_set_torque_float(&BLDC_CONF_SUPPLY, motor_command.u_supply);
+    //float takeup_speed = bldc_set_torque_float(&BLDC_CONF_TAKEUP, motor_command.u_takeup);
+
+    float supply_speed = 0.0f;
+    float takeup_speed = 0.0f;
 
     //uart_println_float(motor_command.u_takeup);
     
@@ -337,10 +340,10 @@ static void set_state(MovementState s) {
     print_state(s);
     ticks = -1;
     if (state == MV_PLAYBACK) {
-        bldc_enable(&BLDC_CONF_CAPSTAN);
+        //bldc_enable(&BLDC_CONF_CAPSTAN);
         solenoid_pinch_engage();
     } else {
-        bldc_disable(&BLDC_CONF_CAPSTAN);
+        //bldc_disable(&BLDC_CONF_CAPSTAN);
         solenoid_pinch_disengage();
     }
 }

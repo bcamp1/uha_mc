@@ -1,3 +1,4 @@
+/*
 #include "state_machine.h"
 #include "../drivers/tension_arm.h"
 #include "../drivers/inc_encoder.h"
@@ -204,7 +205,6 @@ void state_machine_take_action(StateAction a) {
                 set_state(REW_TO_IDLE);
                 next_action = a;
             }
-            */
             break;
         case FF_TO_IDLE:
         case REW_TO_IDLE:
@@ -237,7 +237,6 @@ static void ff_controller(float* u_t, float* u_s, float tape_speed) {
     float e_t = r_t - data_collector_get_takeup_tension();
     float e_s = r_s - data_collector_get_supply_tension();
 
-    //*u_t = filter_next(e_t, &controller_ff_takeup);
     *u_t = 0.0f;
     *u_s = filter_next(e_s, &controller_ff_supply);
 
@@ -247,11 +246,9 @@ static void ff_controller(float* u_t, float* u_s, float tape_speed) {
     *u_t += -0.3f;
     //uart_println_float(u_tape_speed);
 
-    //*u_t += u_tape_speed ;
 }
 
 static void rew_controller(float* u_t, float* u_s, float tape_speed) {
-    /*
     const float r_t = 0.5f;
     const float r_s = 1.0f;
 
@@ -265,7 +262,6 @@ static void rew_controller(float* u_t, float* u_s, float tape_speed) {
     float u_tape_speed = filter_next(e_tape_speed, &controller_tape_speed_rew);
 
     *u_s -= u_tape_speed ;
-    */
 }
 
 static void ff_to_idle_controller(float* u_t, float* u_s) {
@@ -343,7 +339,6 @@ static bool idle_controller(float* u_t, float* u_s) {
 }
 
 static void goto_mem_controller(float* u_t, float* u_s) {
-    /*
     const float full_gain_distance = 60.0f;
     const float max_torque = 0.6f;
     const float min_torque = 0.4f;
@@ -380,11 +375,10 @@ static void goto_mem_controller(float* u_t, float* u_s) {
     } else {
         rew_controller(u_t, u_s, torque);
     }
-    */
 }
 
 void state_machine_goto_position(float position) {
     mem_target_position = position;
     state_machine_take_action(MEM_ACTION);
 }
-
+*/

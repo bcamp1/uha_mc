@@ -2,7 +2,7 @@
 #include "../sched.h"
 #include "filter.h"
 #include "simple_filter.h"
-#include "../drivers/tension_arm.h"
+#include "../drivers/tension.h"
 #include "../drivers/inc_encoder.h"
 
 static volatile ControlData data;
@@ -39,8 +39,9 @@ void data_collector_init() {
 
 void data_collector_update() {
     // New tensions
-    float tension_t = tension_arm_get_position(&TENSION_ARM_A);
-    float tension_s = tension_arm_get_position(&TENSION_ARM_B);
+    float tension_t = tension_get_takeup();
+    float tension_s = tension_get_supply();
+
     //float tension_t = 0;
     //float tension_s = 0;
     float takeup_tension = simple_filter_next(tension_t, &takeup_tension_filter);

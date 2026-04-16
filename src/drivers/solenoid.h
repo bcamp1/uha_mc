@@ -17,7 +17,3 @@ void solenoid_pinch_init();
 void solenoid_pinch_engage();
 void solenoid_pinch_disengage();
 
-void solenoid_lifter_init();
-void solenoid_lifter_engage();
-void solenoid_lifter_disengage();
-

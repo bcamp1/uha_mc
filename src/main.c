@@ -14,14 +14,13 @@
 #include "drivers/user_comms.h"
 #include "periphs/uart.h"
 #include "drivers/motor_encoder.h"
-#include "drivers/tension_arm.h"
+#include "drivers/tension.h"
 #include "drivers/stopwatch.h"
 #include "board.h"
 #include "sched.h"
 #include "drivers/delay.h"
 #include "drivers/motor_encoder.h"
 #include "drivers/trq_pwm.h"
-#include "drivers/bldc.h"
 #include "drivers/inc_encoder.h"
 #include "drivers/solenoid.h"
 #include "foc/fast_sin_cos.h"
@@ -105,15 +104,6 @@ static void encoder_test() {
     }
 }
 
-static void tension_arm_test() {
-    while (true) {
-        float pos_a = tension_arm_get_position(&TENSION_ARM_A);
-        float pos_b = tension_arm_get_position(&TENSION_ARM_B);
-        float data[2] = {pos_a, pos_b};
-        uart_println_float_arr(data, 2);
-    }
-}
-
 static void comms_test() {
     comms_init();
 
@@ -127,15 +117,14 @@ static void comms_test() {
 static volatile float torque_cmd = 0.0f;
 
 static void mock_movement_tick() {
-    bldc_set_torque_float(&BLDC_CONF_TAKEUP, torque_cmd);
-    bldc_set_torque_float(&BLDC_CONF_SUPPLY, torque_cmd);
+    //bldc_set_torque_float(&BLDC_CONF_TAKEUP, torque_cmd);
+    //bldc_set_torque_float(&BLDC_CONF_SUPPLY, torque_cmd);
 }
 
 int main(void) {
 	init_peripherals();
     uart_init();
-    tension_arm_init(&TENSION_ARM_A);
-    tension_arm_init(&TENSION_ARM_B);
+    tension_init();
     //comms_init();
     rs485_init();
     gpio_init_pin(DEBUG_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
@@ -144,14 +133,20 @@ int main(void) {
     delay(0xFFF);
 
     while (1) {
-        float pos_a = tension_arm_get_raw_position(&TENSION_ARM_A);
-        float pos_b = tension_arm_get_raw_position(&TENSION_ARM_B);
+        float pos_a = tension_get_takeup_raw();
+        float pos_b = tension_get_supply_raw();
+        float pos_a_true = tension_get_takeup();
+        float pos_b_true = tension_get_supply();
     
         gpio_toggle_pin(PIN_DEBUG1);
         gpio_toggle_pin(PIN_DEBUG2);
         uart_print_float(pos_a);
-        uart_put(' ');
-        uart_println_float(pos_b);
+        uart_print(" ");
+        uart_print_float(pos_b);
+        uart_print(" | ");
+        uart_print_float(pos_a_true);
+        uart_print(" ");
+        uart_println_float(pos_b_true);
         rs485_send_byte(pos_a * 0xFF);
         delay(0xFFF);
     }

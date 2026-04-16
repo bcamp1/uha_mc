@@ -135,6 +135,7 @@ int main(void) {
 	init_peripherals();
     uart_init();
     tension_arm_init(&TENSION_ARM_A);
+    tension_arm_init(&TENSION_ARM_B);
     //comms_init();
     rs485_init();
     gpio_init_pin(DEBUG_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
@@ -144,10 +145,13 @@ int main(void) {
 
     while (1) {
         float pos_a = tension_arm_get_raw_position(&TENSION_ARM_A);
+        float pos_b = tension_arm_get_raw_position(&TENSION_ARM_B);
     
         gpio_toggle_pin(PIN_DEBUG1);
         gpio_toggle_pin(PIN_DEBUG2);
-        uart_println_float(pos_a);
+        uart_print_float(pos_a);
+        uart_put(' ');
+        uart_println_float(pos_b);
         rs485_send_byte(pos_a * 0xFF);
         delay(0xFFF);
     }

@@ -14,7 +14,7 @@
 // Roller Encoder Pins
 #define PIN_ROLLER_INDEX PIN_PA09
 #define PIN_ROLLER_PULSE PIN_PA07
-#define PIN_ROLLER_DIR   PIN_PA08
+#define PIN_ROLLER_DIR   PIN_PA06
 #define INDEX_ROLLER_PULSE (7)
 #define IRQ_ROLLER EIC_7_IRQn
 #define HANDLER_ROLLER EIC_7_Handler

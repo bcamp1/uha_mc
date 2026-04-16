@@ -125,29 +125,26 @@ int main(void) {
 	init_peripherals();
     uart_init();
     tension_init();
+    inc_encoder_init();
     //comms_init();
     rs485_init();
     gpio_init_pin(DEBUG_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
     gpio_set_pin(DEBUG_PIN);
+    data_collector_init();
 
     delay(0xFFF);
 
     while (1) {
-        float pos_a = tension_get_takeup_raw();
-        float pos_b = tension_get_supply_raw();
-        float pos_a_true = tension_get_takeup();
-        float pos_b_true = tension_get_supply();
-    
+        data_collector_update();
         gpio_toggle_pin(PIN_DEBUG1);
         gpio_toggle_pin(PIN_DEBUG2);
-        uart_print_float(pos_a);
+        //uart_print_float(data_collector_get_takeup_tension());
+        //uart_print(" ");
+        //uart_print_float(data_collector_get_supply_tension());
+        //uart_print(" ");
+        uart_print_float(data_collector_get_tape_position());
         uart_print(" ");
-        uart_print_float(pos_b);
-        uart_print(" | ");
-        uart_print_float(pos_a_true);
-        uart_print(" ");
-        uart_println_float(pos_b_true);
-        rs485_send_byte(pos_a * 0xFF);
+        uart_println_float(data_collector_get_tape_speed());
         delay(0xFFF);
     }
 

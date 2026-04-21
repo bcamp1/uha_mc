@@ -11,6 +11,7 @@
 #include "periphs/timer.h"
 #include "drivers/rs422.h"
 #include "drivers/rs485.h"
+#include "drivers/motor_comms.h"
 #include "drivers/user_comms.h"
 #include "periphs/uart.h"
 #include "drivers/motor_encoder.h"
@@ -126,27 +127,41 @@ int main(void) {
     uart_init();
     tension_init();
     inc_encoder_init();
-    //comms_init();
-    rs485_init();
+
+    motor_comms_init();
+
     gpio_init_pin(DEBUG_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
     gpio_set_pin(DEBUG_PIN);
     data_collector_init();
 
     delay(0xFFF);
 
+    uint8_t test_data = 0;
+
     while (1) {
-        data_collector_update();
-        gpio_toggle_pin(PIN_DEBUG1);
-        gpio_toggle_pin(PIN_DEBUG2);
+        gpio_clear_pin(PIN_DEBUG2);
+        gpio_set_pin(PIN_DEBUG1);
+        motor_comms_send_cmd(0x4, test_data);
+        delay(0x4FFFF);
+        test_data++;
+        gpio_clear_pin(PIN_DEBUG1);
+        gpio_set_pin(PIN_DEBUG2);
+        motor_comms_send_cmd(0x2, test_data);
+        delay(0x4FFFF);
+        test_data++;
+    }
+        //data_collector_update();
+        //gpio_toggle_pin(PIN_DEBUG1);
+        //gpio_toggle_pin(PIN_DEBUG2);
         //uart_print_float(data_collector_get_takeup_tension());
         //uart_print(" ");
         //uart_print_float(data_collector_get_supply_tension());
         //uart_print(" ");
-        uart_print_float(data_collector_get_tape_position());
-        uart_print(" ");
-        uart_println_float(data_collector_get_tape_speed());
-        delay(0xFFF);
-    }
+        //uart_print_float(data_collector_get_tape_position());
+        //uart_print(" ");
+        //uart_println_float(data_collector_get_tape_speed());
+        //delay(0xFFF);
+    //}
 
     //gpio_set_pin(PIN_DEBUG1);
     // Print firmware info

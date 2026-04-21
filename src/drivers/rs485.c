@@ -75,6 +75,14 @@ void rs485_send_byte(uint8_t byte) {
 	rs485_tx_end();
 }
 
+void rs485_send_bytes(const uint8_t* data, uint16_t len) {
+	rs485_tx_begin();
+	for (uint16_t i = 0; i < len; i++) {
+		rs485_put_byte(data[i]);
+	}
+	rs485_tx_end();
+}
+
 void rs485_send_uint(uint32_t val) {
 	rs485_tx_begin();
 	rs485_put_byte((val >> 24) & 0xFF);

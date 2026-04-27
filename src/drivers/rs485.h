@@ -14,6 +14,10 @@
 void rs485_init(void);
 
 int16_t rs485_get(void);
+int rs485_available(void);
+void rs485_rx_flush(void);
+uint32_t rs485_get_overflow_count(void);
+void rs485_clear_overflow_count(void);
 
 void rs485_send_byte(uint8_t byte);
 void rs485_send_bytes(const uint8_t* data, uint16_t len);

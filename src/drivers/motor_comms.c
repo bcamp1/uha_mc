@@ -1,6 +1,8 @@
 #include "motor_comms.h"
 #include "rs485.h"
 #include <string.h>
+#include "delay.h"
+#include "../periphs/uart.h"
 
 #define SOF_BYTE 0xAA
 
@@ -42,52 +44,69 @@ static bool get_byte_with_timeout(uint8_t* byte, uint32_t timeout) {
         int16_t ch = rs485_get();
         if (ch != -1) {
             *byte = (uint8_t)ch;
+            uart_println_int_base(ch, 16);
             return true;
         }
     }
     return false;
 }
 
-bool motor_comms_get_data(uint8_t* data, uint8_t* data_len, uint8_t buf_size) {
+// Frame layout: [SOF][addr][length][checksum][data...]
+RXError motor_comms_get_data(uint8_t* addr, uint8_t* data, uint8_t* data_len, uint8_t buf_size) {
+    uart_println("get_data");
     int16_t ch;
 
     do {
         ch = rs485_get();
-    } while (ch != -1 && ch != SOF_BYTE);
+    } while (!(ch == -1 || ch == SOF_BYTE));
 
     if (ch == -1) {
-        return false;
+        return RX_ERR_NO_DATA;
     }
+
+    // get addr
+    uint8_t a = 0;
+    if (!get_byte_with_timeout(&a, 0xFFF)) return RX_ERR_TIMEOUT;
 
     // get length
     uint8_t length = 0;
-    if (!get_byte_with_timeout(&length, 0xFFF)) {
-       return false;
-    }
-    if (length > buf_size) return false;
+    if (!get_byte_with_timeout(&length, 0xFFF)) return RX_ERR_TIMEOUT;
+    if (length > buf_size) return RX_ERR_BUF_OVF;
+
+    // get checksum
+    uint8_t given_checksum = 0;
+    if (!get_byte_with_timeout(&given_checksum, 0xFFF)) return RX_ERR_TIMEOUT;
 
     // get data
     uint8_t data_byte = 0;
-    uint8_t checksum = length;
+    uint8_t checksum = a + length;
     for (uint32_t i = 0; i < length; i++) {
-        if (!get_byte_with_timeout(&data_byte, 0xFFF)) {
-           return false;
-        }
-
+        if (!get_byte_with_timeout(&data_byte, 0xFFF)) return RX_ERR_TIMEOUT;
         data[i] = data_byte;
         checksum += data_byte;
     }
 
-    // verify checksum
-    uint8_t given_checksum = 0;
-    if (!get_byte_with_timeout(&given_checksum, 0xFFF)) {
-       return false;
+    if (given_checksum != checksum) return RX_ERR_WRONG_CHECKSUM;
+
+    *addr = a;
+    *data_len = length;
+    return RX_ERR_OK;
+}
+
+// Send a single-byte command to `addr` and wait for a response frame from the same addr.
+RXError motor_comms_read(uint8_t addr, uint8_t cmd, uint8_t* data, uint8_t* data_len, uint8_t buf_size) {
+    motor_comms_send_cmd(addr, cmd);
+    delay(0xFFFF);
+
+    uint8_t recv_addr = 0;
+    RXError err = motor_comms_get_data(&recv_addr, data, data_len, buf_size);
+
+    if (err != RX_ERR_OK) {
+        return err; 
     }
 
-    if (given_checksum != checksum) return false;
-
-    *data_len = length;
-    return true;
+    if (recv_addr != addr) return RX_ERR_WRONG_ADDR;
+    return RX_ERR_OK;
 }
 
 float motor_comms_data_to_float(uint8_t* data) {
@@ -95,3 +114,32 @@ float motor_comms_data_to_float(uint8_t* data) {
     memcpy(&result, data, 4);
     return result;
 }
+
+void motor_comms_print_error(RXError err) {
+    switch (err) {
+        case RX_ERR_OK:
+            uart_print("RX_ERR_OK");
+            break;
+        case RX_ERR_TIMEOUT:
+            uart_print("RX_ERR_TIMEOUT");
+            break;
+        case RX_ERR_WRONG_ADDR:
+            uart_print("RX_ERR_WRONG_ADDR");
+            break;
+        case RX_ERR_BUF_OVF:
+            uart_print("RX_ERR_BUF_OVF");
+            break;
+        case RX_ERR_WRONG_CHECKSUM:
+            uart_print("RX_ERR_WRONG_CHECKSUM");
+            break;
+        case RX_ERR_NO_DATA:
+            uart_print("RX_ERR_NO_DATA");
+            break;
+    }
+}
+
+void motor_comms_println_error(RXError err) {
+    motor_comms_print_error(err);
+    uart_println("");
+}
+

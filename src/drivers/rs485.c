@@ -9,6 +9,7 @@
 #include "../periphs/gpio.h"
 #include "samd51j20a.h"
 #include "../periphs/sercom.h"
+#include "../periphs/uart.h"
 #include <string.h>
 #include "../drivers/delay.h"
 
@@ -17,8 +18,17 @@
 #define RS485_TX_PAD		(0)
 #define RS485_RX_PAD		(1)
 #define RS485_SERCOM		SERCOM2
+#define RS485_SERCOM_RXC_IRQ	SERCOM2_2_IRQn
 #define RS485_TXEN_PIN		PIN_PA14
 #define RS485_BAUD  	    (0x9000)
+
+#define RS485_RX_BUF_SIZE 128  // Must be a power of two
+#define RS485_RX_BUF_MASK (RS485_RX_BUF_SIZE - 1)
+
+static volatile uint8_t rx_buf[RS485_RX_BUF_SIZE];
+static volatile uint16_t rx_head = 0;  // Written by ISR
+static volatile uint16_t rx_tail = 0;  // Read by consumer
+static volatile uint32_t rx_overflow_count = 0;  // Incremented when ISR drops oldest byte
 
 void rs485_init(void) {
 	// Init ports
@@ -42,6 +52,11 @@ void rs485_init(void) {
 	RS485_SERCOM->USART.CTRLB.bit.RXEN = 1;
 	while (RS485_SERCOM->USART.SYNCBUSY.bit.CTRLB) {} // Wait for busy
 
+	// Enable RX complete interrupt
+	RS485_SERCOM->USART.INTENSET.bit.RXC = 1;
+	NVIC_SetPriority(RS485_SERCOM_RXC_IRQ, 3);
+	NVIC_EnableIRQ(RS485_SERCOM_RXC_IRQ);
+
 	RS485_SERCOM->USART.CTRLA.bit.ENABLE = 1;
 	while (RS485_SERCOM->USART.SYNCBUSY.bit.ENABLE) {} // Wait for busy
 }
@@ -63,10 +78,43 @@ static void rs485_put_byte(uint8_t byte) {
 }
 
 int16_t rs485_get(void) {
-	if (RS485_SERCOM->USART.INTFLAG.bit.RXC) {
-		return (RS485_SERCOM->USART.DATA.reg & 0xFF);
+	if (rx_head == rx_tail) {
+		return RS485_EMPTY;
 	}
-	return RS485_EMPTY;
+	uint8_t ch = rx_buf[rx_tail];
+	rx_tail = (rx_tail + 1) & RS485_RX_BUF_MASK;
+	return (int16_t)ch;
+}
+
+int rs485_available(void) {
+	return (int)((rx_head - rx_tail) & RS485_RX_BUF_MASK);
+}
+
+void rs485_rx_flush(void) {
+	rx_tail = rx_head;
+}
+
+uint32_t rs485_get_overflow_count(void) {
+	return rx_overflow_count;
+}
+
+void rs485_clear_overflow_count(void) {
+	rx_overflow_count = 0;
+}
+
+// RXC interrupt: push received byte into ring buffer.
+// On overflow, drop the oldest byte to make room for the newest.
+void SERCOM2_2_Handler(void) {
+	if (RS485_SERCOM->USART.INTFLAG.bit.RXC) {
+		uint8_t data = RS485_SERCOM->USART.DATA.reg & 0xFF;
+		uint16_t next = (rx_head + 1) & RS485_RX_BUF_MASK;
+		if (next == rx_tail) {
+			rx_tail = (rx_tail + 1) & RS485_RX_BUF_MASK;
+			rx_overflow_count++;
+		}
+		rx_buf[rx_head] = data;
+		rx_head = next;
+	}
 }
 
 void rs485_send_byte(uint8_t byte) {

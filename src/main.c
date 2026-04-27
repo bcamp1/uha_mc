@@ -136,19 +136,14 @@ int main(void) {
 
     delay(0xFFF);
 
-    uint8_t test_data = 0;
+    const uint16_t buf_size = 20;
+    uint8_t buf[buf_size];
+    uint8_t data_len;
 
     while (1) {
-        gpio_clear_pin(PIN_DEBUG2);
-        gpio_set_pin(PIN_DEBUG1);
-        motor_comms_send_cmd(0x4, test_data);
-        delay(0x4FFFF);
-        test_data++;
-        gpio_clear_pin(PIN_DEBUG1);
-        gpio_set_pin(PIN_DEBUG2);
-        motor_comms_send_cmd(0x2, test_data);
-        delay(0x4FFFF);
-        test_data++;
+        RXError err = motor_comms_read(0x4, 0x1, buf, &data_len, buf_size); 
+        motor_comms_println_error(err);
+        delay(0x3FFFF);
     }
         //data_collector_update();
         //gpio_toggle_pin(PIN_DEBUG1);

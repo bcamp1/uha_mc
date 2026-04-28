@@ -139,11 +139,20 @@ int main(void) {
     const uint16_t buf_size = 20;
     uint8_t buf[buf_size];
     uint8_t data_len;
+    uint8_t x = 1;
 
     while (1) {
-        RXError err = motor_comms_read(0x4, 0x1, buf, &data_len, buf_size); 
-        motor_comms_println_error(err);
-        delay(0x3FFFF);
+        RXError err = motor_comms_read(0x4, x, buf, &data_len, buf_size); 
+        uart_print("Sent ");
+        uart_print_int(x);
+        uart_print(" got ");
+        if (err == RX_ERR_OK) {
+            uart_println_int(buf[0]); 
+        } else {
+            motor_comms_println_error(err);
+        }
+        //delay(0x3FFFF);
+        x++;
     }
         //data_collector_update();
         //gpio_toggle_pin(PIN_DEBUG1);

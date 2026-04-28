@@ -44,7 +44,7 @@ static bool get_byte_with_timeout(uint8_t* byte, uint32_t timeout) {
         int16_t ch = rs485_get();
         if (ch != -1) {
             *byte = (uint8_t)ch;
-            uart_println_int_base(ch, 16);
+            //uart_println_int_base(ch, 16);
             return true;
         }
     }
@@ -53,7 +53,7 @@ static bool get_byte_with_timeout(uint8_t* byte, uint32_t timeout) {
 
 // Frame layout: [SOF][addr][length][checksum][data...]
 RXError motor_comms_get_data(uint8_t* addr, uint8_t* data, uint8_t* data_len, uint8_t buf_size) {
-    uart_println("get_data");
+    //uart_println("get_data");
     int16_t ch;
 
     do {
@@ -96,7 +96,7 @@ RXError motor_comms_get_data(uint8_t* addr, uint8_t* data, uint8_t* data_len, ui
 // Send a single-byte command to `addr` and wait for a response frame from the same addr.
 RXError motor_comms_read(uint8_t addr, uint8_t cmd, uint8_t* data, uint8_t* data_len, uint8_t buf_size) {
     motor_comms_send_cmd(addr, cmd);
-    delay(0xFFFF);
+    //delay(0xFFFF);
 
     uint8_t recv_addr = 0;
     RXError err = motor_comms_get_data(&recv_addr, data, data_len, buf_size);

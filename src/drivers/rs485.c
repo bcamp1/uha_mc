@@ -20,7 +20,6 @@
 #define RS485_SERCOM		SERCOM2
 #define RS485_SERCOM_RXC_IRQ	SERCOM2_2_IRQn
 #define RS485_TXEN_PIN		PIN_PA14
-#define RS485_BAUD  	    (0x9000)
 
 #define RS485_RX_BUF_SIZE 128  // Must be a power of two
 #define RS485_RX_BUF_MASK (RS485_RX_BUF_SIZE - 1)
@@ -45,7 +44,11 @@ void rs485_init(void) {
 	RS485_SERCOM->USART.CTRLA.bit.RXPO = 0x1; // Pad 1
 	RS485_SERCOM->USART.CTRLA.bit.DORD = 1; // Order
 
-	RS485_SERCOM->USART.BAUD.reg = RS485_BAUD;
+	// Async arithmetic, 16x oversample: BAUD = 65536 * (1 - 16 * f_baud / f_ref).
+	// f_ref must match the actual GCLK4 frequency configured in clocks.c.
+	const float baud_hz = 500000.0f;
+	const float f_ref = 12000000.0f;
+	RS485_SERCOM->USART.BAUD.reg = (uint16_t)(65536.0f * (1.0f - 16.0f * baud_hz / f_ref));
 
 	RS485_SERCOM->USART.CTRLB.bit.CHSIZE = 0;
 	RS485_SERCOM->USART.CTRLB.bit.TXEN = 1;
@@ -63,12 +66,12 @@ void rs485_init(void) {
 
 static void rs485_tx_begin(void) {
 	gpio_set_pin(RS485_TXEN_PIN);
-	delay(0x4E); // Settle before transmitting
+	delay(1); // Settle before transmitting (TXEN spec is 55ns)
 }
 
 static void rs485_tx_end(void) {
 	while (!RS485_SERCOM->USART.INTFLAG.bit.TXC) {} // Wait for last byte to shift out
-	delay(0x4E); // Settle before releasing bus
+	delay(1); // Settle before releasing bus
 	gpio_clear_pin(RS485_TXEN_PIN);
 }
 
@@ -78,11 +81,17 @@ static void rs485_put_byte(uint8_t byte) {
 }
 
 int16_t rs485_get(void) {
+	// Mask IRQs around tail update: the ISR can also mutate rx_tail on overflow,
+	// so a preemption between the read and the write would let the consumer
+	// clobber the ISR's tail bumps and lose extra bytes.
+	__disable_irq();
 	if (rx_head == rx_tail) {
+		__enable_irq();
 		return RS485_EMPTY;
 	}
 	uint8_t ch = rx_buf[rx_tail];
 	rx_tail = (rx_tail + 1) & RS485_RX_BUF_MASK;
+	__enable_irq();
 	return (int16_t)ch;
 }
 

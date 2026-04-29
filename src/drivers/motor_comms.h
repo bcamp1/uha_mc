@@ -26,6 +26,7 @@ typedef enum {
 #define MOTOR_COMMS_CMD_CAPSTAN_30IPS (0x5)
 #define MOTOR_COMMS_CMD_CAPSTAN_7P5IPS (0x6)
 #define MOTOR_COMMS_CMD_REEL_TORQUE (0x7)
+#define MOTOR_COMMS_CMD_BAD_REQUEST (0x8)
 
 void motor_comms_init();
 void motor_comms_send_bytes(uint8_t addr, const uint8_t *data, uint8_t length);

@@ -138,15 +138,15 @@ int main(void) {
 
     delay(0xFFF);
 
-    const uint16_t buf_size = 20;
-    uint8_t buf[buf_size];
-    uint8_t data_len;
-    uint8_t x = 1;
+    float x = 0.0f;
 
     while (1) {
+        x += 0.00003f;
+        if (x > 1.0f) x = 0.0f;
+
         gpio_set_pin(PIN_DEBUG1);
         gpio_clear_pin(PIN_DEBUG1);
-        motors_set_reel_torques(0.5f, 0.8f);
+        motors_set_reel_torques(-x, x);
         delay(0xFF);
         // read_test(0x2, x);
         // x++;

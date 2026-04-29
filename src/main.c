@@ -122,6 +122,23 @@ static void mock_movement_tick() {
     //bldc_set_torque_float(&BLDC_CONF_SUPPLY, torque_cmd);
 }
 
+
+static void read_test(uint8_t addr, uint8_t data) {
+    static uint8_t buf[10];
+    uint8_t data_len;
+    RXError err = motor_comms_read(addr, data, buf, &data_len, 10); 
+    uart_print("@");
+    uart_print_int(addr);
+    uart_print(": sent ");
+    uart_print_int(data);
+    uart_print(" got ");
+    if (err == RX_ERR_OK) {
+        uart_println_int(buf[0]); 
+    } else {
+        motor_comms_println_error(err);
+    }
+}
+
 int main(void) {
 	init_peripherals();
     uart_init();
@@ -142,16 +159,9 @@ int main(void) {
     uint8_t x = 1;
 
     while (1) {
-        RXError err = motor_comms_read(0x4, x, buf, &data_len, buf_size); 
-        uart_print("Sent ");
-        uart_print_int(x);
-        uart_print(" got ");
-        if (err == RX_ERR_OK) {
-            uart_println_int(buf[0]); 
-        } else {
-            motor_comms_println_error(err);
-        }
-        //delay(0x3FFFF);
+        read_test(0x2, x);
+        x++;
+        read_test(0x4, x);
         x++;
     }
         //data_collector_update();

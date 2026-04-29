@@ -29,16 +29,16 @@ void motor_comms_send_bytes(uint8_t addr, const uint8_t *data, uint8_t length) {
     rs485_send_bytes(frame, 4 + length);
 }
 
-
 void motor_comms_send_cmd(uint8_t addr, uint8_t cmd) {
     motor_comms_send_bytes(addr, &cmd, 1);
 }
 
-void motor_comms_send_float(uint8_t addr, const uint8_t command, float data) {
-    uint8_t buf[5];
-    buf[0] = command;
-    memcpy(&buf[1], &data, 4);
-    motor_comms_send_bytes(addr, buf, 5);
+void motor_comms_broadcast_bytes(const uint8_t *data, uint8_t length) {
+    motor_comms_send_bytes(MOTOR_COMMS_ADDR_BROADCAST, data, length);
+}
+
+void motor_comms_broadcast_cmd(uint8_t cmd) {
+    motor_comms_send_cmd(MOTOR_COMMS_ADDR_BROADCAST, cmd);
 }
 
 static bool get_byte_with_timeout(uint8_t* byte, uint32_t timeout) {
@@ -112,12 +112,6 @@ RXError motor_comms_read(uint8_t addr, uint8_t cmd, uint8_t* data, uint8_t* data
 
     if (recv_addr != addr) return RX_ERR_WRONG_ADDR;
     return RX_ERR_OK;
-}
-
-float motor_comms_data_to_float(uint8_t* data) {
-    float result;
-    memcpy(&result, data, 4);
-    return result;
 }
 
 void motor_comms_print_error(RXError err) {

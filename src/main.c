@@ -10,21 +10,15 @@
 #include "periphs/clocks.h"
 #include "periphs/timer.h"
 #include "drivers/rs422.h"
-#include "drivers/rs485.h"
 #include "drivers/motor_comms.h"
+#include "drivers/motors.h"
 #include "drivers/user_comms.h"
 #include "periphs/uart.h"
-#include "drivers/motor_encoder.h"
 #include "drivers/tension.h"
 #include "drivers/stopwatch.h"
 #include "board.h"
-#include "sched.h"
 #include "drivers/delay.h"
-#include "drivers/motor_encoder.h"
-#include "drivers/trq_pwm.h"
 #include "drivers/inc_encoder.h"
-#include "drivers/solenoid.h"
-#include "foc/fast_sin_cos.h"
 #include "control/state_machine.h"
 #include "control/data_collector.h"
 #include "control/movement.h"
@@ -95,16 +89,6 @@ static void stopwatch_test() {
 }
 */
 
-static void encoder_test() {
-    rs422_println("Starting motor encoder test");
-    motor_encoder_init(&MOTOR_ENCODER_CONF);
-
-    while (true) {
-        float pos = motor_encoder_get_position(&MOTOR_ENCODER_CONF);
-        rs422_println_float(pos);
-    }
-}
-
 static void comms_test() {
     comms_init();
 
@@ -145,7 +129,8 @@ int main(void) {
     tension_init();
     inc_encoder_init();
 
-    motor_comms_init();
+    //motor_comms_init();
+    motors_init();
 
     gpio_init_pin(DEBUG_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
     gpio_set_pin(DEBUG_PIN);
@@ -159,10 +144,14 @@ int main(void) {
     uint8_t x = 1;
 
     while (1) {
-        read_test(0x2, x);
-        x++;
-        read_test(0x4, x);
-        x++;
+        gpio_set_pin(PIN_DEBUG1);
+        gpio_clear_pin(PIN_DEBUG1);
+        motors_set_reel_torques(0.5f, 0.8f);
+        delay(0xFF);
+        // read_test(0x2, x);
+        // x++;
+        // read_test(0x4, x);
+        // x++;
     }
         //data_collector_update();
         //gpio_toggle_pin(PIN_DEBUG1);

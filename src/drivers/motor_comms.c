@@ -134,6 +134,12 @@ void motor_comms_print_error(RXError err) {
         case RX_ERR_NO_DATA:
             uart_print("RX_ERR_NO_DATA");
             break;
+        case RX_ERR_WRONG_RESPONSE:
+            uart_print("RX_ERR_WRONG_RESPONSE");
+            break;
+        case RX_ERR_WRONG_RESPONSE_LENGTH:
+            uart_print("RX_ERR_WRONG_RESPONSE_LENGTH");
+            break;
     }
 }
 

@@ -9,6 +9,8 @@ typedef enum {
     RX_ERR_BUF_OVF,
     RX_ERR_WRONG_CHECKSUM,
     RX_ERR_NO_DATA,
+    RX_ERR_WRONG_RESPONSE,
+    RX_ERR_WRONG_RESPONSE_LENGTH,
 } RXError;
 
 // Available Addresses

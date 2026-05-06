@@ -54,6 +54,28 @@ void motors_takeup_calibrate_encoder() {
     motor_comms_send_cmd(MOTOR_COMMS_ADDR_TAKEUP, MOTOR_COMMS_CMD_CALIB_ENCODER);
 }
 
+RXError motors_takeup_get_faults(uint8_t* faults) {
+    uint8_t buf[5];
+    uint8_t buf_size = 5;
+    uint8_t data_len = 0;
+    RXError err = motor_comms_read(MOTOR_COMMS_ADDR_TAKEUP, MOTOR_COMMS_CMD_FAULT_STATUS, buf, &data_len, buf_size);
+    if (err == RX_ERR_OK) {
+        if (data_len != 2) {
+            err = RX_ERR_WRONG_RESPONSE_LENGTH;
+        } else {
+            if (buf[0] != MOTOR_COMMS_CMD_FAULT_STATUS) {
+                err = RX_ERR_WRONG_RESPONSE;
+            } else {
+                *faults = buf[1];
+            }
+        }
+    }
+
+    if (err != RX_ERR_OK) {
+        *faults = 0;
+    }
+    return err;
+}
 
 void motors_supply_enable() {
     motor_comms_send_cmd(MOTOR_COMMS_ADDR_SUPPLY, MOTOR_COMMS_CMD_ENABLE);
@@ -65,6 +87,29 @@ void motors_supply_disable() {
 
 void motors_supply_calibrate_encoder() {
     motor_comms_send_cmd(MOTOR_COMMS_ADDR_SUPPLY, MOTOR_COMMS_CMD_CALIB_ENCODER);
+}
+
+RXError motors_supply_get_faults(uint8_t* faults) {
+    uint8_t buf[5];
+    uint8_t buf_size = 5;
+    uint8_t data_len = 0;
+    RXError err = motor_comms_read(MOTOR_COMMS_ADDR_SUPPLY, MOTOR_COMMS_CMD_FAULT_STATUS, buf, &data_len, buf_size);
+    if (err == RX_ERR_OK) {
+        if (data_len != 2) {
+            err = RX_ERR_WRONG_RESPONSE_LENGTH;
+        } else {
+            if (buf[0] != MOTOR_COMMS_CMD_FAULT_STATUS) {
+                err = RX_ERR_WRONG_RESPONSE;
+            } else {
+                *faults = buf[1];
+            }
+        }
+    }
+
+    if (err != RX_ERR_OK) {
+        *faults = 0;
+    }
+    return err;
 }
 
 void motors_capstan_enable() {

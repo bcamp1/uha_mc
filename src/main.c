@@ -140,14 +140,30 @@ int main(void) {
 
     float x = 0.0f;
 
+    uint8_t faults = 0;
+    RXError err = RX_ERR_OK;
+
     while (1) {
         x += 0.00003f;
         if (x > 1.0f) x = 0.0f;
 
         gpio_set_pin(PIN_DEBUG1);
         gpio_clear_pin(PIN_DEBUG1);
-        motors_set_reel_torques(-x, x);
-        delay(0xFF);
+        //motors_set_reel_torques(-x, x);
+        
+        uart_print("Takeup -> ");
+        err = motors_takeup_get_faults(&faults);
+        motor_comms_print_error(err);
+        uart_print(": ");
+        uart_println_int(faults);
+        delay(0xFFF);
+
+        uart_print("Supply -> ");
+        err = motors_supply_get_faults(&faults);
+        motor_comms_print_error(err);
+        uart_print(": ");
+        uart_println_int(faults);
+        delay(0xFFF);
         // read_test(0x2, x);
         // x++;
         // read_test(0x4, x);

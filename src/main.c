@@ -116,18 +116,12 @@ int main(void) {
     uint8_t faults = 0;
     RXError err = RX_ERR_OK;
 
-    uint8_t buf[20];
-    uint8_t data_len = 0;
-
     uart_println("Motor Controller Start!");
 
     while (1) {
-        
-        if (comms_get_data(buf, &data_len, 20)) {
-            if (data_len >= 1) {
-                uart_print("0x");
-                uart_println_int_base(buf[0], 16);
-            }
+        CommsRxResult rx = comms_get_data();
+        if (rx.err == RX_ERR_OK && rx.data_len >= 1) {
+            comms_send_bytes(&rx.data[0], 1);
         }
     }
         /*

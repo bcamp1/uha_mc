@@ -131,6 +131,7 @@ int main(void) {
 
     //motor_comms_init();
     motors_init();
+    comms_init();
 
     gpio_init_pin(DEBUG_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
     gpio_set_pin(DEBUG_PIN);
@@ -143,7 +144,20 @@ int main(void) {
     uint8_t faults = 0;
     RXError err = RX_ERR_OK;
 
+    uint8_t buf[20];
+    uint8_t data_len = 0;
+
+    uart_println("Motor Controller Start!");
+
     while (1) {
+        
+        if (comms_get_data(buf, &data_len, 20)) {
+            if (data_len >= 1) {
+                uart_println_int_base(buf[0], 16);
+            }
+        }
+    }
+        /*
         x += 0.00003f;
         if (x > 1.0f) x = 0.0f;
 
@@ -168,7 +182,8 @@ int main(void) {
         // x++;
         // read_test(0x4, x);
         // x++;
-    }
+        */
+    //}
         //data_collector_update();
         //gpio_toggle_pin(PIN_DEBUG1);
         //gpio_toggle_pin(PIN_DEBUG2);

@@ -33,15 +33,6 @@ void comms_send_float(const uint8_t command, float data) {
     comms_send_bytes(buf, 5);
 }
 
-void comms_print_debug(const char* debug_str) {
-    uint8_t buf[64];
-    buf[0] = COMMS_CMD_DEBUG;
-    uint8_t len = strlen(debug_str);
-    if (len > 63) len = 63;
-    memcpy(&buf[1], debug_str, len);
-    comms_send_bytes(buf, len + 1);
-}
-
 static bool get_byte_with_timeout(uint8_t* byte, uint32_t timeout) {
     for (uint32_t i = 0; i < timeout; i++) {
         int16_t ch = rs422_get();

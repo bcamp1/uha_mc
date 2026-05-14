@@ -21,7 +21,6 @@
 #define RS422_TX_PAD		(0)
 #define RS422_RX_PAD		(1)
 #define RS422_SERCOM		SERCOM0
-#define RS422_BAUD  	    (0x9000)
 
 #define RS422_BUF_SIZE 64
 
@@ -48,7 +47,11 @@ void rs422_init(void) {
 	RS422_SERCOM->USART.CTRLA.bit.RXPO = 0x1; // Pad 1
 	RS422_SERCOM->USART.CTRLA.bit.DORD = 1; // Order
 
-	RS422_SERCOM->USART.BAUD.reg = RS422_BAUD;
+	// Async arithmetic, 16x oversample: BAUD = 65536 * (1 - 16 * f_baud / f_ref).
+	// f_ref must match the actual GCLK4 frequency configured in clocks.c.
+	const float baud_hz = 500000.0f;
+	const float f_ref = 12000000.0f;
+	RS422_SERCOM->USART.BAUD.reg = (uint16_t)(65536.0f * (1.0f - 16.0f * baud_hz / f_ref));
 
 	// Enable RXC interrupt (fires when byte received)
 	RS422_SERCOM->USART.INTENSET.bit.RXC = 1;

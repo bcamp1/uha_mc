@@ -1,15 +1,18 @@
 #include "user_comms.h"
 #include "rs422.h"
+#include <stdbool.h>
 #include <string.h>
 
 #define SOF_BYTE 0xAA
 
-static void comms_put(uint8_t ch) {
-    rs422_put_raw(ch);
+static volatile bool comms_rx_pending = false;
+
+static void on_rx_ready(void) {
+    comms_rx_pending = true;
 }
 
 void comms_init() {
-    rs422_init();
+    rs422_init(on_rx_ready);
 }
 
 void comms_send_bytes(const uint8_t *data, uint8_t length) {
@@ -17,12 +20,13 @@ void comms_send_bytes(const uint8_t *data, uint8_t length) {
     for (uint16_t i = 0; i < length; i++)
         checksum += data[i];
 
-    comms_put(SOF_BYTE);
-    comms_put(length);
-    for (uint16_t i = 0; i < length; i++) {
-        comms_put(data[i]);
-    }
-    comms_put(checksum);
+    uint8_t frame[3 + 255];
+    frame[0] = SOF_BYTE;
+    frame[1] = length;
+    memcpy(&frame[2], data, length);
+    frame[2 + length] = checksum;
+
+    rs422_send_bytes(frame, 3 + length);
 }
 
 
@@ -35,7 +39,7 @@ void comms_send_float(const uint8_t command, float data) {
 
 static bool get_byte_with_timeout(uint8_t* byte, uint32_t timeout) {
     for (uint32_t i = 0; i < timeout; i++) {
-        int16_t ch = rs422_get();
+        int ch = rs422_get();
         if (ch != -1) {
             *byte = (uint8_t)ch;
             return true;
@@ -45,12 +49,12 @@ static bool get_byte_with_timeout(uint8_t* byte, uint32_t timeout) {
 }
 
 bool comms_get_data(uint8_t* data, uint8_t* data_len, uint8_t buf_size) {
-    int16_t ch;
+    int ch;
 
     do {
         ch = rs422_get();
     } while (ch != -1 && ch != SOF_BYTE);
-    
+
     if (ch == -1) {
         return false;
     }
@@ -90,5 +94,4 @@ float comms_data_to_float(uint8_t* data) {
     float result;
     memcpy(&result, data, 4);
     return result;
-} 
-
+}

@@ -29,9 +29,7 @@
 
 static void enable_fpu(void);
 static void init_peripherals(void);
-static void stopwatch_test();
 static void parse_actions();
-static void parse_movement_actions();
 
 static void init_peripherals(void) {
 	// Init clock to use 32K OSC in closed-loop 48MHz mode
@@ -62,32 +60,6 @@ static void enable_fpu(void) {
 	__DSB();  // Data Synchronization Barrier
 	__ISB();  // Instruction Synchronization Barrier
 }
-
-/*
-static void stopwatch_test() {
-    stopwatch_init();
-    bool running = false;
-    rs422_println("UART Stopwatch Test (press s)");
-    
-    while (1) {
-        //uint32_t time = stopwatch_underlying_time();
-        //rs422_println_int_base(time, 16);
-        if (rs422_get() == 's') {
-            if (!running) {
-                rs422_println("Starting stopwatch... s to stop");
-                running = true;
-                stopwatch_start(0);
-            } else {
-                float dt = ticks_to_time(stopwatch_stop(0, false));
-                running = false;
-                rs422_print("Stopped. Took ");
-                rs422_print_float(dt);
-                rs422_println(" seconds.");
-            }
-        }
-    }
-}
-*/
 
 static void comms_test() {
     comms_init();
@@ -153,6 +125,7 @@ int main(void) {
         
         if (comms_get_data(buf, &data_len, 20)) {
             if (data_len >= 1) {
+                uart_print("0x");
                 uart_println_int_base(buf[0], 16);
             }
         }
@@ -198,15 +171,7 @@ int main(void) {
     //}
 
     //gpio_set_pin(PIN_DEBUG1);
-    // Print firmware info
-    //rs422_println("\n");
-    //rs422_println("--------------------");
-    //rs422_println(FIRMWARE_VERSION);
-    //rs422_println(FIRMWARE_AUTHOR);
-    //rs422_println(FIRMWARE_DATE);
-    //rs422_println("--------------------");
-    //delay(0xFFFF);
-    
+
     // Motor control-specific peripherals
     //tension_arm_init(&TENSION_ARM_A);
     //tension_arm_init(&TENSION_ARM_B);
@@ -231,75 +196,5 @@ int main(void) {
     //comms_init();
     //delay(0xFF);
 
-    //uint8_t data[10];
-    //uint8_t data_len;
-    //while (1) {
-        //rs422_println_float(data_collector_get_tape_position());
-        /*
-        if (comms_get_data(data, &data_len, 10)) {
-            //torque_cmd = 0.4f;
-            gpio_toggle_pin(PIN_DEBUG2);
-            switch (data[0]) {
-                case COMMS_CMD_ACTION_STOP:
-                    //rs422_println("[ACTION] Stop");
-                    movement_set_target_idle();
-                    break;
-                case COMMS_CMD_ACTION_PLAYBACK:
-                    //rs422_println("[ACTION] Playback");
-                    movement_set_target_playback();
-                    break;
-                case COMMS_CMD_ACTION_REWIND:
-                    //rs422_println("[ACTION] Rewind");
-                    movement_set_target_rew(2.0f);
-                    break;
-                case COMMS_CMD_ACTION_FF:
-                    //rs422_println("[ACTION] Fast Forward");
-                    movement_set_target_ff(2.0f);
-                    break;
-                case COMMS_CMD_ACTION_MEM:
-                    //rs422_println("[ACTION] Go to Memory");
-                    movement_set_target_mem(120.0f, 2.0f);
-                    break;
-                case COMMS_CMD_ACTION_RTZ:
-                    //rs422_println("[ACTION] Go to Memory");
-                    movement_set_target_mem(120.0f, 2.0f);
-                    break;
-            }
-        }
-        
-        comms_send_float(COMMS_CMD_TRANSMIT_TAPE_POS, data_collector_get_tape_position());
-        delay(0xFF);
-        comms_send_float(COMMS_CMD_TRANSMIT_TAPE_SPD, data_collector_get_tape_speed());
-        delay(0xFFF);
-        */
-    //}
-}
-
-// Depracated
-void parse_movement_actions() {
-    //rs422_println("Parsing");
-    int16_t user_input = rs422_get();
-    switch (user_input) {
-        case 'p':
-            rs422_println("[ACTION] Playback");
-            movement_set_target_playback();
-            break;
-        case 's':
-            rs422_println("[ACTION] Stop");
-            movement_set_target_idle();
-            break;
-        case 'f':
-            rs422_println("[ACTION] Fast Forward");
-            movement_set_target_ff(2.0f);
-            break;
-        case 'r':
-            rs422_println("[ACTION] Rewind");
-            movement_set_target_rew(2.0f);
-            break;
-        case 'm':
-            rs422_println("[ACTION] Go to Memory");
-            movement_set_target_mem(120.0f, 2.0f);
-    }
-    delay(0x1FFF);
 }
 

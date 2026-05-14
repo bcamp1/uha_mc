@@ -1,39 +1,17 @@
-/*
- * uart.h
- *
- * Created: 7/29/2024 3:41:36 PM
- *  Author: brans
- */
-
 #pragma once
 
 #include <stdint.h>
 
-#define RS422_EMPTY (-1)
+// rx_ready (nullable) is invoked from the RXC ISR every time a byte enters the
+// RX ring. Callers can pass a stub that sets a flag or feeds a state machine.
+void rs422_init(void (*rx_ready)(void));
 
-void rs422_init(void);
+// RX (async ring, ISR-safe)
+int  rs422_get(void);          // returns 0..255, or -1 if empty
+int  rs422_available(void);
+void rs422_rx_flush(void);
 
-// Input
-int16_t rs422_get(void);
-
-// Strings
-void rs422_put(char ch);
-void rs422_put_raw(char ch);
-void rs422_print(char* str);
-void rs422_println(char* str);
-
-// Integers
-void rs422_print_int_base(int num, int base);
-void rs422_println_int_base(int num, int base);
-void rs422_print_int(int num);
-void rs422_println_int(int num);
-
-// Floats
-void rs422_print_float(float num);
-void rs422_println_float(float num);
-void rs422_print_float_arr(float* data, int len);
-void rs422_println_float_arr(float* data, int len);
-
-// Send binary data
-void rs422_send_float(float num);
-void rs422_send_float_arr(float* data, int len);
+// TX (async ring). Returns once queued; DRE/TXC ISRs handle shift-out.
+// Callers MUST run at lower priority than PRIO_RS422 or risk deadlock when the
+// ring is full.
+void rs422_send_bytes(const uint8_t* data, uint16_t len);

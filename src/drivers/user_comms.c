@@ -138,11 +138,23 @@ void comms_send_bytes(const uint8_t *data, uint8_t length) {
     rs422_send_bytes(frame, 3 + length);
 }
 
+void comms_send_byte(uint8_t data) {
+    comms_send_bytes(&data, 1);
+}
+
 void comms_send_float(uint8_t command, float data) {
     uint8_t buf[5];
     buf[0] = command;
     memcpy(&buf[1], &data, 4);
     comms_send_bytes(buf, 5);
+}
+
+void  comms_send_float2(uint8_t command, float data1, float data2) {
+    uint8_t buf[9];
+    buf[0] = command;
+    memcpy(&buf[1], &data1, 4);
+    memcpy(&buf[5], &data2, 4);
+    comms_send_bytes(buf, 9);
 }
 
 void comms_register_message_ready_cb(CommsMessageReadyCb cb) {

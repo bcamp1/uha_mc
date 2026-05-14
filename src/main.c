@@ -17,6 +17,7 @@
 #include "drivers/tension.h"
 #include "drivers/stopwatch.h"
 #include "board.h"
+#include "sched.h"
 #include "drivers/delay.h"
 #include "drivers/inc_encoder.h"
 #include "control/state_machine.h"
@@ -116,6 +117,8 @@ int main(void) {
     uint8_t faults = 0;
     RXError err = RX_ERR_OK;
 
+    timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, data_collector_update);
+
     uart_println("Motor Controller Start!");
 
     while (1) {
@@ -123,6 +126,7 @@ int main(void) {
         if (rx.err == RX_ERR_OK && rx.data_len >= 1) {
             comms_send_bytes(&rx.data[0], 1);
         }
+        uart_println_float(data_collector_get_takeup_tension());
     }
         /*
         x += 0.00003f;

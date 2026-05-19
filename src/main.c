@@ -111,24 +111,26 @@ int main(void) {
 
     gpio_init_pin(DEBUG_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
     gpio_set_pin(DEBUG_PIN);
-    //data_collector_init();
-    //movement_init();
-    //delay(0xFFF);
-    //timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK / 100.0f, PRIO_STATE_MACHINE_TICK, movement_tick);
+    data_collector_init();
+    movement_init();
+    delay(0xFFF);
+    timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK / 5.0f, PRIO_STATE_MACHINE_TICK, movement_tick);
 
     uart_println("Motor Controller Start!");
 
     while (1) {
+        uart_println_float(data_collector_get_supply_tension());
         //uart_println_float(tension_get_takeup());
         //delay(0xFFFF);
         //CommsRxResult rx = comms_get_data();
         //if (rx.err == RX_ERR_OK && rx.data_len >= 1) {
         //    comms_send_bytes(&rx.data[0], 1);
         //}
-        uart_print_float(tension_get_supply());
-        uart_print(" ");
-        uart_println_float(tension_get_takeup());
-        delay(0xFFF);
+        //uart_println_float(tension_get_supply());
+        //delay(0xFFFF);
+        //uart_print(" ");
+        //uart_println_float(tension_get_takeup());
+        //delay(0xFFF);
         //uart_println_float(2.0f);
     }
         /*

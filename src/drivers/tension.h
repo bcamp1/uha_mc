@@ -8,6 +8,8 @@
 #pragma once
 
 void tension_init();
+void tension_init_takeup_only();
+void tension_init_supply_only();
 
 // Information
 float tension_get_takeup();

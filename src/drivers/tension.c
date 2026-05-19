@@ -38,6 +38,22 @@ void tension_init() {
     }
 }
 
+void tension_init_takeup_only() {
+	spi_init(&SPI_CONF_TENSION_TAKEUP);
+
+    if (takeup_bottom < takeup_top) {
+        takeup_bottom += 1.0f;
+    }
+}
+
+void tension_init_supply_only() {
+	spi_init(&SPI_CONF_TENSION_SUPPLY);
+
+    if (takeup_bottom < takeup_top) {
+        takeup_bottom += 1.0f;
+    }
+}
+
 // Information
 float tension_get_takeup() {
     return interpolate(takeup_bottom, takeup_top, tension_get_takeup_raw());

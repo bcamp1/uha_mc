@@ -104,13 +104,14 @@ int main(void) {
     inc_encoder_init();
 
     //motor_comms_init();
-    motors_init();
+    //motors_init();
     //comms_init();
     command_center_init();
 
     gpio_init_pin(DEBUG_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
     gpio_set_pin(DEBUG_PIN);
     data_collector_init();
+    movement_init();
 
     delay(0xFFF);
 
@@ -119,7 +120,7 @@ int main(void) {
     uint8_t faults = 0;
     RXError err = RX_ERR_OK;
 
-    timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, data_collector_update);
+    timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK / 100.0f, PRIO_STATE_MACHINE_TICK, movement_tick);
 
     uart_println("Motor Controller Start!");
 

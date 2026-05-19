@@ -31,6 +31,9 @@ static void rx_callback() {
     uint8_t command = rx.data[0];
     uint8_t response[10];
 
+    //comms_send_byte(command);
+    //return;
+
     switch (command) {
         case UCOMM_M_STOP:
             comms_send_byte(UCOMM_S_ACK_STOP);
@@ -89,12 +92,12 @@ static void rx_callback() {
         }
         case UCOMM_M_GET_TAPE_SPEED: {
             float tape_speed = data_collector_get_tape_speed();
-            comms_send_float(UCOMM_S_SEND_TAPE_POS, tape_speed);
+            comms_send_float(UCOMM_S_SEND_TAPE_SPEED, tape_speed);
             break;
         }   
         case UCOMM_M_GET_TENSION_ARMS: {
             float tension_takeup = data_collector_get_takeup_tension();
-            float tension_supply = data_collector_get_takeup_tension();
+            float tension_supply = data_collector_get_supply_tension();
             if (tension_takeup < 0.0f) tension_takeup = 0.0f;
             if (tension_supply < 0.0f) tension_supply = 0.0f;
             uint8_t t = (uint8_t) (tension_takeup * 255.0f);

@@ -16,6 +16,7 @@
 #include "periphs/uart.h"
 #include "drivers/tension.h"
 #include "drivers/stopwatch.h"
+#include "drivers/command_center.h"
 #include "board.h"
 #include "sched.h"
 #include "drivers/delay.h"
@@ -104,7 +105,8 @@ int main(void) {
 
     //motor_comms_init();
     motors_init();
-    comms_init();
+    //comms_init();
+    command_center_init();
 
     gpio_init_pin(DEBUG_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
     gpio_set_pin(DEBUG_PIN);
@@ -122,11 +124,14 @@ int main(void) {
     uart_println("Motor Controller Start!");
 
     while (1) {
-        CommsRxResult rx = comms_get_data();
-        if (rx.err == RX_ERR_OK && rx.data_len >= 1) {
-            comms_send_bytes(&rx.data[0], 1);
-        }
+        //uart_println_float(tension_get_takeup());
+        //delay(0xFFFF);
+        //CommsRxResult rx = comms_get_data();
+        //if (rx.err == RX_ERR_OK && rx.data_len >= 1) {
+        //    comms_send_bytes(&rx.data[0], 1);
+        //}
         uart_println_float(data_collector_get_takeup_tension());
+        //uart_println_float(2.0f);
     }
         /*
         x += 0.00003f;

@@ -25,6 +25,7 @@ static float angle_distance(float a, float b) {
 static float interpolate(float bottom, float top, float value) {
     float fraction = angle_distance(value, bottom) / angle_distance(top, bottom);
     if (fraction < 0) fraction = -fraction;
+    if (fraction > 1.0f) fraction = 1.0f;
     return fraction;
 }
 

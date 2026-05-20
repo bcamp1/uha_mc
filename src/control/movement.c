@@ -49,12 +49,6 @@ void movement_init() {
     commanded_target.active = false;
     movement_set_target_idle();
     movement_controllers_init();
-    motors_init();
-    motors_enable_all();
-    //bldc_enable(&BLDC_CONF_SUPPLY);
-    //bldc_enable(&BLDC_CONF_TAKEUP);
-    //bldc_set_torque_float(&BLDC_CONF_TAKEUP, 0.0f);
-    //bldc_set_torque_float(&BLDC_CONF_SUPPLY, 0.0f);
 }
 
 void movement_tick() {

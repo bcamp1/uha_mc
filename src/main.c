@@ -97,9 +97,32 @@ static void read_test(uint8_t addr, uint8_t data) {
     }
 }
 
+static void init_motors() {
+    motors_init();
+
+    // Enable takeup
+    uart_println("Enabling takeup...");
+    RXError err = RX_ERR_NO_DATA;
+    while (err != RX_ERR_OK) {
+        err = motors_takeup_enable();
+    }
+    uart_println("Takeup enabled.");
+
+    // Enable takeup
+    uart_println("Enabling supply...");
+    err = RX_ERR_NO_DATA;
+    while (err != RX_ERR_OK) {
+        err = motors_supply_enable();
+    }
+    uart_println("Supply enabled.");
+}
+
 int main(void) {
 	init_peripherals();
     uart_init();
+    delay(0xFFF);
+    uart_println("--------MOTOR CONTROLLER START--------");
+
     tension_init();
     //inc_encoder_init();
     //tension_init_supply_only();
@@ -109,6 +132,8 @@ int main(void) {
     //comms_init();
     command_center_init();
 
+    init_motors();
+
     gpio_init_pin(DEBUG_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
     gpio_set_pin(DEBUG_PIN);
     data_collector_init();
@@ -116,10 +141,8 @@ int main(void) {
     delay(0xFFF);
     timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK / 5.0f, PRIO_STATE_MACHINE_TICK, movement_tick);
 
-    uart_println("Motor Controller Start!");
-
     while (1) {
-        uart_println_float(data_collector_get_supply_tension());
+        //uart_println_float(data_collector_get_supply_tension());
         //uart_println_float(tension_get_takeup());
         //delay(0xFFFF);
         //CommsRxResult rx = comms_get_data();

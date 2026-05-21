@@ -12,5 +12,5 @@ typedef enum {
 } CommandCenterSimpleAction;
 
 void command_center_init();
-
+CommandCenterSimpleAction command_center_get_action();
 

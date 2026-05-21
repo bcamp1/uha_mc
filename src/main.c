@@ -32,6 +32,9 @@
 static void enable_fpu(void);
 static void init_peripherals(void);
 static void parse_actions();
+static void enable_motors();
+static void disable_motors();
+static void init_motors(bool enable);
 
 static void init_peripherals(void) {
 	// Init clock to use 32K OSC in closed-loop 48MHz mode
@@ -97,9 +100,17 @@ static void read_test(uint8_t addr, uint8_t data) {
     }
 }
 
-static void init_motors() {
+static void init_motors(bool enable) {
     motors_init();
+    
+    if (enable) {
+        enable_motors();
+    } else {
+        disable_motors();
+    }
+}
 
+static void enable_motors() {
     // Enable takeup
     uart_println("Enabling takeup...");
     RXError err = RX_ERR_NO_DATA;
@@ -117,6 +128,24 @@ static void init_motors() {
     uart_println("Supply enabled.");
 }
 
+static void disable_motors() {
+    // Enable takeup
+    uart_println("Disabling takeup...");
+    RXError err = RX_ERR_NO_DATA;
+    while (err != RX_ERR_OK) {
+        err = motors_takeup_disable();
+    }
+    uart_println("Takeup disabled.");
+
+    // Enable takeup
+    uart_println("Disabling supply...");
+    err = RX_ERR_NO_DATA;
+    while (err != RX_ERR_OK) {
+        err = motors_supply_disable();
+    }
+    uart_println("Supply disabled.");
+}
+
 int main(void) {
 	init_peripherals();
     uart_init();
@@ -132,7 +161,7 @@ int main(void) {
     //comms_init();
     command_center_init();
 
-    init_motors();
+    init_motors(false);
 
     gpio_init_pin(DEBUG_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
     gpio_set_pin(DEBUG_PIN);
@@ -142,85 +171,28 @@ int main(void) {
     timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK / 5.0f, PRIO_STATE_MACHINE_TICK, movement_tick);
 
     while (1) {
-        //uart_println_float(data_collector_get_supply_tension());
-        //uart_println_float(tension_get_takeup());
-        //delay(0xFFFF);
-        //CommsRxResult rx = comms_get_data();
-        //if (rx.err == RX_ERR_OK && rx.data_len >= 1) {
-        //    comms_send_bytes(&rx.data[0], 1);
-        //}
-        //uart_println_float(tension_get_supply());
-        //delay(0xFFFF);
-        //uart_print(" ");
-        //uart_println_float(tension_get_takeup());
-        //delay(0xFFF);
-        //uart_println_float(2.0f);
+        CommandCenterSimpleAction action = command_center_get_action();
+        switch (action) {
+            case CMD_STOP:
+                disable_motors();
+                break;
+            case CMD_PLAY:
+                enable_motors();
+                break;
+            case CMD_FAST_FORWARD:
+                break;
+            case CMD_REWIND:
+                break;
+            case CMD_SPOOL:
+                break;
+            case CMD_SET_ZERO:
+                break;
+            case CMD_SET_CAPSTAN_SPEED:
+                break;
+            case CMD_NONE:
+                break;
+        }
     }
-        /*
-        x += 0.00003f;
-        if (x > 1.0f) x = 0.0f;
-
-        gpio_set_pin(PIN_DEBUG1);
-        gpio_clear_pin(PIN_DEBUG1);
-        //motors_set_reel_torques(-x, x);
-        
-        uart_print("Takeup -> ");
-        err = motors_takeup_get_faults(&faults);
-        motor_comms_print_error(err);
-        uart_print(": ");
-        uart_println_int(faults);
-        delay(0xFFF);
-
-        uart_print("Supply -> ");
-        err = motors_supply_get_faults(&faults);
-        motor_comms_print_error(err);
-        uart_print(": ");
-        uart_println_int(faults);
-        delay(0xFFF);
-        // read_test(0x2, x);
-        // x++;
-        // read_test(0x4, x);
-        // x++;
-        */
-    //}
-        //data_collector_update();
-        //gpio_toggle_pin(PIN_DEBUG1);
-        //gpio_toggle_pin(PIN_DEBUG2);
-        //uart_print_float(data_collector_get_takeup_tension());
-        //uart_print(" ");
-        //uart_print_float(data_collector_get_supply_tension());
-        //uart_print(" ");
-        //uart_print_float(data_collector_get_tape_position());
-        //uart_print(" ");
-        //uart_println_float(data_collector_get_tape_speed());
-        //delay(0xFFF);
-    //}
-
-    //gpio_set_pin(PIN_DEBUG1);
-
-    // Motor control-specific peripherals
-    //tension_arm_init(&TENSION_ARM_A);
-    //tension_arm_init(&TENSION_ARM_B);
-
-    //uart_init();
-    //tension_arm_test();
-
-    //inc_encoder_init();
-    //bldc_init(&BLDC_CONF_TAKEUP);
-    //bldc_enable(&BLDC_CONF_TAKEUP);
-
-    //bldc_init(&BLDC_CONF_SUPPLY);
-    //bldc_enable(&BLDC_CONF_SUPPLY);
-
-    //solenoid_pinch_init();
-    
-    //data_collector_init();
-
-    //movement_init();
-    //timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, movement_tick);
-
-    //comms_init();
-    //delay(0xFF);
 
 }
 

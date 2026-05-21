@@ -37,21 +37,27 @@ static void rx_callback() {
     switch (command) {
         case UCOMM_M_STOP:
             comms_send_byte(UCOMM_S_ACK_STOP);
+            latest_action = CMD_STOP;
             break;
         case UCOMM_M_PLAY:
             comms_send_byte(UCOMM_S_ACK_PLAY);
+            latest_action = CMD_PLAY;
             break;
         case UCOMM_M_FAST_FORWARD:
             comms_send_byte(UCOMM_S_ACK_FAST_FORWARD);
+            latest_action = CMD_FAST_FORWARD;
             break;
         case UCOMM_M_REWIND:
             comms_send_byte(UCOMM_S_ACK_REWIND);
+            latest_action = CMD_REWIND;
             break;
         case UCOMM_M_SPOOL:
             comms_send_byte(UCOMM_S_ACK_SPOOL);
+            latest_action = CMD_SPOOL;
             break;
         case UCOMM_M_SET_ZERO:
             comms_send_byte(UCOMM_S_ACK_SET_ZERO);
+            latest_action = CMD_SET_ZERO;
             break;
         case UCOMM_M_GOTO_ZERO:
             comms_send_byte(UCOMM_S_ACK_GOTO_ZERO);
@@ -61,6 +67,7 @@ static void rx_callback() {
             break;
         case UCOMM_M_SET_CAPSTAN_SPEED:
             comms_send_byte(UCOMM_S_ACK_SET_CAPSTAN_SPEED);
+            latest_action = CMD_SET_CAPSTAN_SPEED;
             break;
         case UCOMM_M_SET_SPOOL_SPEED:
             comms_send_byte(UCOMM_S_ACK_SET_SPOOL_SPEED);
@@ -114,6 +121,12 @@ static void rx_callback() {
         default:
             break;
     }
+}
+
+CommandCenterSimpleAction command_center_get_action() {
+    CommandCenterSimpleAction action = latest_action;
+    latest_action = CMD_NONE;
+    return action;
 }
 
 void command_center_init() {

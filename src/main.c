@@ -168,15 +168,23 @@ int main(void) {
     data_collector_init();
     movement_init();
     delay(0xFFF);
-    timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK / 5.0f, PRIO_STATE_MACHINE_TICK, movement_tick);
+    //timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK / 5.0f, PRIO_STATE_MACHINE_TICK, movement_tick);
+
+
+    // I believe issue is command center is not always firing even though user sends correct signal
+    // TODO: debug LEDs.
 
     while (1) {
         CommandCenterSimpleAction action = command_center_get_action();
         switch (action) {
             case CMD_STOP:
+                gpio_set_pin(PIN_DEBUG1);
+                gpio_clear_pin(PIN_DEBUG1);
                 disable_motors();
                 break;
             case CMD_PLAY:
+                gpio_set_pin(PIN_DEBUG1);
+                gpio_clear_pin(PIN_DEBUG1);
                 enable_motors();
                 break;
             case CMD_FAST_FORWARD:

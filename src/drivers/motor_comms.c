@@ -97,9 +97,9 @@ RXError motor_comms_get_data(uint8_t* addr, uint8_t* data, uint8_t* data_len, ui
 
 // Send a single-byte command to `addr` and wait for a response frame from the same addr.
 RXError motor_comms_read(uint8_t addr, uint8_t cmd, uint8_t* data, uint8_t* data_len, uint8_t buf_size) {
-    gpio_set_pin(PIN_DEBUG1);
-    delay(5);
-    gpio_clear_pin(PIN_DEBUG1);
+    //gpio_set_pin(PIN_DEBUG1);
+    //delay(5);
+    //gpio_clear_pin(PIN_DEBUG1);
     motor_comms_send_cmd(addr, cmd);
     delay(0xFF);
 

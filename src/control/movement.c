@@ -52,7 +52,6 @@ void movement_init() {
 }
 
 void movement_tick() {
-    gpio_set_pin(PIN_DEBUG1);
     ticks += 1;
 
     // Step 0: Update data
@@ -136,7 +135,6 @@ void movement_tick() {
     //uart_println_float(motor_command.u_takeup);
     
     data_collector_set_reel_speeds(takeup_speed, supply_speed);
-    gpio_clear_pin(PIN_DEBUG1);
 }
 
 static void state_transition_commanded_target() {

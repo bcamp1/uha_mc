@@ -1,7 +1,10 @@
 #include "command_center.h"
 #include "ucomm_commands.h"
 #include "user_comms.h"
+#include "../periphs/gpio.h"
+#include "../board.h"
 #include "../control/data_collector.h"
+#include <sam.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -14,7 +17,7 @@ static float odometer_distance = 0;
 static float odometer_time = 0;
 
 // These variables are managed by user, sent to us
-CommandCenterSimpleAction latest_action = CMD_NONE;
+volatile CommandCenterSimpleAction latest_action = CMD_NONE;
 float latest_goto_loc = 0.0f;
 bool is_auto_play = false;
 bool is_auto_loop = false;
@@ -23,6 +26,8 @@ float auto_loop_loc2 = 0.0f;
 
 // RX message callback
 static void rx_callback() {
+    gpio_set_pin(PIN_DEBUG2);
+    gpio_clear_pin(PIN_DEBUG2);
     CommsRxResult rx = comms_get_data();
     if (rx.err != RX_ERR_OK || rx.data_len < 1) {
         return;
@@ -124,8 +129,10 @@ static void rx_callback() {
 }
 
 CommandCenterSimpleAction command_center_get_action() {
+    __disable_irq();
     CommandCenterSimpleAction action = latest_action;
     latest_action = CMD_NONE;
+    __enable_irq();
     return action;
 }
 

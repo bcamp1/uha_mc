@@ -153,7 +153,7 @@ int main(void) {
     uart_println("--------MOTOR CONTROLLER START--------");
 
     tension_init();
-    //inc_encoder_init();
+    inc_encoder_init();
     //tension_init_supply_only();
 
     //motor_comms_init();
@@ -168,11 +168,7 @@ int main(void) {
     data_collector_init();
     movement_init();
     delay(0xFFF);
-    //timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK / 5.0f, PRIO_STATE_MACHINE_TICK, movement_tick);
-
-
-    // I believe issue is command center is not always firing even though user sends correct signal
-    // TODO: debug LEDs.
+    timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, movement_tick);
 
     while (1) {
         CommandCenterSimpleAction action = command_center_get_action();
@@ -181,15 +177,19 @@ int main(void) {
                 gpio_set_pin(PIN_DEBUG1);
                 gpio_clear_pin(PIN_DEBUG1);
                 disable_motors();
+                movement_init();
                 break;
             case CMD_PLAY:
                 gpio_set_pin(PIN_DEBUG1);
                 gpio_clear_pin(PIN_DEBUG1);
                 enable_motors();
+                movement_set_target_idle();
                 break;
             case CMD_FAST_FORWARD:
+                movement_set_target_ff(100.0f);
                 break;
             case CMD_REWIND:
+                movement_set_target_rew(100.0f);
                 break;
             case CMD_SPOOL:
                 break;
@@ -200,6 +200,7 @@ int main(void) {
             case CMD_NONE:
                 break;
         }
+        uart_println_float(data_collector_get_tape_speed());
     }
 
 }

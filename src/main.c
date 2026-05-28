@@ -200,7 +200,7 @@ int main(void) {
             case CMD_NONE:
                 break;
         }
-        uart_println_float(data_collector_get_tape_speed());
+        uart_println_float(data_collector_get_tape_position());
     }
 
 }

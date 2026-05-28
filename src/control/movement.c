@@ -372,3 +372,31 @@ static void print_state(MovementState s) {
     }
 }
 
+void movement_get_ui_state(UiState* out_state, bool* out_transient) {
+    __disable_irq();
+    MovementState s = state;
+    MovementTarget t = target;
+    __enable_irq();
+
+    UiState ui;
+    if (s == MV_IDLE) {
+        ui = UI_STATE_IDLE;
+    } else if (s == MV_PLAYBACK) {
+        ui = UI_STATE_PLAY;
+    } else if (t.is_idle) {
+        ui = UI_STATE_IDLE;
+    } else if (t.is_playback) {
+        ui = UI_STATE_PLAY;
+    } else if (t.goto_position) {
+        ui = UI_STATE_SEEKING;
+    } else {
+        ui = (t.direction == FORWARD) ? UI_STATE_FAST_FORWARD : UI_STATE_REWIND;
+    }
+
+    *out_state = ui;
+    *out_transient = (s == START_TENSION
+                  || s == ACCELERATE
+                  || s == DECELERATE
+                  || s == STOP_TENSION);
+}
+

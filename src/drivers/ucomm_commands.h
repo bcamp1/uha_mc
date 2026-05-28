@@ -20,6 +20,7 @@
 #define UCOMM_M_GET_TAPE_SPEED    (0x10)
 #define UCOMM_M_GET_TENSION_ARMS  (0x11)
 #define UCOMM_M_GET_ODOMETER      (0x12)
+#define UCOMM_M_GET_UI_STATE      (0x13)
 
 // Slave Commands
 // ACKs
@@ -44,4 +45,8 @@
 #define UCOMM_S_SEND_TAPE_SPEED    (0x10)
 #define UCOMM_S_SEND_TENSION_ARMS  (0x11)
 #define UCOMM_S_SEND_ODOMETER      (0x12)
+#define UCOMM_S_SEND_UI_STATE      (0x13)
+
+// UI_STATE flag bits (byte 2 of UI_STATE response)
+#define UCOMM_UI_FLAG_TRANSIENT    (1 << 0)
 

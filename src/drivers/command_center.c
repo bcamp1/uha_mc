@@ -4,6 +4,7 @@
 #include "../periphs/gpio.h"
 #include "../board.h"
 #include "../control/data_collector.h"
+#include "../control/movement.h"
 #include <sam.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -123,6 +124,16 @@ static void rx_callback() {
         case UCOMM_M_GET_ODOMETER:
             comms_send_float2(UCOMM_S_SEND_ODOMETER, odometer_time, odometer_distance);
             break;
+        case UCOMM_M_GET_UI_STATE: {
+            UiState ui_state;
+            bool transient;
+            movement_get_ui_state(&ui_state, &transient);
+            response[0] = UCOMM_S_SEND_UI_STATE;
+            response[1] = (uint8_t) ui_state;
+            response[2] = transient ? UCOMM_UI_FLAG_TRANSIENT : 0;
+            comms_send_bytes(response, 3);
+            break;
+        }
         default:
             break;
     }

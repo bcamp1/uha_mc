@@ -13,15 +13,41 @@ typedef struct {
     float u_secondary;
 } MovementCommand;
 
+// What the deck has been asked to do. `kind` selects which union arm (if any)
+// carries the parameters: IDLE and PLAYBACK carry none, WIND/SEEK carry the
+// fields valid for that mode. `active` is the lifecycle flag (does this slot
+// hold a real request) and is orthogonal to `kind`.
+typedef enum {
+    TARGET_IDLE,
+    TARGET_PLAYBACK,
+    TARGET_WIND,   // fast-forward / rewind at a speed
+    TARGET_SEEK,   // wind to a tape position ("mem")
+} TargetKind;
+
 typedef struct {
-    MovementDirection direction;
-    float tape_speed;
-    float tape_position;
-    bool goto_position;
+    TargetKind kind;
     bool active;
-    bool is_playback;
-    bool is_idle;
+    union {
+        struct {
+            MovementDirection dir;
+            float speed;
+        } wind;
+        struct {
+            MovementDirection dir;
+            float speed;
+            float position;
+        } seek;
+    } u;
 } MovementTarget;
+
+// Direction of travel for any target. IDLE and PLAYBACK always run FORWARD.
+static inline MovementDirection target_direction(MovementTarget t) {
+    switch (t.kind) {
+        case TARGET_WIND: return t.u.wind.dir;
+        case TARGET_SEEK: return t.u.seek.dir;
+        default:          return FORWARD;
+    }
+}
 
 typedef enum {
     MV_IDLE,
@@ -52,4 +78,11 @@ void movement_set_target_idle();
 void movement_set_target_rew(float tape_speed);
 void movement_set_target_mem(float tape_position, float tape_speed);
 void movement_get_ui_state(UiState* out_state, bool* out_transient);
+
+// Name of the current state-machine state (e.g. "ACCELERATE"), for debug/UART.
+char* movement_state_name(void);
+
+// Print "[MOV] <state> | tgt=..." over UART, but only when the state or target
+// has changed since the last call. Safe to call every iteration of a poll loop.
+void movement_debug_print_on_change(void);
 

@@ -12,66 +12,66 @@ typedef struct {
     float tape_position;
 } ControllerInfo;
 
+// Shared state for the idle tension-regulation loop. Each caller (idle,
+// playback) owns its own instance so the two modes can't alias each other's
+// filters or tension history.
+typedef struct {
+    Filter primary_filter;
+    Filter secondary_filter;
+    float prev_tension_p;
+    float prev_tension_s;
+} IdleState;
+
+// A pair of tension-regulation filters (primary/secondary reel). Used by the
+// accelerate/decelerate feed-forward command helpers.
+typedef struct {
+    Filter primary_filter;
+    Filter secondary_filter;
+} TensionFilters;
+
 static const float T = (1.0 / FREQUENCY_STATE_MACHINE_TICK);
 static const float f = FREQUENCY_STATE_MACHINE_TICK;
 
 static MovementCommand accelerate_movement_command(uint32_t ticks, float primary_tension, float secondary_tension, float torque);
 static MovementCommand decelerate_movement_command(uint32_t ticks, float primary_tension, float secondary_tension, float torque);
 
+// Only meaningful for a SEEK target (callers gate on TARGET_SEEK).
 static float get_mem_distance(ControllerInfo info, MovementTarget target) {
-    float delta = target.tape_position - info.tape_position;
-    if (target.direction == FORWARD) {
+    float delta = target.u.seek.position - info.tape_position;
+    if (target.u.seek.dir == FORWARD) {
         return delta;
     }
     return -delta;
 }
 
-TransitionStatus idle_controller(ControllerInfo info, MovementTarget target, MovementCommand* command) {
+static TransitionStatus idle_regulate(ControllerInfo info, MovementCommand* command, IdleState* st) {
     const float transition_speed_thresh = 0.5f;
     const float transition_position_thresh = 0.25f;
 
-    static float prev_tension_p = 0.0f;
-    static float prev_tension_s = 0.0f;
-
-    static Filter primary_filter;
-    static Filter secondary_filter;
-
     if (info.ticks == 0) {
-        filter_init_pd(&primary_filter, 1.0f, 0.05f, T);
-        filter_init_pd(&secondary_filter, 1.0f, 0.05f, T);
+        filter_init_pd(&st->primary_filter, 1.0f, 0.05f, T);
+        filter_init_pd(&st->secondary_filter, 1.0f, 0.05f, T);
     }
-    
+
     float r = 0.6f;
     float e_primary = r - info.primary_tension;
     float e_secondary = r - info.secondary_tension;
 
-    float u_primary = filter_next(e_primary, &primary_filter);
-    float u_secondary = filter_next(e_secondary, &secondary_filter);
+    float u_primary = filter_next(e_primary, &st->primary_filter);
+    float u_secondary = filter_next(e_secondary, &st->secondary_filter);
 
     command->u_primary = u_primary;
     command->u_secondary = u_secondary;
 
-    /*
-    command->u_primary = 0.4f;
-    if (info.ticks % 2000 < 1000) {
-        command->u_primary = 0.4f;
-    }
-
-    command->u_secondary = 0.4f;
-    if (info.ticks % 2000 < 1000) {
-        command->u_secondary = 0.4f;
-    }
-    */
-
-    float delta_primary = (info.primary_tension - prev_tension_p) * f;
-    float delta_secondary = (info.secondary_tension - prev_tension_s) * f;
+    float delta_primary = (info.primary_tension - st->prev_tension_p) * f;
+    float delta_secondary = (info.secondary_tension - st->prev_tension_s) * f;
 
     if (delta_primary < 0) delta_primary = -delta_primary;
     if (delta_secondary < 0) delta_secondary = -delta_secondary;
-    
-    prev_tension_p = info.primary_tension;
-    prev_tension_s = info.secondary_tension;
-    
+
+    st->prev_tension_p = info.primary_tension;
+    st->prev_tension_s = info.secondary_tension;
+
     float time = info.ticks * T;
 
     if (delta_primary < transition_speed_thresh && delta_secondary < transition_speed_thresh) {
@@ -85,6 +85,11 @@ TransitionStatus idle_controller(ControllerInfo info, MovementTarget target, Mov
     return TRANSITION_NOT_READY;
 }
 
+TransitionStatus idle_controller(ControllerInfo info, MovementTarget target, MovementCommand* command) {
+    static IdleState st;
+    return idle_regulate(info, command, &st);
+}
+
 TransitionStatus start_tension_controller(ControllerInfo info, MovementTarget target, MovementCommand* command) {
     const float transition_position_thresh = 0.95f;
 
@@ -93,13 +98,10 @@ TransitionStatus start_tension_controller(ControllerInfo info, MovementTarget ta
     static float start_torque = 0.2f;
     const float r = 0.6f;
 
-    static Filter primary_filter;
     static Filter secondary_filter;
 
     if (info.ticks == 0) {
-        filter_init_pd(&primary_filter, 1.0f, 0.05f, T);
         filter_init_pd(&secondary_filter, 1.0f, 0.05f, T);
-        //start_torque = filter_next(r - info.primary_tension, &primary_filter);
     }
 
     float time = info.ticks * T;
@@ -118,11 +120,15 @@ TransitionStatus start_tension_controller(ControllerInfo info, MovementTarget ta
     return TRANSITION_NOT_READY;
 }
 
+typedef struct {
+    Filter tape_speed_controller;
+    float tape_speed_error_integrator;
+    float tape_speed_r;
+} AccelerateState;
+
 TransitionStatus accelerate_controller(ControllerInfo info, MovementTarget target, MovementCommand* command) {
-    static Filter tape_speed_controller;
-    static float tape_speed_error_integrator;
-    static float tape_speed_r;
-    
+    static AccelerateState st;
+
     const float tape_speed_start = 10.0f;
     const float tape_speed_slew = 20.0f; // Units: IPS per second
     const float torque_floor = 0.1f;
@@ -132,21 +138,21 @@ TransitionStatus accelerate_controller(ControllerInfo info, MovementTarget targe
     const float Ki = 0.1f;
 
     if (info.ticks == 0) {
-        filter_init_pd(&tape_speed_controller, 0.1f, 0.00f, T);
-        tape_speed_error_integrator = 0.0f;
-        tape_speed_r = 0.0f;
+        filter_init_pd(&st.tape_speed_controller, 0.1f, 0.00f, T);
+        st.tape_speed_error_integrator = 0.0f;
+        st.tape_speed_r = 0.0f;
     }
 
     float time = info.ticks * T;
-    tape_speed_r = tape_speed_slew * time;
-    if (tape_speed_r > tape_speed_target) tape_speed_r = tape_speed_target;
+    st.tape_speed_r = tape_speed_slew * time;
+    if (st.tape_speed_r > tape_speed_target) st.tape_speed_r = tape_speed_target;
 
 
-    float tape_speed_e = tape_speed_r - info.tape_speed; 
-    float torque_pd = filter_next(tape_speed_e, &tape_speed_controller);
+    float tape_speed_e = st.tape_speed_r - info.tape_speed;
+    float torque_pd = filter_next(tape_speed_e, &st.tape_speed_controller);
 
-    tape_speed_error_integrator += (tape_speed_e * T);
-    float torque_i = Ki * tape_speed_error_integrator;
+    st.tape_speed_error_integrator += (tape_speed_e * T);
+    float torque_i = Ki * st.tape_speed_error_integrator;
 
     if (torque_pd > PD_torque_ceil) torque_pd = PD_torque_ceil;
     
@@ -161,7 +167,7 @@ TransitionStatus accelerate_controller(ControllerInfo info, MovementTarget targe
     //uart_println_float(c.u_primary);
     
     // Decide when to transition to decelerate for mem option
-    if (target.goto_position) {
+    if (target.kind == TARGET_SEEK) {
         if (get_mem_distance(info, target) < 40.0f) {
             return TRANSITION_READY;
         }
@@ -188,14 +194,18 @@ TransitionStatus decelerate_controller(ControllerInfo info, MovementTarget targe
 
 typedef enum {DEC_GOTO_MEDIUM, DEC_MEDIUM, DEC_GOTO_SLOW, DEC_SLOW} DecelerateMemState;
 
+typedef struct {
+    Filter tape_speed_controller;
+    float tape_speed_error_integrator;
+    float tape_speed_r;
+    float tape_speed_start;
+    DecelerateMemState dec_state;
+    uint32_t dec_state_ticks;
+    float dec_state_time;
+} DecelerateMemRunState;
+
 TransitionStatus decelerate_mem_controller(ControllerInfo info, MovementTarget target, MovementCommand* command) {
-    static Filter tape_speed_controller;
-    static float tape_speed_error_integrator;
-    static float tape_speed_r;
-    static float tape_speed_start = 0.0f;
-    static DecelerateMemState dec_state = DEC_GOTO_MEDIUM;
-    static uint32_t dec_state_ticks = 0;
-    static float dec_state_time = 0.0f;
+    static DecelerateMemRunState st;
 
     const float torque_floor = -0.4f;
     const float torque_ceil = 0.4f;
@@ -213,64 +223,64 @@ TransitionStatus decelerate_mem_controller(ControllerInfo info, MovementTarget t
     const float slew_goto_slow = -20.0f; // IPS per second
 
     if (info.ticks == 0) {
-        tape_speed_start = info.tape_speed;
-        filter_init_pd(&tape_speed_controller, 0.1f, 0.00f, T);
-        tape_speed_error_integrator = 0.0f;
-        tape_speed_r = 0.0f;
-        dec_state_ticks = 0;
-        dec_state_time = 0.0f;
+        st.tape_speed_start = info.tape_speed;
+        filter_init_pd(&st.tape_speed_controller, 0.1f, 0.00f, T);
+        st.tape_speed_error_integrator = 0.0f;
+        st.tape_speed_r = 0.0f;
+        st.dec_state_ticks = 0;
+        st.dec_state_time = 0.0f;
 
-        if (tape_speed_start > medium_tape_speed_target) {
-            dec_state = DEC_GOTO_MEDIUM;
+        if (st.tape_speed_start > medium_tape_speed_target) {
+            st.dec_state = DEC_GOTO_MEDIUM;
         } else {
-            dec_state = DEC_GOTO_SLOW;
+            st.dec_state = DEC_GOTO_SLOW;
         }
     }
 
     // Calculate times
     float time = info.ticks * T;
     float distance = get_mem_distance(info, target);
-    dec_state_time = dec_state_ticks * T;
+    st.dec_state_time = st.dec_state_ticks * T;
 
     // Calculate tape speed reference + state transitions
-    switch (dec_state) {
+    switch (st.dec_state) {
         case DEC_GOTO_MEDIUM:
-            tape_speed_r = tape_speed_start + (dec_state_time * slew_goto_medium);
-            if (tape_speed_r < medium_tape_speed_target) {
-                tape_speed_r = medium_tape_speed_target;
-                dec_state_ticks = 0;
-                dec_state = DEC_MEDIUM;
+            st.tape_speed_r = st.tape_speed_start + (st.dec_state_time * slew_goto_medium);
+            if (st.tape_speed_r < medium_tape_speed_target) {
+                st.tape_speed_r = medium_tape_speed_target;
+                st.dec_state_ticks = 0;
+                st.dec_state = DEC_MEDIUM;
             }
             break;
         case DEC_MEDIUM:
-            tape_speed_r = medium_tape_speed_target;
+            st.tape_speed_r = medium_tape_speed_target;
             if (distance < distance_thresh_medium) {
-                dec_state_ticks = 0;
-                dec_state = DEC_GOTO_SLOW;
+                st.dec_state_ticks = 0;
+                st.dec_state = DEC_GOTO_SLOW;
             }
             break;
         case DEC_GOTO_SLOW:
-            tape_speed_r = medium_tape_speed_target + (dec_state_time * slew_goto_slow);
-            if (tape_speed_r < slow_tape_speed_target) {
-                tape_speed_r = slow_tape_speed_target;
-                dec_state_ticks = 0;
-                dec_state = DEC_SLOW;
+            st.tape_speed_r = medium_tape_speed_target + (st.dec_state_time * slew_goto_slow);
+            if (st.tape_speed_r < slow_tape_speed_target) {
+                st.tape_speed_r = slow_tape_speed_target;
+                st.dec_state_ticks = 0;
+                st.dec_state = DEC_SLOW;
             }
             break;
         case DEC_SLOW:
-            tape_speed_r = slow_tape_speed_target;
+            st.tape_speed_r = slow_tape_speed_target;
             if (distance < distance_thresh_slow) {
-               return TRANSITION_READY; 
+               return TRANSITION_READY;
             }
             break;
     }
 
-    float tape_speed_e = tape_speed_r - info.tape_speed; 
-    float torque_pd = filter_next(tape_speed_e, &tape_speed_controller);
+    float tape_speed_e = st.tape_speed_r - info.tape_speed;
+    float torque_pd = filter_next(tape_speed_e, &st.tape_speed_controller);
 
-    tape_speed_error_integrator += (tape_speed_e * T);
-    float torque_i = Ki * tape_speed_error_integrator;
-    
+    st.tape_speed_error_integrator += (tape_speed_e * T);
+    float torque_i = Ki * st.tape_speed_error_integrator;
+
     float torque = torque_pd + torque_i;
 
     if (torque < torque_floor) torque = torque_floor;
@@ -281,7 +291,7 @@ TransitionStatus decelerate_mem_controller(ControllerInfo info, MovementTarget t
     command->u_secondary = c.u_secondary;
     //uart_println_float(c.u_primary);
 
-    dec_state_ticks++;
+    st.dec_state_ticks++;
     return TRANSITION_NOT_READY;
 }
 
@@ -290,9 +300,10 @@ TransitionStatus stop_tension_controller(ControllerInfo info, MovementTarget tar
 }
 
 TransitionStatus playback_controller(ControllerInfo info, MovementTarget target, MovementCommand* command) {
-    idle_controller(info, target, command);
+    static IdleState st;
+    idle_regulate(info, command, &st);
 
-    if (target.is_playback) {
+    if (target.kind == TARGET_PLAYBACK) {
         return TRANSITION_NOT_READY;
     }
 
@@ -326,7 +337,7 @@ TransitionStatus movement_controllers_tick(MovementState state, MovementTarget t
             return closed_loop_controller(info, target, command);
             break;
         case DECELERATE:
-            if (target.goto_position) {
+            if (target.kind == TARGET_SEEK) {
                 return decelerate_mem_controller(info, target, command);
             }
             return decelerate_controller(info, target, command);
@@ -343,12 +354,11 @@ TransitionStatus movement_controllers_tick(MovementState state, MovementTarget t
 }
 
 static MovementCommand accelerate_movement_command(uint32_t ticks, float primary_tension, float secondary_tension, float torque) {
-    static Filter secondary_filter;
-    static Filter primary_filter;
+    static TensionFilters st;
 
     if (ticks == 0) {
-        filter_init_pd(&primary_filter, 1.0f, 0.05f, T);
-        filter_init_pd(&secondary_filter, 1.0f, 0.05f, T);
+        filter_init_pd(&st.primary_filter, 1.0f, 0.05f, T);
+        filter_init_pd(&st.secondary_filter, 1.0f, 0.05f, T);
     }
 
     const float secondary_tension_reference = 0.6f;
@@ -356,8 +366,8 @@ static MovementCommand accelerate_movement_command(uint32_t ticks, float primary
     float error_secondary_tension = secondary_tension_reference - secondary_tension;
     float error_primary_tension = primary_tension_reference - primary_tension;
 
-    float u_primary = filter_next(error_primary_tension, &primary_filter) + torque;
-    float u_secondary = filter_next(error_secondary_tension, &secondary_filter);
+    float u_primary = filter_next(error_primary_tension, &st.primary_filter) + torque;
+    float u_secondary = filter_next(error_secondary_tension, &st.secondary_filter);
 
     return (MovementCommand) {
         .u_primary = u_primary,
@@ -369,12 +379,11 @@ static MovementCommand decelerate_movement_command(uint32_t ticks, float primary
     // Torque adjustment to be more similar to accelerate_movement_command
     torque -= 0.3f;
 
-    static Filter secondary_filter;
-    static Filter primary_filter;
+    static TensionFilters st;
 
     if (ticks == 0) {
-        filter_init_pd(&primary_filter, 4.0f, 0.2f, T);
-        filter_init_pd(&secondary_filter, 1.0f, 0.05f, T);
+        filter_init_pd(&st.primary_filter, 4.0f, 0.2f, T);
+        filter_init_pd(&st.secondary_filter, 1.0f, 0.05f, T);
     }
 
     const float secondary_tension_reference = 0.6f;
@@ -382,8 +391,8 @@ static MovementCommand decelerate_movement_command(uint32_t ticks, float primary
     float error_secondary_tension = secondary_tension_reference - secondary_tension;
     float error_primary_tension = primary_tension_reference - primary_tension;
 
-    float u_primary = filter_next(error_primary_tension, &primary_filter) + torque;
-    float u_secondary = filter_next(error_secondary_tension, &secondary_filter);
+    float u_primary = filter_next(error_primary_tension, &st.primary_filter) + torque;
+    float u_secondary = filter_next(error_secondary_tension, &st.secondary_filter);
 
     return (MovementCommand) {
         .u_primary = u_primary,

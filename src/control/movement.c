@@ -27,7 +27,6 @@ static void transfer_commanded_target_future();
 static void transfer_future_target_current();
 static void state_transition_commanded_target();
 static void panic(char* str);
-static void print_state(MovementState s);
 static void set_state(MovementState s);
 
 // Targets
@@ -270,7 +269,6 @@ static void transfer_commanded_target_current() {
     target.active = true;
     future_target.active = false;
     critical_exit(primask);
-    uart_println("target <- command");
 }
 
 static void transfer_commanded_target_future() {
@@ -278,7 +276,6 @@ static void transfer_commanded_target_future() {
     if (commanded_target.active) {
         future_target = commanded_target;
         commanded_target.active = false;
-        uart_println("future target <- command");
     }
     critical_exit(primask);
 }
@@ -288,7 +285,6 @@ static void transfer_future_target_current() {
     target = future_target;
     future_target.active = false;
     critical_exit(primask);
-    uart_println("target <- future target");
 }
 
 static float get_primary_tension() {
@@ -339,7 +335,6 @@ static void set_state(MovementState s) {
         panic("Attempted to set state but already current state");
     }
     state = s;
-    print_state(s);
     ticks = -1;
     if (state == MV_PLAYBACK) {
         //bldc_enable(&BLDC_CONF_CAPSTAN);
@@ -375,11 +370,6 @@ static char* kind_name(TargetKind k) {
         case TARGET_SEEK:     return "SEEK";
     }
     return "UNKNOWN";
-}
-
-static void print_state(MovementState s) {
-    uart_print("[MOVSTATE] ");
-    uart_println(state_name(s));
 }
 
 char* movement_state_name(void) {

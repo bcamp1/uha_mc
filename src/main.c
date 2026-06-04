@@ -191,6 +191,9 @@ int main(void) {
             case CMD_REWIND:
                 movement_set_target_rew(100.0f);
                 break;
+            case CMD_GOTO_LOC:
+                movement_set_target_mem(command_center_get_goto_loc(), 100.0f);
+                break;
             case CMD_SPOOL:
                 break;
             case CMD_SET_ZERO:

@@ -19,7 +19,7 @@ static float odometer_time = 0;
 
 // These variables are managed by user, sent to us
 volatile CommandCenterSimpleAction latest_action = CMD_NONE;
-float latest_goto_loc = 0.0f;
+volatile float latest_goto_loc = 0.0f;
 bool is_auto_play = false;
 bool is_auto_loop = false;
 float auto_loop_loc1 = 0.0f;
@@ -65,11 +65,13 @@ static void rx_callback() {
             comms_send_byte(UCOMM_S_ACK_SET_ZERO);
             latest_action = CMD_SET_ZERO;
             break;
-        case UCOMM_M_GOTO_ZERO:
-            comms_send_byte(UCOMM_S_ACK_GOTO_ZERO);
-            break;
         case UCOMM_M_GOTO_LOC:
             comms_send_byte(UCOMM_S_ACK_GOTO_LOC);
+            // Frame: [cmd][float tape_position]. Ignore if the payload is short.
+            if (rx.data_len >= 5) {
+                latest_goto_loc = comms_data_to_float(&rx.data[1]);
+                latest_action = CMD_GOTO_LOC;  // set last: loc is valid once seen
+            }
             break;
         case UCOMM_M_SET_CAPSTAN_SPEED:
             comms_send_byte(UCOMM_S_ACK_SET_CAPSTAN_SPEED);
@@ -145,6 +147,10 @@ CommandCenterSimpleAction command_center_get_action() {
     latest_action = CMD_NONE;
     __enable_irq();
     return action;
+}
+
+float command_center_get_goto_loc() {
+    return latest_goto_loc;
 }
 
 void command_center_init() {

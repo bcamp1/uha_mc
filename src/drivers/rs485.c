@@ -12,6 +12,7 @@
 #include "../periphs/uart.h"
 #include <string.h>
 #include "../drivers/delay.h"
+#include "../sched.h"
 
 #define RS485_TX_PIN		PIN_PA12
 #define RS485_RX_PIN		PIN_PA13
@@ -57,7 +58,7 @@ void rs485_init(void) {
 
 	// Enable RX complete interrupt
 	RS485_SERCOM->USART.INTENSET.bit.RXC = 1;
-	NVIC_SetPriority(RS485_SERCOM_RXC_IRQ, 3);
+	NVIC_SetPriority(RS485_SERCOM_RXC_IRQ, PRIO_RS485);
 	NVIC_EnableIRQ(RS485_SERCOM_RXC_IRQ);
 
 	RS485_SERCOM->USART.CTRLA.bit.ENABLE = 1;

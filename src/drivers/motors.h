@@ -11,6 +11,9 @@ typedef enum {
 
 void motors_init();
 
+// Helpers
+void motors_set_torque(uint8_t motor_addr, float torque);
+
 // Broadcasts
 void motors_enable_all();
 void motors_disable_all();

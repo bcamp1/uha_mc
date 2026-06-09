@@ -21,7 +21,6 @@
 #include "sched.h"
 #include "drivers/delay.h"
 #include "drivers/inc_encoder.h"
-#include "control/state_machine.h"
 #include "control/data_collector.h"
 #include "control/movement.h"
 

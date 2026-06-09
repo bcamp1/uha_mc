@@ -1,5 +1,6 @@
 #include "motors.h"
 #include "motor_comms.h"
+#include "delay.h"
 #include <stdint.h>
 
 // +1.0f -> INT16_MAX, -1.0f -> INT16_MIN. Asymmetric scaling because the
@@ -34,6 +35,10 @@ void motors_disable_all() {
 }
 
 void motors_set_reel_torques(float takeup_torque, float supply_torque) {
+    motors_set_torque(MOTOR_COMMS_ADDR_TAKEUP, takeup_torque);
+    delay(0xFF);
+    motors_set_torque(MOTOR_COMMS_ADDR_SUPPLY, supply_torque);
+    /*
     int16_t takeup = torque_float_to_int16(takeup_torque);
     int16_t supply = torque_float_to_int16(supply_torque);
     // Cast to uint16_t before shifting: right-shift of negative signed
@@ -50,6 +55,27 @@ void motors_set_reel_torques(float takeup_torque, float supply_torque) {
     data[4] = (uint8_t)(supply_u & 0xFF);
 
     motor_comms_broadcast_bytes(data, 5);
+    */
+}
+
+void motors_set_torque(uint8_t motor_addr, float torque) {
+    int16_t torque_int = torque_float_to_int16(torque);
+    // Cast to uint16_t before shifting: right-shift of negative signed
+    // values is implementation-defined in C.
+    uint16_t torque_u = (uint16_t)torque_int;
+
+    // Data = [cmd_reel_torque, takeup_msb, takeup_lsb, supply_msb, supply_lsb]
+    uint8_t data[3];
+    data[0] = MOTOR_COMMS_CMD_REEL_TORQUE;
+    data[1] = (uint8_t)(torque_u >> 8);
+    data[2] = (uint8_t)(torque_u & 0xFF);
+
+    uint8_t tx_len = 3;
+    uint8_t rx_len = 0;
+    uint8_t rx_buf_size = 8;
+    uint8_t rx_data[8];
+
+    RXError err = motor_comms_write_read(motor_addr, data, tx_len, rx_data, &rx_len, rx_buf_size);
 }
 
 RXError motors_takeup_enable() {

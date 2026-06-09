@@ -114,6 +114,21 @@ RXError motor_comms_read(uint8_t addr, uint8_t cmd, uint8_t* data, uint8_t* data
     return RX_ERR_OK;
 }
 
+RXError motor_comms_write_read(uint8_t addr, uint8_t* tx_data, uint8_t tx_len, uint8_t* rx_data, uint8_t* rx_len, uint8_t rx_buf_size) {
+    motor_comms_send_bytes(addr, tx_data, tx_len);
+    delay(0xFF);
+
+    uint8_t recv_addr = 0;
+    RXError err = motor_comms_get_data(&recv_addr, rx_data, rx_len, rx_buf_size);
+
+    if (err != RX_ERR_OK) {
+        return err; 
+    }
+
+    if (recv_addr != addr) return RX_ERR_WRONG_ADDR;
+    return RX_ERR_OK;
+}
+
 void motor_comms_print_error(RXError err) {
     switch (err) {
         case RX_ERR_OK:

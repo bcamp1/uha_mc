@@ -39,6 +39,7 @@ void motor_comms_broadcast_cmd(uint8_t cmd);
 
 RXError motor_comms_get_data(uint8_t* addr, uint8_t* data, uint8_t* data_len, uint8_t buf_size);
 RXError motor_comms_read(uint8_t addr, uint8_t cmd, uint8_t* data, uint8_t* data_len, uint8_t buf_size);
+RXError motor_comms_write_read(uint8_t addr, uint8_t* tx_data, uint8_t tx_len, uint8_t* rx_data, uint8_t* rx_len, uint8_t rx_buf_size);
 
 void motor_comms_print_error(RXError err);
 void motor_comms_println_error(RXError err);

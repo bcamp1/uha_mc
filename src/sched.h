@@ -8,7 +8,7 @@
 #define PRIO_STATE_MACHINE_TICK (2)
 
 // Frequencies
-#define FREQUENCY_STATE_MACHINE_TICK (1000.0f)
+#define FREQUENCY_STATE_MACHINE_TICK (200.0f)
 
 // Timer IDs
 #define ID_STATE_MACHINE_TICK (0)

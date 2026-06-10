@@ -141,6 +141,38 @@ static void rx_callback() {
     }
 }
 
+// --- Fault state accessors --------------------------------------------------
+// fault_controller is read-modify-written from both the main loop
+// (faults_check_health) and the 200 Hz movement ISR (faults_note_motor_reply),
+// so guard the RMW. Save/restore PRIMASK rather than unconditionally
+// re-enabling, so this stays correct when called from inside an ISR.
+void command_center_set_ctrl_fault(uint8_t mask) {
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    fault_controller |= mask;
+    __set_PRIMASK(primask);
+}
+
+void command_center_clear_ctrl_fault(uint8_t mask) {
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    fault_controller &= ~mask;
+    __set_PRIMASK(primask);
+}
+
+uint8_t command_center_get_ctrl_fault(void) {
+    return fault_controller;
+}
+
+void command_center_set_motor_fault(FaultMotorSlot slot, uint8_t fault_byte) {
+    // Single-byte store is atomic on Cortex-M, so no IRQ guard needed.
+    switch (slot) {
+        case FAULT_MOTOR_TAKEUP:  fault_takeup  = fault_byte; break;
+        case FAULT_MOTOR_SUPPLY:  fault_supply  = fault_byte; break;
+        case FAULT_MOTOR_CAPSTAN: fault_capstan = fault_byte; break;
+    }
+}
+
 CommandCenterSimpleAction command_center_get_action() {
     __disable_irq();
     CommandCenterSimpleAction action = latest_action;

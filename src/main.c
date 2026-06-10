@@ -17,6 +17,7 @@
 #include "drivers/tension.h"
 #include "drivers/stopwatch.h"
 #include "drivers/command_center.h"
+#include "drivers/faults.h"
 #include "board.h"
 #include "sched.h"
 #include "drivers/delay.h"
@@ -161,6 +162,7 @@ int main(void) {
     command_center_init();
 
     init_motors(false);
+    faults_init();
 
     gpio_init_pin(DEBUG_PIN, GPIO_DIR_OUT, GPIO_ALTERNATE_NONE);
     gpio_set_pin(DEBUG_PIN);
@@ -202,6 +204,7 @@ int main(void) {
             case CMD_NONE:
                 break;
         }
+        faults_check_health();
         movement_debug_print_on_change();
     }
 

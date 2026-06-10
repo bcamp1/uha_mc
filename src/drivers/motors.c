@@ -1,6 +1,8 @@
 #include "motors.h"
 #include "motor_comms.h"
+#include "faults.h"
 #include "delay.h"
+#include <stddef.h>
 #include <stdint.h>
 
 // +1.0f -> INT16_MAX, -1.0f -> INT16_MIN. Asymmetric scaling because the
@@ -76,6 +78,9 @@ void motors_set_torque(uint8_t motor_addr, float torque) {
     uint8_t rx_data[8];
 
     RXError err = motor_comms_write_read(motor_addr, data, tx_len, rx_data, &rx_len, rx_buf_size);
+
+    // The reel-torque reply is [cmd][meta_fault]; harvest it into the fault state.
+    faults_note_motor_reply(motor_addr, err, rx_data, rx_len);
 }
 
 RXError motors_takeup_enable() {
@@ -176,7 +181,12 @@ RXError motors_capstan_set_speed(CapstanSpeed speed) {
             return RX_ERR_TIMEOUT;
     }
 
-    return confirm_command(MOTOR_COMMS_ADDR_CAPSTAN, cmd);
+    RXError err = confirm_command(MOTOR_COMMS_ADDR_CAPSTAN, cmd);
+    // Capstan speed acks are a bare echo (no meta-fault byte), so this only
+    // tracks the capstan's comms presence, not its meta-fault. Getting the
+    // capstan's meta-fault needs an explicit FAULT_STATUS poll.
+    faults_note_motor_reply(MOTOR_COMMS_ADDR_CAPSTAN, err, NULL, 0);
+    return err;
 }
 
 

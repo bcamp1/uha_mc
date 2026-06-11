@@ -37,6 +37,10 @@ static volatile MovementTarget commanded_target;
 // State
 static volatile MovementState state;
 
+// Set by the main-loop fault supervisor (movement_set_fault_disarm). While true,
+// the tick stops driving the motor bus -- see the gate in movement_tick.
+static volatile bool fault_disarmed = false;
+
 static const float T = (1.0 / FREQUENCY_STATE_MACHINE_TICK);
 
 // Enter a critical section by disabling interrupts, returning the previous
@@ -106,12 +110,29 @@ void movement_init() {
     movement_controllers_init();
 }
 
+void movement_set_fault_disarm(bool disarmed) {
+    fault_disarmed = disarmed;
+}
+
 void movement_tick() {
     gpio_set_pin(PIN_DEBUG1);
     ticks += 1;
 
     // Step 0: Update data
     data_collector_update();
+
+    // Safety gate: while fault-disarmed, skip the motion pipeline and the pinch
+    // roller. The motors are disabled at the driver, but we still command zero
+    // torque every tick -- that keeps polling each motor's fault byte (the reply)
+    // without driving, so a cleared fault is observed and CMD_PLAY can re-arm.
+    // Faults are kept live here; only the disarm itself latches. Telemetry
+    // (data_collector) above also stays live.
+    if (fault_disarmed) {
+        solenoid_pinch_disengage();
+        motors_set_reel_torques(0.0f, 0.0f);
+        gpio_clear_pin(PIN_DEBUG1);
+        return;
+    }
 
     // Step 1: Check for new target
     if (commanded_target.active) {

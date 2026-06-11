@@ -37,8 +37,10 @@ void motors_disable_all() {
 }
 
 void motors_set_reel_torques(float takeup_torque, float supply_torque) {
+    // No inter-command delay: motors_set_torque() blocks in motor_comms_write_read
+    // until the takeup slave's full reply has been read off the wire, so the
+    // supply command can't go out until takeup's response is already consumed.
     motors_set_torque(MOTOR_COMMS_ADDR_TAKEUP, takeup_torque);
-    delay(0xFF);
     motors_set_torque(MOTOR_COMMS_ADDR_SUPPLY, supply_torque);
     /*
     int16_t takeup = torque_float_to_int16(takeup_torque);

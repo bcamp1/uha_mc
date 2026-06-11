@@ -12,11 +12,16 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-// Shadow of per-motor state, kept here so the aggregate CTRL_FAULT_MOTOR_DRIVER
-// bit can be recomputed without reading back command_center. Indexed by
-// FaultMotorSlot.
-static uint8_t motor_fault[3] = {0, 0, 0};
-static bool    motor_offline[3] = {false, false, false};
+// Per-motor RS485 comms state, indexed by FaultMotorSlot. A read failure must
+// persist for MOTOR_COMM_FAIL_DEBOUNCE consecutive replies before the motor is
+// declared offline, so a lone dropped/garbled frame -- common on the half-duplex
+// bus -- doesn't blip the RS485 fault bit. The streak is reset by the first good
+// read. At 400 Hz each motor is read once per tick, so 4 ~= 10 ms.
+#define MOTOR_COMM_FAIL_DEBOUNCE 4
+
+static uint8_t motor_fail_count[3] = {0, 0, 0};        // consecutive failed reads
+static bool    motor_offline[3]    = {false, false, false};  // debounced state
+static uint8_t motor_meta[3]       = {0, 0, 0};        // last reported per-motor meta byte
 
 // Map an RS485 motor address to its fault slot. Returns false for broadcast or
 // any unrecognised address.
@@ -43,27 +48,29 @@ static uint8_t decode_motor_fault_byte(const uint8_t *rx_data, uint8_t rx_len) {
     return 0;
 }
 
-// Recompute and publish the aggregate motor-driver bit: set whenever any motor
-// is offline or is reporting a non-zero meta-fault.
-static void update_motor_driver_aggregate(void) {
-    bool faulted = false;
+// Publish the RS485 fault bit: set whenever any motor is (debounced) offline.
+// This is purely a comms-health bit -- actual motor/DRV faults are carried in the
+// per-motor bytes, so they are intentionally NOT folded in here.
+static void update_rs485_aggregate(void) {
+    bool any_offline = false;
     for (int i = 0; i < 3; i++) {
-        if (motor_offline[i] || motor_fault[i] != 0) {
-            faulted = true;
+        if (motor_offline[i]) {
+            any_offline = true;
             break;
         }
     }
-    if (faulted) {
-        command_center_set_ctrl_fault(CTRL_FAULT_MOTOR_DRIVER);
+    if (any_offline) {
+        command_center_set_ctrl_fault(CTRL_FAULT_RS485);
     } else {
-        command_center_clear_ctrl_fault(CTRL_FAULT_MOTOR_DRIVER);
+        command_center_clear_ctrl_fault(CTRL_FAULT_RS485);
     }
 }
 
 void faults_init(void) {
     for (int i = 0; i < 3; i++) {
-        motor_fault[i] = 0;
+        motor_fail_count[i] = 0;
         motor_offline[i] = false;
+        motor_meta[i] = 0;
     }
     command_center_clear_ctrl_fault(0xFF);
     command_center_set_motor_fault(FAULT_MOTOR_TAKEUP, 0);
@@ -79,18 +86,42 @@ void faults_note_motor_reply(uint8_t motor_addr, RXError err,
     }
 
     if (err != RX_ERR_OK) {
-        // Motor did not answer / bad frame: treat as offline, ambiguous fault.
-        motor_offline[slot] = true;
-        motor_fault[slot] = 0;
-        command_center_set_motor_fault(slot, 0);
+        // Failed read: grow the failure streak and only declare the motor offline
+        // once the debounce threshold is crossed. Hold the last-known motor byte
+        // meanwhile -- a single dropped frame shouldn't disturb the reported state.
+        if (motor_fail_count[slot] < MOTOR_COMM_FAIL_DEBOUNCE) {
+            motor_fail_count[slot]++;
+        }
+        if (motor_fail_count[slot] >= MOTOR_COMM_FAIL_DEBOUNCE) {
+            motor_offline[slot] = true;
+        }
     } else {
+        // Good read: clear the failure streak and store the reported meta byte.
+        motor_fail_count[slot] = 0;
         motor_offline[slot] = false;
         uint8_t fb = decode_motor_fault_byte(rx_data, rx_len);
-        motor_fault[slot] = fb;
+        motor_meta[slot] = fb;
         command_center_set_motor_fault(slot, fb);
     }
 
-    update_motor_driver_aggregate();
+    update_rs485_aggregate();
+}
+
+bool faults_disarm_required(void) {
+#if DISARM_ON_FAULT
+    // Disarm on any non-zero fault byte: the controller meta byte (tension /
+    // roller / RS485) or any per-motor reported fault byte. This is exactly the
+    // set of bytes reported to uha_user in UCOMM_S_SEND_FAULTS.
+    if (command_center_get_ctrl_fault() != 0) {
+        return true;
+    }
+    for (int i = 0; i < 3; i++) {
+        if (motor_meta[i] != 0) {
+            return true;
+        }
+    }
+#endif
+    return false;
 }
 
 // --- uha_mother's own sensor health -----------------------------------------
@@ -139,5 +170,5 @@ void faults_print_ctrl(void) {
     if (c & CTRL_FAULT_TENSION_TAKEUP) uart_println("  TENSION_TAKEUP: takeup arm error state");
     if (c & CTRL_FAULT_TENSION_SUPPLY) uart_println("  TENSION_SUPPLY: supply arm error state");
     if (c & CTRL_FAULT_ROLLER)         uart_println("  ROLLER: roller encoder fault");
-    if (c & CTRL_FAULT_MOTOR_DRIVER)   uart_println("  MOTOR_DRIVER: a motor faulted or dropped off RS485");
+    if (c & CTRL_FAULT_RS485)          uart_println("  RS485: a motor stopped responding on RS485");
 }

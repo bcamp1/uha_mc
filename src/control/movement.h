@@ -72,6 +72,12 @@ typedef enum {
 
 void movement_init();
 void movement_tick();
+
+// Safety gate driven by the main-loop fault supervisor. While disarmed, the tick
+// skips the motion pipeline but still polls the motors with zero torque (they are
+// disabled at the driver), so fault state stays live and a cleared fault lets
+// CMD_PLAY re-arm.
+void movement_set_fault_disarm(bool disarmed);
 void movement_set_target_ff(float tape_speed);
 void movement_set_target_playback();
 void movement_set_target_idle();

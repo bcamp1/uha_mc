@@ -171,8 +171,39 @@ int main(void) {
     delay(0xFFF);
     timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, movement_tick);
 
+#if DISARM_ON_FAULT
+    bool fault_disarmed = false;
+#endif
     while (1) {
         CommandCenterSimpleAction action = command_center_get_action();
+
+#if DISARM_ON_FAULT
+        // Disarm on any active fault: drop to the same safe state as STOP and
+        // latch until a clean re-arm. Use the non-blocking broadcast disable
+        // (the per-motor disable_motors() retries forever, which would hang if
+        // the fault is a motor that won't answer on RS485).
+        if (!fault_disarmed && faults_disarm_required()) {
+            fault_disarmed = true;
+            movement_set_fault_disarm(true);   // tick stops driving (still polls at 0 torque)
+            motors_disable_all();
+            movement_init();
+            uart_println("!! DISARMED: motor fault !!");
+        }
+
+        // While disarmed, the only accepted command is a re-arm: CMD_PLAY once the
+        // fault has cleared. Everything else (including a still-faulted re-arm) is
+        // swallowed. A clean re-arm falls through to the normal CMD_PLAY handler.
+        if (fault_disarmed) {
+            if (action == CMD_PLAY && !faults_disarm_required()) {
+                fault_disarmed = false;
+                movement_set_fault_disarm(false);
+            } else {
+                if (action == CMD_PLAY) uart_println("Re-arm refused: motor fault present");
+                action = CMD_NONE;
+            }
+        }
+#endif
+
         switch (action) {
             case CMD_STOP:
                 gpio_set_pin(PIN_DEBUG1);

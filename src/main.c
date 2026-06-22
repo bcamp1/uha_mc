@@ -18,6 +18,7 @@
 #include "drivers/stopwatch.h"
 #include "drivers/command_center.h"
 #include "drivers/faults.h"
+#include "drivers/solenoid.h"
 #include "drivers/seeprom.h"
 #include "drivers/stat_tracker.h"
 #include "board.h"
@@ -154,6 +155,9 @@ static void disable_motors() {
         err = motors_capstan_disable();
     }
     uart_println("Capstan disabled.");
+    
+    // Disable pinch solenoid
+    solenoid_pinch_disengage();
 }
 
 int main(void) {
@@ -183,6 +187,7 @@ int main(void) {
 
     tension_init();
     inc_encoder_init();
+    solenoid_pinch_init();
     //tension_init_supply_only();
 
     //motor_comms_init();

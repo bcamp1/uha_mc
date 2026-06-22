@@ -92,3 +92,6 @@ char* movement_state_name(void);
 // has changed since the last call. Safe to call every iteration of a poll loop.
 void movement_debug_print_on_change(void);
 
+float movement_get_playback_time();
+float movement_get_playback_travel();
+

@@ -11,9 +11,16 @@
 #include "../periphs/gpio.h"
 //#include "../drivers/bldc.h"
 #include "../drivers/solenoid.h"
+#include "../drivers/stat_tracker.h"
+#include <stdbool.h>
 
 static float integrator = 0.0f;
 static uint32_t ticks = 0;
+
+// Odometer Stats
+static volatile uint32_t playback_ticks = 0;
+static volatile float prev_tape_position = 0.0f;
+static volatile float playback_travel = 0.0f;
 
 // Function prototypes
 static MovementCommand simple_movement_command(float torque);
@@ -99,7 +106,33 @@ static const CommandTransition CMD_TRANSITION[] = {
     [MV_PLAYBACK]   = { .set_next = true, .next = MV_IDLE, .load_now = true },
 };
 
+float movement_get_playback_time() {
+    float ticks = (float) playback_ticks;
+    return ticks / FREQUENCY_STATE_MACHINE_TICK;
+}
+
+float movement_get_playback_travel() {
+    return playback_travel;
+}
+
+// Restore the cumulative odometer counters from persistent storage. Done once,
+// on the first movement_init() (boot): movement_init() also runs on every
+// STOP/disarm, and the stat flusher only persists every ~5 s, so reloading on
+// later calls would roll the totals back to the last-flushed value.
+static void initialize_movement_stats() {
+    static bool loaded = false;
+    if (loaded) {
+        return;
+    }
+    loaded = true;
+
+    // Stats store play time in minutes; playback_ticks counts state-machine ticks.
+    playback_ticks  = (uint32_t)(stat_get_play_time_min() * 60.0f * FREQUENCY_STATE_MACHINE_TICK);
+    playback_travel = stat_get_tape_played_ft();
+}
+
 void movement_init() {
+    initialize_movement_stats();
     integrator = 0.0f;
     ticks = -1;
     state = MV_IDLE;
@@ -118,7 +151,9 @@ void movement_tick() {
     gpio_set_pin(PIN_DEBUG1);
     ticks += 1;
 
+
     // Step 0: Update data
+    prev_tape_position = data_collector_get_tape_position();
     data_collector_update();
 
     // Safety gate: while fault-disarmed, skip the motion pipeline and the pinch
@@ -132,6 +167,12 @@ void movement_tick() {
         motors_set_reel_torques(0.0f, 0.0f);
         gpio_clear_pin(PIN_DEBUG1);
         return;
+    }
+
+    // Step 0.5: Odometer stats
+    if (state == MV_PLAYBACK) {
+        playback_ticks++;
+        playback_travel += (data_collector_get_tape_position() - prev_tape_position);
     }
 
     // Step 1: Check for new target
@@ -360,10 +401,10 @@ static void set_state(MovementState s) {
     state = s;
     ticks = -1;
     if (state == MV_PLAYBACK) {
-        //bldc_enable(&BLDC_CONF_CAPSTAN);
+        motors_capstan_enable();
         solenoid_pinch_engage();
     } else {
-        //bldc_disable(&BLDC_CONF_CAPSTAN);
+        motors_capstan_disable();
         solenoid_pinch_disengage();
     }
 }

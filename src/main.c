@@ -18,6 +18,8 @@
 #include "drivers/stopwatch.h"
 #include "drivers/command_center.h"
 #include "drivers/faults.h"
+#include "drivers/seeprom.h"
+#include "drivers/stat_tracker.h"
 #include "board.h"
 #include "sched.h"
 #include "drivers/delay.h"
@@ -129,7 +131,7 @@ static void enable_motors() {
 }
 
 static void disable_motors() {
-    // Enable takeup
+    // Disable takeup
     uart_println("Disabling takeup...");
     RXError err = RX_ERR_NO_DATA;
     while (err != RX_ERR_OK) {
@@ -137,13 +139,21 @@ static void disable_motors() {
     }
     uart_println("Takeup disabled.");
 
-    // Enable takeup
+    // Disable takeup
     uart_println("Disabling supply...");
     err = RX_ERR_NO_DATA;
     while (err != RX_ERR_OK) {
         err = motors_supply_disable();
     }
     uart_println("Supply disabled.");
+
+    // Disable capstan
+    uart_println("Disabling capstan...");
+    err = RX_ERR_NO_DATA;
+    while (err != RX_ERR_OK) {
+        err = motors_capstan_disable();
+    }
+    uart_println("Capstan disabled.");
 }
 
 int main(void) {
@@ -151,6 +161,25 @@ int main(void) {
     uart_init();
     delay(0xFFF);
     uart_println("--------MOTOR CONTROLLER START--------");
+
+    // Persistent storage (SmartEEPROM). On a fresh board this provisions the
+    // user-page fuses and resets -- the debug LED blinks during that one-time
+    // step, and halts on a fast blink if storage can't be brought up. Run early,
+    // before anything that reads persistent state.
+    if (seeprom_init_or_provision()) {
+        uart_println("SmartEEPROM ready.");
+
+        // Persistence test: byte 0 is a boot counter. A freshly provisioned cell
+        // reads 0xFF (erased), so treat that as "never booted" -> start at 1. The
+        // byte wraps after 255 boots, which is fine for testing.
+        uint8_t boots = seeprom_read_byte(0);
+        boots = (boots == 0xFF) ? 1 : (uint8_t)(boots + 1);
+        seeprom_write_byte(0, boots);
+        uart_print("Total boots: ");
+        uart_println_int(boots);
+    } else {
+        uart_println("!! SmartEEPROM unavailable !!");
+    }
 
     tension_init();
     inc_encoder_init();
@@ -171,10 +200,18 @@ int main(void) {
     delay(0xFFF);
     timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, movement_tick);
 
+    // Periodically persist playback stats to EEPROM (~every 5 s, low priority).
+    schedule_stat_flusher();
+
 #if DISARM_ON_FAULT
     bool fault_disarmed = false;
 #endif
     while (1) {
+
+        uart_print("Play Time: ");
+        uart_print_float(movement_get_playback_time());
+        uart_print(" Play Dist: ");
+        uart_println_float(movement_get_playback_travel());
         CommandCenterSimpleAction action = command_center_get_action();
 
 #if DISARM_ON_FAULT
@@ -215,7 +252,7 @@ int main(void) {
                 gpio_set_pin(PIN_DEBUG1);
                 gpio_clear_pin(PIN_DEBUG1);
                 enable_motors();
-                movement_set_target_idle();
+                movement_set_target_playback();
                 break;
             case CMD_FAST_FORWARD:
                 movement_set_target_ff(100.0f);

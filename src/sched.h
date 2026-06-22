@@ -6,10 +6,15 @@
 #define PRIO_RS422 (1)
 #define PRIO_RS485 (1)
 #define PRIO_STATE_MACHINE_TICK (2)
+#define PRIO_STAT_FLUSH (3)
 
 // Frequencies
 #define FREQUENCY_STATE_MACHINE_TICK (500.0f)
+// Stat flusher timer ticks at 10 Hz; the actual EEPROM flush is divided down to
+// ~5 s in software (a 16-bit scheduler slot can't run slower than ~7 Hz).
+#define FREQUENCY_STAT_FLUSH (10.0f)
 
 // Timer IDs
 #define ID_STATE_MACHINE_TICK (0)
+#define ID_STAT_FLUSH (1)
 

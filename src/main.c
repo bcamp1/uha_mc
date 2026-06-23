@@ -37,6 +37,7 @@ static void init_peripherals(void);
 static void parse_actions();
 static void enable_motors();
 static void disable_motors();
+static void calibrate_motors();
 static void init_motors(bool enable);
 
 static void init_peripherals(void) {
@@ -160,6 +161,24 @@ static void disable_motors() {
     solenoid_pinch_disengage();
 }
 
+static void calibrate_motors() {
+    // Take the 500 Hz movement tick off the air first: it shares the half-duplex
+    // RS485 bus and harvests each slave's meta-fault byte every tick. If it keeps
+    // running during calibration it (a) preempts our CALIB_ENCODER transactions
+    // mid-frame and (b) latches the slave's transient "calibrating" meta byte,
+    // which trips faults_disarm_required() -> spurious motor-fault disarm.
+    timer_deschedule(ID_STATE_MACHINE_TICK);
+
+    disable_motors();
+    movement_init();
+    motors_takeup_calibrate_encoder();
+    motors_supply_calibrate_encoder();
+
+    // Bus is ours alone until here; resume the tick (next harvest sees the
+    // post-calibration, idle meta bytes).
+    timer_schedule(ID_STATE_MACHINE_TICK, FREQUENCY_STATE_MACHINE_TICK, PRIO_STATE_MACHINE_TICK, movement_tick);
+}
+
 int main(void) {
 	init_peripherals();
     uart_init();
@@ -213,10 +232,10 @@ int main(void) {
 #endif
     while (1) {
 
-        uart_print("Play Time: ");
-        uart_print_float(movement_get_playback_time());
-        uart_print(" Play Dist: ");
-        uart_println_float(movement_get_playback_travel());
+        //uart_print("Play Time: ");
+        //uart_print_float(movement_get_playback_time());
+        //uart_print(" Play Dist: ");
+        //uart_println_float(movement_get_playback_travel());
         CommandCenterSimpleAction action = command_center_get_action();
 
 #if DISARM_ON_FAULT
@@ -266,7 +285,9 @@ int main(void) {
                 movement_set_target_rew(100.0f);
                 break;
             case CMD_GOTO_LOC:
-                movement_set_target_mem(command_center_get_goto_loc(), 100.0f);
+                //movement_set_target_mem(command_center_get_goto_loc(), 100.0f);
+                uart_println("Calibrating motors");
+                calibrate_motors();
                 break;
             case CMD_SPOOL:
                 break;

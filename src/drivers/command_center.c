@@ -65,6 +65,14 @@ static void rx_callback() {
             comms_send_byte(UCOMM_S_ACK_SET_ZERO);
             latest_action = CMD_SET_ZERO;
             break;
+        case UCOMM_M_CALIBRATE:
+            comms_send_byte(UCOMM_S_ACK_CALIBRATE);
+            latest_action = CMD_CALIBRATE;
+            break;
+        case UCOMM_M_DISABLE:
+            comms_send_byte(UCOMM_S_ACK_DISABLE);
+            latest_action = CMD_DISABLE;
+            break;
         case UCOMM_M_GOTO_LOC:
             comms_send_byte(UCOMM_S_ACK_GOTO_LOC);
             // Frame: [cmd][float tape_position]. Ignore if the payload is short.

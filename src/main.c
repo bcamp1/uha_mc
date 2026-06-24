@@ -267,10 +267,8 @@ int main(void) {
 
         switch (action) {
             case CMD_STOP:
-                gpio_set_pin(PIN_DEBUG1);
-                gpio_clear_pin(PIN_DEBUG1);
-                disable_motors();
-                movement_init();
+                enable_motors();
+                movement_set_target_idle();
                 break;
             case CMD_PLAY:
                 gpio_set_pin(PIN_DEBUG1);
@@ -285,15 +283,23 @@ int main(void) {
                 movement_set_target_rew(100.0f);
                 break;
             case CMD_GOTO_LOC:
-                //movement_set_target_mem(command_center_get_goto_loc(), 100.0f);
-                uart_println("Calibrating motors");
-                calibrate_motors();
+                movement_set_target_mem(command_center_get_goto_loc(), 100.0f);
                 break;
             case CMD_SPOOL:
                 break;
             case CMD_SET_ZERO:
                 break;
             case CMD_SET_CAPSTAN_SPEED:
+                break;
+            case CMD_CALIBRATE:
+                uart_println("CMD_CALIBRATE");
+                calibrate_motors();
+                break;
+            case CMD_DISABLE:
+                gpio_set_pin(PIN_DEBUG1);
+                gpio_clear_pin(PIN_DEBUG1);
+                disable_motors();
+                movement_init();
                 break;
             case CMD_NONE:
                 break;

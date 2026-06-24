@@ -7,7 +7,7 @@
 #define UCOMM_M_REWIND            (0x03)
 #define UCOMM_M_SPOOL             (0x04)
 #define UCOMM_M_SET_ZERO          (0x05)
-// 0x06 reserved (was UCOMM_M_GOTO_ZERO; use UCOMM_M_GOTO_LOC with 0.0f)
+#define UCOMM_M_CALIBRATE         (0x06)
 #define UCOMM_M_GOTO_LOC          (0x07)
 #define UCOMM_M_SET_CAPSTAN_SPEED (0x08)
 #define UCOMM_M_SET_SPOOL_SPEED   (0x09)
@@ -21,6 +21,7 @@
 #define UCOMM_M_GET_TENSION_ARMS  (0x11)
 #define UCOMM_M_GET_ODOMETER      (0x12)
 #define UCOMM_M_GET_UI_STATE      (0x13)
+#define UCOMM_M_DISABLE           (0x14)
 
 // Slave Commands
 // ACKs
@@ -30,7 +31,7 @@
 #define UCOMM_S_ACK_REWIND            (0x03)
 #define UCOMM_S_ACK_SPOOL             (0x04)
 #define UCOMM_S_ACK_SET_ZERO          (0x05)
-// 0x06 reserved (was UCOMM_S_ACK_GOTO_ZERO)
+#define UCOMM_S_ACK_CALIBRATE         (0x06)
 #define UCOMM_S_ACK_GOTO_LOC          (0x07)
 #define UCOMM_S_ACK_SET_CAPSTAN_SPEED (0x08)
 #define UCOMM_S_ACK_SET_SPOOL_SPEED   (0x09)
@@ -38,6 +39,7 @@
 #define UCOMM_S_ACK_CLEAR_AUTO_PLAY   (0x0B)
 #define UCOMM_S_ACK_CLEAR_AUTO_LOOP   (0x0C)
 #define UCOMM_S_ACK_SET_AUTO_LOOP     (0x0D)
+#define UCOMM_S_ACK_DISABLE           (0x14)
 
 // Return Data
 #define UCOMM_S_SEND_FAULTS        (0x0E)

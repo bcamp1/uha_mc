@@ -9,6 +9,8 @@ typedef enum {
     CMD_SPOOL,
     CMD_SET_ZERO,
     CMD_SET_CAPSTAN_SPEED,
+    CMD_CALIBRATE,
+    CMD_DISABLE,
     CMD_GOTO_LOC,
     CMD_NONE,
 } CommandCenterSimpleAction;

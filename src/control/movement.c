@@ -48,6 +48,11 @@ static volatile MovementState state;
 // the tick stops driving the motor bus -- see the gate in movement_tick.
 static volatile bool fault_disarmed = false;
 
+// Optional auto-play: when true, a completed SEEK enters MV_PLAYBACK instead of
+// stopping at MV_IDLE. Toggled only by UCOMM_M_SET/CLEAR_AUTO_PLAY; persists
+// across STOP/DISABLE (movement_init does not touch it). Default off at boot.
+static volatile bool auto_play = false;
+
 static const float T = (1.0 / FREQUENCY_STATE_MACHINE_TICK);
 
 // Enter a critical section by disabling interrupts, returning the previous
@@ -147,6 +152,16 @@ void movement_set_fault_disarm(bool disarmed) {
     fault_disarmed = disarmed;
 }
 
+void movement_set_auto_play(bool enabled) {
+    auto_play = enabled;
+    // Debug: PIN_DEBUG2 LED mirrors the auto-play flag (on = enabled).
+    if (enabled) {
+        gpio_set_pin(PIN_DEBUG2);
+    } else {
+        gpio_clear_pin(PIN_DEBUG2);
+    }
+}
+
 void movement_tick() {
     gpio_set_pin(PIN_DEBUG1);
     ticks += 1;
@@ -212,9 +227,18 @@ void movement_tick() {
             }
         } else {
             MovementState next = NEXT_ON_READY[state];
-            set_state(next);
-            if (next == MV_IDLE) {
-                target.active = false;  // run finished; release the target slot
+            // Auto-play: a finished SEEK rolls into playback rather than stopping.
+            // Only when no explicit command is already queued (future_target wins).
+            if (next == MV_IDLE && auto_play
+                && target.kind == TARGET_SEEK && !future_target.active) {
+                target.kind = TARGET_PLAYBACK;   // PLAYBACK carries no union params
+                target.active = true;
+                set_state(MV_PLAYBACK);
+            } else {
+                set_state(next);
+                if (next == MV_IDLE) {
+                    target.active = false;  // run finished; release the target slot
+                }
             }
         }
     }

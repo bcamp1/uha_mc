@@ -78,6 +78,11 @@ void movement_tick();
 // disabled at the driver), so fault state stays live and a cleared fault lets
 // CMD_PLAY re-arm.
 void movement_set_fault_disarm(bool disarmed);
+
+// Optional auto-play. When enabled, a completed SEEK (goto-loc) run enters
+// playback instead of stopping. Off at boot; persists until changed.
+void movement_set_auto_play(bool enabled);
+
 void movement_set_target_ff(float tape_speed);
 void movement_set_target_playback();
 void movement_set_target_idle();

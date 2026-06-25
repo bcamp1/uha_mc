@@ -27,8 +27,6 @@ float auto_loop_loc2 = 0.0f;
 
 // RX message callback
 static void rx_callback() {
-    gpio_set_pin(PIN_DEBUG2);
-    gpio_clear_pin(PIN_DEBUG2);
     CommsRxResult rx = comms_get_data();
     if (rx.err != RX_ERR_OK || rx.data_len < 1) {
         return;
@@ -90,9 +88,11 @@ static void rx_callback() {
             break;
         case UCOMM_M_SET_AUTO_PLAY:
             comms_send_byte(UCOMM_S_ACK_SET_AUTO_PLAY);
+            movement_set_auto_play(true);
             break;
         case UCOMM_M_CLEAR_AUTO_PLAY:
             comms_send_byte(UCOMM_S_ACK_CLEAR_AUTO_PLAY);
+            movement_set_auto_play(false);
             break;
         case UCOMM_M_CLEAR_AUTO_LOOP:
             comms_send_byte(UCOMM_S_ACK_CLEAR_AUTO_LOOP);

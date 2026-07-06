@@ -19,5 +19,7 @@ void inc_encoder_init();
 float inc_encoder_get_rads();
 float inc_encoder_get_position(); // Tape position in seconds
 int32_t inc_encoder_get_ticks();
+float inc_encoder_get_inches();
+float inc_encoder_get_feet();
 
 #endif /* INC_ENCODER_H_ */

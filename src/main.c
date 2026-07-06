@@ -237,6 +237,7 @@ int main(void) {
         //uart_print(" Play Dist: ");
         //uart_println_float(movement_get_playback_travel());
         CommandCenterSimpleAction action = command_center_get_action();
+        //uart_println_float(movement_get_playback_travel());
 
 #if DISARM_ON_FAULT
         // Disarm on any active fault: drop to the same safe state as STOP and

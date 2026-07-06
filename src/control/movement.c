@@ -19,7 +19,7 @@ static uint32_t ticks = 0;
 
 // Odometer Stats
 static volatile uint32_t playback_ticks = 0;
-static volatile float prev_tape_position = 0.0f;
+static volatile float prev_playback_travel = 0.0f;
 static volatile float playback_travel = 0.0f;
 
 // Function prototypes
@@ -168,7 +168,7 @@ void movement_tick() {
 
 
     // Step 0: Update data
-    prev_tape_position = data_collector_get_tape_position();
+    prev_playback_travel = data_collector_get_tape_distance();
     data_collector_update();
 
     // Safety gate: while fault-disarmed, skip the motion pipeline and the pinch
@@ -187,7 +187,7 @@ void movement_tick() {
     // Step 0.5: Odometer stats
     if (state == MV_PLAYBACK) {
         playback_ticks++;
-        playback_travel += (data_collector_get_tape_position() - prev_tape_position);
+        playback_travel += (data_collector_get_tape_distance() - prev_playback_travel);
     }
 
     // Step 1: Check for new target

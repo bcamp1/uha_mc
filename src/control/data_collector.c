@@ -55,6 +55,7 @@ void data_collector_update() {
 
     data.tape_position = tape_position;
     data.tape_speed = tape_speed;
+    data.tape_distance = inc_encoder_get_feet();
 
     data.filtered_takeup_tension = takeup_tension;
     data.filtered_supply_tension = supply_tension;
@@ -68,6 +69,10 @@ float data_collector_get_tape_speed() {
 
 float data_collector_get_tape_position() {
     return data.tape_position;
+}
+
+float data_collector_get_tape_distance() {
+    return data.tape_distance;
 }
 
 float data_collector_get_takeup_tension() {

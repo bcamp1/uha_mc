@@ -132,6 +132,8 @@ static void rx_callback() {
             break;
         }
         case UCOMM_M_GET_ODOMETER:
+            odometer_time     = movement_get_playback_time();
+            odometer_distance = movement_get_playback_travel();
             comms_send_float2(UCOMM_S_SEND_ODOMETER, odometer_time, odometer_distance);
             break;
         case UCOMM_M_GET_UI_STATE: {

@@ -46,6 +46,15 @@ float inc_encoder_get_position() {
     return tape_inches / TAPE_IPS;
 }
 
+float inc_encoder_get_inches() {
+    float tape_inches = inc_encoder_get_rads() * roller_radius;
+    return tape_inches;
+}
+
+float inc_encoder_get_feet() {
+    return inc_encoder_get_inches() / 12.0f;
+}
+
 static void inc_encoder_pulse() {
     // Get Encoder Pos
 	bool dir = gpio_get_pin(PIN_ROLLER_DIR);
